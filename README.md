@@ -1,74 +1,22 @@
-# Hippique AI
+# Hippique AI — agent multitâche
 
-Une IA dédiée au monde hippique, pensée comme un assistant d’analyse de courses, de chevaux, de jockeys, d’entraîneurs et d’hippodromes.
+Le projet inclut maintenant `MultiTaskAgent`, une couche d’orchestration inspirée du principe d’Agent Reach : une demande est décomposée, les agents spécialisés sont sélectionnés en parallèle et l’état des sources est retourné explicitement.
 
-## Fonctionnalités
+## API
 
-- Analyse de chevaux et de performances
-- Suivi des performances par piste, distance et conditions
-- Profil des jockeys et entraîneurs
-- Analyse des prochaines courses et du calendrier
-- Recommandations prudentes et structurées
-- Assistant conversationnel en français
-- Architecture modulaire multi-agents
+- `GET /api/health` — état du service
+- `GET /api/agents` — catalogue des agents
+- `GET /api/capabilities` — diagnostic des capacités et sources
+- `GET /api/analysis?horse=...` — analyse de démonstration
+- `POST /api/chat` — assistant conversationnel
+- `POST /api/multitask` — orchestration multitâche
 
-## Agents spécialisés
-
-- CourseAgent : analyse de la course et de la stratégie
-- HorseAgent : forme, pedigree, rythme et potentiel
-- JockeyAgent : statistiques et compatibilité
-- TrainerAgent : performance de l’écurie et préparation
-- TrackAgent : influence de la piste et des conditions
-- CalendarAgent : agenda et éventails
-- ForecastAgent : synthèse et score global
-- AssistantAgent : interface conversationnelle
-
-## Stack
-
-- Python 3.11+
-- FastAPI
-- Jinja2
-- HTML / CSS / JavaScript
-
-## Lancement rapide
-
-1. Créez un environnement virtuel
-2. Installez les dépendances
-3. Lancez le serveur
+Exemple :
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+curl -X POST http://localhost:8000/api/multitask \
+  -H 'Content-Type: application/json' \
+  -d '{"task":"Analyse Asteria du Clos avec la piste, le jockey et le calendrier"}'
 ```
 
-Puis ouvrez :
-
-```text
-http://localhost:8000
-```
-
-## Structure du projet
-
-```text
-main.py
-requirements.txt
-README.md
-templates/
-  index.html
-static/
-  styles.css
-  app.js
-```
-
-## Exemple de usage
-
-- “Quel cheval est le plus solide sur piste lourde ?”
-- “Analyse le profil de Asteria du Clos.”
-- “Quel est le meilleur candidat pour la prochaine course ?”
-- “Que faut-il surveiller sur l’hippodrome de Chantilly ?”
-
-## Notes
-
-Le projet est conçu comme une base solide pour un assistant hippique intelligent, avec des agents spécialisés et des données simulées faciles à remplacer par des données réelles ou des API externes.
+Les connecteurs web, RSS, météo et sources officielles sont représentés par un registre de capacités. Ils doivent être branchés à des API autorisées et à leurs clés avant toute collecte réelle. Les résultats actuels utilisent des données de démonstration et ne constituent pas un conseil de pari.
