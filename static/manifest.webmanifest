@@ -1,0 +1,11 @@
+{
+  "name": "Hippique AI",
+  "short_name": "Hippique AI",
+  "description": "Assistant hippique multi-agents",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "lang": "fr",
+  "icons": [{"src":"/static/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
