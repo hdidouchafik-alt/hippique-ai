@@ -1,30 +1,29 @@
-from __future__ import annotations
+name: Tests
 
-from fastapi.testclient import TestClient
+on:
+  push:
+  pull_request:
 
-from main import app
+jobs:
+  tests:
+    runs-on: ubuntu-latest
 
-client = TestClient(app)
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
 
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-def test_health():
-    response = client.get("/api/health")
-    assert response.status_code == 200
-    assert response.json()["status"] == "ok"
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
-
-def test_analysis():
-    response = client.get("/api/analysis?horse=Asteria%20du%20Clos")
-    assert response.status_code == 200
-    assert response.json()["horse"]["name"] == "Asteria du Clos"
-
-
-def test_tracks_and_capabilities():
-    assert client.get("/api/tracks").status_code == 200
-    assert client.get("/api/capabilities").json()["agent"] == "MultiTaskAgent"
-
-
-def test_multitask():
-    response = client.post("/api/multitask", json={"task": "Analyse la météo à Chantilly"})
-    assert response.status_code == 200
-    assert "TrackAgent" in response.json()["plan"]
+      - name: Run pytest
+        env:
+          PYTHONPATH: .
+        run: pytest -q
