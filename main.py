@@ -10,13 +10,15 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 
 from multitask_agent import MultiTaskAgent
+from racing_data_agent import RacingDataAgent
 
-app = FastAPI(title="Hippique AI", version="0.3.0")
+app = FastAPI(title="Hippique AI", version="0.4.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 HORSES = {"Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]}, "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]}, "Mistral de Noir": {"age": 6, "form": 71, "surface": "gazon", "distance": "2400m", "speed": 78, "stamina": 90, "traction": 74, "last_runs": ["3e", "2e", "4e"]}, "Luna de la Mer": {"age": 3, "form": 88, "surface": "gazon", "distance": "1800m", "speed": 91, "stamina": 82, "traction": 79, "last_runs": ["1er", "1er", "2e"]}}
 AGENTS = {"CourseAgent": "Analyse le rythme et la distance.", "HorseAgent": "Analyse la forme et les aptitudes.", "JockeyAgent": "Évalue la stratégie du jockey.", "TrainerAgent": "Évalue la préparation de l’écurie.", "TrackAgent": "Analyse piste, terrain et météo.", "CalendarAgent": "Organise les prochaines échéances.", "ForecastAgent": "Consolide les signaux sans garantie."}
+data_agent = RacingDataAgent()
 class ChatMessage(BaseModel): message: str = Field(min_length=1, max_length=2000)
 class MultiTaskRequest(BaseModel): task: str = Field(min_length=1, max_length=4000); horse: str | None = None; sources: list[str] = []
 def analysis(name: str):
@@ -30,6 +32,10 @@ async def health(): return {"status": "ok", "service": "Hippique AI", "version":
 async def agents(): return {"agents": AGENTS, "multitask": MultiTaskAgent.catalog()}
 @app.get("/api/capabilities")
 async def capabilities(): return MultiTaskAgent(HORSES, AGENTS).health()
+@app.get("/api/tracks")
+async def tracks(): return {"tracks": data_agent.tracks()}
+@app.get("/api/races")
+async def races(): return {"races": data_agent.races()}
 @app.get("/api/analysis")
 async def get_analysis(horse: str = "Asteria du Clos"): return analysis(horse)
 @app.post("/api/multitask")

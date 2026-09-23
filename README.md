@@ -1,26 +1,32 @@
-# Hippique AI
+# Hippique AI — version 0.4
 
-Le MultiTaskAgent récupère maintenant des données publiques lorsque possible :
+## Fonctionnalités
 
-- flux RSS hippiques ;
-- météo actuelle via Open-Meteo, sans clé API ;
-- lecture contrôlée de pages HTTP(S) via `PublicSourceAgent` ;
-- statut et date de collecte pour chaque source ;
-- exécution parallèle des collectes et agents spécialisés.
+- Agents hippiques spécialisés et `MultiTaskAgent`.
+- Collecte publique RSS et météo Open-Meteo.
+- Cache SQLite avec expiration.
+- Catalogue d'hippodromes français avec coordonnées météo.
+- API courses, hippodromes, capacités et orchestration.
+- Tests automatisés et workflow GitHub Actions.
+- Déploiement Render via `render.yaml`.
 
-Les sources officielles nécessitant authentification ne sont pas contournées. Les données externes peuvent être indisponibles et doivent être vérifiées avant utilisation. Les résultats ne constituent pas un conseil de pari.
-
-## Lancement
+## Lancer
 
 ```bash
 pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-## Mission multitâche
+Tests :
 
 ```bash
-curl -X POST http://localhost:8000/api/multitask \
-  -H 'Content-Type: application/json' \
-  -d '{"task":"Analyse les prochaines courses avec la météo","sources":["rss","weather"]}'
+pip install -r requirements-dev.txt
+pytest -q
 ```
+
+## Déployer
+
+- **Render** : connecter le dépôt et utiliser `render.yaml`.
+- **GitHub Pages** : le frontend actuel dépend de FastAPI et n'est donc pas déployable seul sur Pages. Pour Pages, exporter une version statique du dossier `static/` et du template, puis remplacer les appels API par une URL Render configurée.
+
+Les données de chevaux restent un jeu de démonstration tant qu'un fournisseur officiel autorisé n'est pas configuré. L'application n'invente pas les résultats et ne contourne pas les accès privés. Ce service ne constitue pas un conseil de pari.
