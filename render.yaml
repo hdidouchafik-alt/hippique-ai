@@ -1,4 +1,4 @@
-services:# Exported from Render on 2026-09-23T21:22:11Z
+# Exported from Render on 2026-09-23T21:22:11Z
 version: "1"
 services:
 - type: web
@@ -11,9 +11,3 @@ services:
   startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
   autoDeployTrigger: commit
 
-  - type: web
-    name: hippique-ai
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
-    plan: free
