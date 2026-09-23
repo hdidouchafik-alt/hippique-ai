@@ -1,22 +1,26 @@
-# Hippique AI — agent multitâche
+# Hippique AI
 
-Le projet inclut maintenant `MultiTaskAgent`, une couche d’orchestration inspirée du principe d’Agent Reach : une demande est décomposée, les agents spécialisés sont sélectionnés en parallèle et l’état des sources est retourné explicitement.
+Le MultiTaskAgent récupère maintenant des données publiques lorsque possible :
 
-## API
+- flux RSS hippiques ;
+- météo actuelle via Open-Meteo, sans clé API ;
+- lecture contrôlée de pages HTTP(S) via `PublicSourceAgent` ;
+- statut et date de collecte pour chaque source ;
+- exécution parallèle des collectes et agents spécialisés.
 
-- `GET /api/health` — état du service
-- `GET /api/agents` — catalogue des agents
-- `GET /api/capabilities` — diagnostic des capacités et sources
-- `GET /api/analysis?horse=...` — analyse de démonstration
-- `POST /api/chat` — assistant conversationnel
-- `POST /api/multitask` — orchestration multitâche
+Les sources officielles nécessitant authentification ne sont pas contournées. Les données externes peuvent être indisponibles et doivent être vérifiées avant utilisation. Les résultats ne constituent pas un conseil de pari.
 
-Exemple :
+## Lancement
+
+```bash
+pip install -r requirements.txt
+uvicorn main:app --reload
+```
+
+## Mission multitâche
 
 ```bash
 curl -X POST http://localhost:8000/api/multitask \
   -H 'Content-Type: application/json' \
-  -d '{"task":"Analyse Asteria du Clos avec la piste, le jockey et le calendrier"}'
+  -d '{"task":"Analyse les prochaines courses avec la météo","sources":["rss","weather"]}'
 ```
-
-Les connecteurs web, RSS, météo et sources officielles sont représentés par un registre de capacités. Ils doivent être branchés à des API autorisées et à leurs clés avant toute collecte réelle. Les résultats actuels utilisent des données de démonstration et ne constituent pas un conseil de pari.
