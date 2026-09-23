@@ -1,6 +1,49 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hippique AI</title><link rel="stylesheet" href="/static/styles.css"></head>
-<body><main class="container"><header><div><p class="eyebrow">Assistant multi-agents</p><h1>Hippique AI</h1><p class="muted">Analyse hippique, orchestration de tâches et contrôle des sources.</p></div><span class="status">● Système prêt</span></header>
-<section class="grid"><article class="panel"><div class="panel-title"><h2>Analyse du cheval</h2><select id="horse"><option>Asteria du Clos</option><option>Vortex d'Or</option><option>Mistral de Noir</option><option>Luna de la Mer</option></select></div><div id="analysis" class="summary">Chargement…</div><div id="agents"></div></article>
-<article class="panel"><div class="panel-title"><h2>Agent multitâche</h2><span class="tag">MultiTaskAgent</span></div><p class="muted">Décris une mission : l’agent la découpe et coordonne les spécialistes.</p><form id="taskForm"><textarea id="task" placeholder="Ex : analyse Asteria du Clos sur une piste lourde avec le jockey et la météo"></textarea><button>Orchestrer la mission</button></form><div id="taskResult" class="result"></div></article></section>
-<section class="panel chat"><h2>Assistant conversationnel</h2><div id="messages" class="messages"><div class="bubble bot">Bonjour. Posez une question sur un cheval, une course, une piste ou une mission complexe.</div></div><form id="chatForm"><input id="message" placeholder="Votre question…"><button>Envoyer</button></form></section><p class="disclaimer">Les analyses sont indicatives, basées sur les données disponibles et ne garantissent aucun résultat.</p></main><script src="/static/app.js"></script></body></html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Hippique AI - tableau de bord d'analyse hippique multi-agents" />
+  <title>Hippique AI — Tableau de bord</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">♞</span><div><strong>Hippique</strong><small>AI Studio</small></div></div>
+      <nav class="nav" aria-label="Navigation principale">
+        <a class="nav-item active" href="#dashboard">⌂ <span>Tableau de bord</span></a>
+        <a class="nav-item" href="#analysis-section">◈ <span>Analyses</span></a>
+        <a class="nav-item" href="#mission-section">✦ <span>Missions IA</span></a>
+        <a class="nav-item" href="#chat-section">◌ <span>Assistant</span></a>
+      </nav>
+      <div class="sidebar-footer"><span class="pulse"></span><span>Agents opérationnels</span><small id="healthText">Vérification…</small></div>
+    </aside>
+
+    <main class="main-content" id="dashboard">
+      <header class="topbar"><div><p class="eyebrow">Centre de contrôle</p><h1>Bonjour, bienvenue dans <span>Hippique AI</span></h1><p class="muted">Analysez vos courses avec une équipe d'agents spécialisés.</p></div><div class="top-actions"><span class="date-chip" id="today"></span><button class="icon-button" id="refreshBtn" title="Actualiser">↻</button></div></header>
+
+      <section class="stats-grid" aria-label="État du système">
+        <div class="stat-card"><div class="stat-icon gold">♞</div><div><small>Agents actifs</small><strong id="agentCount">—</strong><span class="trend">Spécialistes disponibles</span></div></div>
+        <div class="stat-card"><div class="stat-icon blue">⌁</div><div><small>Sources publiques</small><strong id="sourceCount">—</strong><span class="trend">Connecteurs configurés</span></div></div>
+        <div class="stat-card"><div class="stat-icon green">⌖</div><div><small>Hippodromes</small><strong id="trackCount">—</strong><span class="trend">Dans le catalogue</span></div></div>
+        <div class="stat-card"><div class="stat-icon violet">◷</div><div><small>Dernière collecte</small><strong id="lastCollection">—</strong><span class="trend">Cache local activé</span></div></div>
+      </section>
+
+      <section class="dashboard-grid" id="analysis-section">
+        <article class="card analysis-card"><div class="card-heading"><div><p class="section-kicker">Profil sportif</p><h2>Analyse d'un cheval</h2></div><select id="horse" aria-label="Choisir un cheval"><option>Asteria du Clos</option><option>Vortex d'Or</option><option>Mistral de Noir</option><option>Luna de la Mer</option></select></div><div id="analysis" class="analysis-summary loading">Chargement de l'analyse…</div><div id="agents" class="agent-list"></div></article>
+        <article class="card track-card"><div class="card-heading"><div><p class="section-kicker">Conditions de course</p><h2>Hippodromes</h2></div><button class="text-button" id="loadTracks">Actualiser</button></div><div id="tracks" class="track-list"><div class="empty-state">Chargement des hippodromes…</div></div></article>
+      </section>
+
+      <section class="dashboard-grid mission-grid" id="mission-section">
+        <article class="card mission-card"><div class="card-heading"><div><p class="section-kicker">Orchestration</p><h2>Créer une mission</h2></div><span class="agent-badge">MultiTaskAgent</span></div><p class="muted">Décrivez votre objectif. L'agent sélectionne et coordonne automatiquement les spécialistes.</p><form id="taskForm"><label for="task">Votre mission</label><textarea id="task" placeholder="Ex : Analyse Asteria du Clos à Chantilly avec météo, piste, jockey et calendrier"></textarea><div class="source-options"><label><input type="checkbox" value="rss" checked> Flux RSS</label><label><input type="checkbox" value="weather" checked> Météo</label></div><button class="primary-button" type="submit">✦ Lancer la mission</button></form><div id="taskResult" class="mission-result hidden"></div></article>
+        <article class="card sources-card"><div class="card-heading"><div><p class="section-kicker">Fiabilité</p><h2>État des sources</h2></div><button class="text-button" id="loadCapabilities">Diagnostiquer</button></div><div id="capabilities" class="capabilities"><div class="empty-state">Cliquez sur Diagnostiquer</div></div></article>
+      </section>
+
+      <section class="card chat-card" id="chat-section"><div class="card-heading"><div><p class="section-kicker">Conversation</p><h2>Assistant hippique</h2></div><span class="online"><i></i> En ligne</span></div><div id="messages" class="messages"><div class="bubble bot"><strong>Assistant Hippique</strong><br>Bonjour ! Posez-moi une question sur un cheval, une course, un jockey ou une piste.</div></div><form id="chatForm" class="chat-form"><input id="message" autocomplete="off" placeholder="Ex : Que penses-tu de Luna de la Mer ?" aria-label="Votre question" /><button class="primary-button">Envoyer <span>→</span></button></form></section>
+      <footer>Hippique AI · Données indicatives · Vérifiez toujours les sources officielles avant toute décision.</footer>
+    </main>
+  </div>
+  <script src="/static/app.js"></script>
+</body>
+</html>
