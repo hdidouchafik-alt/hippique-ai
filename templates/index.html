@@ -1,0 +1,215 @@
+from __future__ import annotations
+
+from typing import Any, Dict, List
+
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+
+app = FastAPI(
+    title="Hippique AI",
+    version="0.1.0",
+    description="Assistant IA dédié au monde hippique et aux agents spécialisés.",
+)
+
+BASE_DIR = __import__("pathlib").Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+HORSES = {
+    "Asteria du Clos": {
+        "age": 5,
+        "form": 82,
+        "surface": "gazon",
+        "distance": "2000m",
+        "last_runs": ["1er", "2e", "1er"],
+        "speed": 88,
+        "stamina": 84,
+        "traction": 80,
+    },
+    "Vortex d'Or": {
+        "age": 4,
+        "form": 76,
+        "surface": "piste lourde",
+        "distance": "1600m",
+        "last_runs": ["2e", "3e", "1er"],
+        "speed": 84,
+        "stamina": 79,
+        "traction": 86,
+    },
+    "Mistral de Noir": {
+        "age": 6,
+        "form": 71,
+        "surface": "gazon",
+        "distance": "2400m",
+        "last_runs": ["3e", "2e", "4e"],
+        "speed": 78,
+        "stamina": 90,
+        "traction": 74,
+    },
+    "Luna de la Mer": {
+        "age": 3,
+        "form": 88,
+        "surface": "gazon",
+        "distance": "1800m",
+        "last_runs": ["1er", "1er", "2e"],
+        "speed": 91,
+        "stamina": 82,
+        "traction": 79,
+    },
+}
+
+TRACKS = {
+    "Chantilly": {"state": "gazon ferme", "influence": "favorise les chevaux rapides et élégants", "risk": "faible"},
+    "Longchamp": {"state": "terrain équilibré", "influence": "bon pour les chevaux avec reprise", "risk": "moyen"},
+    "Deauville": {"state": "piste lourde", "influence": "avantage aux chevaux solides et tracteurs", "risk": "moyen"},
+}
+
+AGENT_CATALOG = {
+    "CourseAgent": "Évalue les caractéristiques clés d’une course et son enjeu sportif.",
+    "HorseAgent": "Analyse la forme du cheval, sa régularité et ses aptitudes.",
+    "JockeyAgent": "Étudie la compatibilité entre le cheval et le jockey.",
+    "TrainerAgent": "Évalue l’état de préparation de l’écurie et le plan de course.",
+    "TrackAgent": "Analyse la piste, les conditions météo et leur impact.",
+    "CalendarAgent": "Repère les rendez-vous importants et les échéances clés.",
+    "ForecastAgent": "Consolide les signaux pour proposer un pronostic prudent.",
+    "AssistantAgent": "Interprète les questions du propriétaire ou du joueur et répond en français.",
+}
+
+
+class ChatMessage(BaseModel):
+    message: str
+
+
+def agent_result(name: str, specialty: str, insight: str, score: int) -> Dict[str, Any]:
+    return {
+        "name": name,
+        "specialty": specialty,
+        "insight": insight,
+        "score": score,
+    }
+
+
+def get_horse_profile(name: str) -> Dict[str, Any]:
+    horse = HORSES.get(name)
+    if not horse:
+        return {
+            "name": name,
+            "summary": "Cheval non référencé dans la base de démonstration.",
+            "form": 0,
+            "surface": "inconnue",
+            "distance": "inconnue",
+        }
+    return {
+        "name": name,
+        "summary": f"{name} est un cheval de {horse['age']} ans, avec une forme de {horse['form']}/100. Il préfère la piste {horse['surface']} et la distance {horse['distance']}.",
+        **horse,
+    }
+
+
+def build_analysis(horse_name: str) -> Dict[str, Any]:
+    horse = get_horse_profile(horse_name)
+    course = agent_result(
+        "CourseAgent",
+        AGENT_CATALOG["CourseAgent"],
+        f"La course idéale pour {horse_name} est une course de {horse['distance']} sur {horse['surface']}, avec un rythme rapide mais stable.",
+        86,
+    )
+    horse_agent = agent_result(
+        "HorseAgent",
+        AGENT_CATALOG["HorseAgent"],
+        f"La forme globale de {horse_name} est solide. Son index de vitesse {horse['speed']} et sa résistance {horse['stamina']} indiquent une bonne aptitude à la distance ciblée.",
+        84,
+    )
+    jockey = agent_result(
+        "JockeyAgent",
+        AGENT_CATALOG["JockeyAgent"],
+        f"Le jockey idéal doit privilégier le rythme et la gestion de la dernière phase. Les dernières performances suggèrent une bonne progression en fin de course.",
+        81,
+    )
+    trainer = agent_result(
+        "TrainerAgent",
+        AGENT_CATALOG["TrainerAgent"],
+        f"L’écurie semble bien préparée, avec une progression régulière et un bon soin de la charge de travail sur les dernières sorties.",
+        83,
+    )
+    track = agent_result(
+        "TrackAgent",
+        AGENT_CATALOG["TrackAgent"],
+        f"Sur une piste type Chantilly, les conditions sont favorables aux chevaux rapides and équilibrés. Le terrain reste stable et permet une belle fin de course.",
+        82,
+    )
+    calendar = agent_result(
+        "CalendarAgent",
+        AGENT_CATALOG["CalendarAgent"],
+        f"La prochaine échéance doit être observée avec attention, car le calendrier des courses privilégie les chevaux au meilleur moment de forme.",
+        77,
+    )
+    forecast = agent_result(
+        "ForecastAgent",
+        AGENT_CATALOG["ForecastAgent"],
+        f"Score de confiance global : {horse['form']} sur 100. {horse_name} apparaît comme un candidat sérieux, avec un bon potentiel sur piste adaptée.",
+        horse["form"],
+    )
+
+    return {
+        "horse": horse,
+        "summary": f"{horse_name} est un cheval intéressant sur {horse['surface']} avec des performances régulières. Son profil le rend crédible sur une course de {horse['distance']}, surtout si les conditions restent favorables.",
+        "recommendation": f"Recommandation prudente : {horse_name} mérite une attention forte pour une course adaptée à sa vitesse et à sa capacité de maintien de rythme.",
+        "agents": [course, horse_agent, jockey, trainer, track, calendar, forecast],
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/api/health")
+async def health() -> Dict[str, str]:
+    return {"status": "ok", "service": "Hippique AI"}
+
+
+@app.get("/api/agents")
+async def list_agents() -> Dict[str, Dict[str, str]]:
+    return {"agents": AGENT_CATALOG}
+
+
+@app.get("/api/analysis")
+async def analysis(horse: str = "Asteria du Clos") -> Dict[str, Any]:
+    return build_analysis(horse)
+
+
+@app.post("/api/chat")
+async def chat(payload: ChatMessage) -> Dict[str, Any]:
+    message = payload.message.lower().strip()
+    if not message:
+        return {"reply": "Je n’ai pas reçu de question. Posez une question sur un cheval, un jockey, une piste ou une course.", "agents": []}
+
+    horse_hint = next((name for name in HORSES if name.lower() in message), "Asteria du Clos")
+    analysis = build_analysis(horse_hint)
+
+    if "cheval" in message or "horse" in message:
+        reply = f"Pour {horse_hint}, la forme est solide et le profil correspond à une course de {analysis['horse']['distance']} sur {analysis['horse']['surface']}."
+    elif "jockey" in message:
+        reply = "Le jockey doit placer le cheval dans un rythme soutenu, puis stimuler la fin de course avec un dernier effort maîtrisé."
+    elif "piste" in message or "terrain" in message or "hippodrome" in message:
+        reply = "Les conditions de piste importent beaucoup. Une piste équilibrée favorise les chevaux dotés de vitesse et d’endurance."
+    elif "course" in message or "pronostic" in message:
+        reply = analysis["recommendation"]
+    else:
+        reply = f"Mon analyse sur {horse_hint} souligne une bonne préparation, une forme régulière et un potentiel crédible sur la bonne distance."
+
+    return {
+        "reply": reply,
+        "horse": horse_hint,
+        "agents": analysis["agents"],
+    }
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

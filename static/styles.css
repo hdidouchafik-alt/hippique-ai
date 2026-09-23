@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hippique AI</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">IA spécialisée</p>
+          <h1>Hippique AI</h1>
+        </div>
+        <div class="hero-badges">
+          <span>Courses</span>
+          <span>Chevaux</span>
+          <span>Jockeys</span>
+          <span>Pronostics</span>
+        </div>
+      </header>
+
+      <main class="layout">
+        <section class="panel analysis-panel">
+          <div class="panel-header">
+            <h2>Analyse du cheval</h2>
+            <select id="horseSelect">
+              <option>Asteria du Clos</option>
+              <option>Vortex d'Or</option>
+              <option>Mistral de Noir</option>
+              <option>Luna de la Mer</option>
+            </select>
+          </div>
+
+          <div id="summaryBox" class="summary-box">
+            Chargement de l’analyse...
+          </div>
+
+          <div id="agentList" class="agent-list"></div>
+        </section>
+
+        <section class="panel chat-panel">
+          <div class="panel-header">
+            <h2>Assistant hippique</h2>
+          </div>
+
+          <div id="chatMessages" class="chat-messages">
+            <div class="message bot">
+              Bonjour. Je peux analyser un cheval, un jockey, une piste ou une course.
+            </div>
+          </div>
+
+          <form id="chatForm" class="chat-form">
+            <input id="chatInput" type="text" placeholder="Ex: Analyse Asteria du Clos" />
+            <button type="submit">Envoyer</button>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
+""
