@@ -1093,7 +1093,7 @@ $('analyseForm').addEventListener('submit', async (e) => {
 });
 
 function afficherResultats(data) {
-  const runners = data.recommendations || data.ranked || data.runners || [];
+  const runners = data.ranking || data.recommendations || data.ranked || data.runners || [];
   const div = $('results');
 
   if (!runners.length) {
