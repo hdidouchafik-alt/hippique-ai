@@ -82,11 +82,9 @@ def analysis(name: str):
 # ============ PAGES HTML ============
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.get("/pronostics", response_class=HTMLResponse)
+    return templates.TemplateResponse(request, "index.html")
 async def pronostics_page(request: Request):
     return templates.TemplateResponse("pronostics.html", {"request": request})
 
