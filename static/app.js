@@ -3,7 +3,10 @@ const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => 
 const setLoading = (element, text = 'Chargement…') => { element.classList.add('loading'); element.textContent = text; };
 
 async function api(url, options = {}) {
-  const response = await fetch(url, options);
+  const response = await fetch(url, {
+    ...options,
+    credentials: 'same-origin'
+  });
   if (!response.ok) throw new Error(`Erreur ${response.status}`);
   return response.json();
 }
