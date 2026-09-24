@@ -34,6 +34,8 @@ def analysis(name: str):
     return {"horse": {"name": name, **h}, "summary": f"{name} présente une forme de {h['form']}/100 et préfère {h['surface']} sur {h['distance']}.", "agents": [{"name": n, "specialty": d, "score": h['form'] if n in ('HorseAgent','ForecastAgent') else 80, "insight": f"{n} a analysé {name}."} for n, d in AGENTS.items()]}
 
 @app.get("/", response_class=HTMLResponse)
+@app.get("/pronostics", response_class=HTMLResponse)
+async def pronostics(request: Request): return templates.TemplateResponse("pronostics.html", {"request": request})
 async def root(request: Request): return templates.TemplateResponse("index.html", {"request": request})
 @app.get("/api/health")
 async def health(): return {"status": "ok", "service": "Hippique AI", "version": app.version, "learning": prediction_store.metrics()}
