@@ -23,7 +23,7 @@
     line-height: 1;
   }
   .page-hero .container {
-    position: relative;
+    position: relative;.
     z-index: 2;
   }
   .page-hero h1 {
@@ -493,7 +493,10 @@ function toast(msg) {
 }
 
 async function api(url, opts = {}) {
-  const r = await fetch(API + url, opts);
+  const r = await fetch(API + url, {
+    ...opts,
+    credentials: 'same-origin'
+  });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
 }
