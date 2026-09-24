@@ -1,37 +1,8 @@
-name: Tests
-
-on:
-  push:
-  pull_request:
-
-jobs:
-  tests:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Installer Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Installer les dépendances
+- name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
+          pip install -r requirements.txt
+          pip install pytest
 
-      - name: Vérifier la structure
-        run: |
-          pwd
-          ls -la
-          test -f main.py
-
-      - name: Exécuter les tests
-        working-directory: ${{ github.workspace }}
-        env:
-          PYTHONPATH: ${{ github.workspace }}
+      - name: Run tests
         run: python -m pytest -q
-
