@@ -1,13 +1,10 @@
 from __future__ import annotations
 
-import os
-import secrets
-
 from pathlib import Path
+from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
@@ -21,31 +18,6 @@ app = FastAPI(title="Hippique AI", version="0.7.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-
-# ============ AUTHENTIFICATION ============
-# Identifiants lus depuis les variables d'environnement Render.
-# Fallback local pour le développement.
-
-AUTH_USER = os.environ.get("HIPPIQUE_USER", "admin")
-AUTH_PASS = os.environ.get("HIPPIQUE_PASS", "hippique2026")
-
-security = HTTPBasic()
-
-
-def verifier_acces(credentials: HTTPBasicCredentials = Depends(security)):
-    """Verifie le couple identifiant / mot de passe."""
-    ok_user = secrets.compare_digest(credentials.username, AUTH_USER)
-    ok_pass = secrets.compare_digest(credentials.password, AUTH_PASS)
-    if not (ok_user and ok_pass):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Acces refuse",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
-
-# ============ DONNEES DEMO ============
 
 HORSES = {
     "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
@@ -68,8 +40,6 @@ data_agent = RacingDataAgent()
 prediction_store = PredictionStore()
 prediction_engine = PredictionEngine(prediction_store)
 
-
-# ============ MODELES ============
 
 class ChatMessage(BaseModel):
     message: str = Field(min_length=1, max_length=2000)
@@ -109,7 +79,19 @@ def analysis(name: str):
     }
 
 
-# ============ SANTE PUBLIQUE (pour Render healthcheck) ============
+# ============ PAGES HTML ============
+
+@app.get("/", response_class=HTMLResponse)
+async def root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/pronostics", response_class=HTMLResponse)
+async def pronostics_page(request: Request):
+    return templates.TemplateResponse("pronostics.html", {"request": request})
+
+
+# ============ API ============
 
 @app.get("/api/health")
 async def health():
@@ -121,57 +103,43 @@ async def health():
     }
 
 
-# ============ PAGES HTML (PROTEGEES) ============
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request, user: str = Depends(verifier_acces)):
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-@app.get("/pronostics", response_class=HTMLResponse)
-async def pronostics_page(request: Request, user: str = Depends(verifier_acces)):
-    return templates.TemplateResponse("pronostics.html", {"request": request})
-
-
-# ============ API (PROTEGEES) ============
-
 @app.get("/api/agents")
-async def agents(user: str = Depends(verifier_acces)):
+async def agents():
     return {"agents": AGENTS, "multitask": MultiTaskAgent.catalog()}
 
 
 @app.get("/api/capabilities")
-async def capabilities(user: str = Depends(verifier_acces)):
+async def capabilities():
     return MultiTaskAgent(HORSES, AGENTS).health()
 
 
 @app.get("/api/tracks")
-async def tracks(user: str = Depends(verifier_acces)):
+async def tracks():
     return {"tracks": data_agent.tracks()}
 
 
 @app.get("/api/races")
-async def races(user: str = Depends(verifier_acces)):
+async def races():
     return {"races": data_agent.races()}
 
 
 @app.get("/api/analysis")
-async def get_analysis(horse: str = "Asteria du Clos", user: str = Depends(verifier_acces)):
+async def get_analysis(horse: str = "Asteria du Clos"):
     return analysis(horse)
 
 
 @app.post("/api/multitask")
-async def multitask(payload: MultiTaskRequest, user: str = Depends(verifier_acces)):
+async def multitask(payload: MultiTaskRequest):
     return await MultiTaskAgent(HORSES, AGENTS).run(payload.task, payload.horse, payload.sources)
 
 
 @app.post("/api/chat")
-async def chat(payload: ChatMessage, user: str = Depends(verifier_acces)):
+async def chat(payload: ChatMessage):
     return {"reply": analysis(next((n for n in HORSES if n.lower() in payload.message.lower()), "Asteria du Clos"))["summary"]}
 
 
 @app.post("/api/predictions")
-async def create_prediction(payload: PredictionRequest, user: str = Depends(verifier_acces)):
+async def create_prediction(payload: PredictionRequest):
     runners = prediction_engine.parse_text(payload.text)
     result = prediction_engine.rank(runners, payload.race_key, payload.race_name, payload.race_date)
     result["runners_count"] = len(runners)
@@ -179,7 +147,7 @@ async def create_prediction(payload: PredictionRequest, user: str = Depends(veri
 
 
 @app.post("/api/predictions/{prediction_id}/outcome")
-async def record_outcome(prediction_id: int, payload: OutcomeRequest, user: str = Depends(verifier_acces)):
+async def record_outcome(prediction_id: int, payload: OutcomeRequest):
     try:
         return prediction_store.save_outcome(prediction_id, payload.arrival)
     except KeyError as exc:
@@ -187,10 +155,10 @@ async def record_outcome(prediction_id: int, payload: OutcomeRequest, user: str 
 
 
 @app.get("/api/predictions")
-async def prediction_history(limit: int = 20, user: str = Depends(verifier_acces)):
+async def prediction_history(limit: int = 20):
     return {"predictions": prediction_store.history(limit)}
 
 
 @app.get("/api/learning/metrics")
-async def learning_metrics(user: str = Depends(verifier_acces)):
+async def learning_metrics():
     return prediction_store.metrics()
