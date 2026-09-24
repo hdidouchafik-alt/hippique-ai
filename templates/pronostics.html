@@ -3,154 +3,351 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#071b16">
+<meta name="theme-color" content="#081813">
 <link rel="stylesheet" href="/static/styles.css?v=luxe-club-2">
 <title>Hippique AI — Pronostics & Infos</title>
 <style>
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
-  .hero {
-    background: linear-gradient(135deg, #0b2a22 0%, #071b16 100%);
-    border: 1px solid rgba(212,175,55,0.25);
-    border-radius: 20px;
-    padding: 32px 28px;
-    margin-bottom: 28px;
+  .page-hero {
+    background: linear-gradient(135deg, #081813 0%, #10281f 60%, #183d2e 100%);
+    padding: 90px 0 80px;
     position: relative;
     overflow: hidden;
   }
-  .hero::before {
+  .page-hero::before {
     content: '♞';
-    position: absolute; right: -20px; bottom: -40px;
-    font-size: 200px; color: rgba(212,175,55,0.06);
+    position: absolute;
+    right: -30px;
+    bottom: -60px;
+    font-size: 260px;
+    color: rgba(229,201,141,0.06);
+    line-height: 1;
   }
-  .hero h1 { font-size: 30px; color: #f5ecd6; margin: 6px 0 8px; letter-spacing: -0.5px; }
-  .hero p { color: #b8c9c2; font-size: 15px; max-width: 620px; }
-  .hero .accent { color: #d4af37; }
+  .page-hero .container {
+    position: relative;
+    z-index: 2;
+  }
+  .page-hero h1 {
+    font-family: Georgia, serif;
+    font-size: 52px;
+    font-weight: 400;
+    color: #f3eee5;
+    letter-spacing: -0.05em;
+    margin: 14 0 18px;
+    line-height: 1.1;
+  }
+  .page-hero h1 em {
+    font-style: italic;
+    color: #e5c98d;
+  }
+  .page-hero p {
+    font-family: Arial, sans-serif;
+    color: #b6c4bc;
+    font-size: 15px;
+    line-height: 1.8;
+    max-width: 620px;
+  }
+  .page-hero .eyebrow {
+    color: #e5c98d;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
 
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
-  @media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+  .kpis {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-top: -40px;
+    position: relative;
+    z-index: 3;
+  }
+  @media (max-width: 850px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+
   .kpi {
-    background: #0a1f1a;
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 14px;
-    padding: 18px;
+    background: #fffdf9;
+    border: 1px solid #e6dece;
+    border-radius: 2px;
+    padding: 24px;
+    box-shadow: 0 24px 70px rgba(22,39,31,0.12);
     text-align: center;
   }
-  .kpi small { font-size: 11px; color: #8aa39a; text-transform: uppercase; letter-spacing: 1px; }
-  .kpi strong { display: block; font-size: 26px; margin-top: 6px; color: #f5ecd6; }
-  .kpi .accent { color: #d4af37; }
-
-  .section-title {
-    display: flex; align-items: center; gap: 12px;
-    margin: 32px 0 18px;
+  .kpi small {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #7d857d;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
   }
-  .section-title::before {
-    content: ''; width: 4px; height: 22px;
-    background: linear-gradient(180deg, #d4af37 0%, #b8941f 100%);
-    border-radius: 2px;
+  .kpi strong {
+    display: block;
+    font-family: Georgia, serif;
+    font-size: 32px;
+    color: #081813;
+    margin-top: 8px;
+    letter-spacing: -0.03em;
   }
-  .section-title h2 { color: #f5ecd6; font-size: 20px; font-weight: 700; }
-  .section-title span { color: #8aa39a; font-size: 13px; margin-left: auto; }
+  .kpi strong.gold { color: #b28a4b; }
 
-  /* PRONO CARD */
-  .prono-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin: 60px 0 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e6dece;
+  }
+  .section-heading h2 {
+    font-family: Georgia, serif;
+    font-size: 30px;
+    font-weight: 400;
+    color: #17221d;
+    letter-spacing: -0.04em;
+  }
+  .section-heading .eyebrow {
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #b28a4b;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .section-heading span.note {
+    font-family: Arial, sans-serif;
+    font-size: 12px;
+    color: #7d857d;
+  }
+
+  /* PRONO CARDS */
+  .prono-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+  }
   .prono-card {
-    background: linear-gradient(135deg, #0b2a22 0%, #0a1f1a 100%);
-    border: 1px solid rgba(212,175,55,0.3);
-    border-radius: 16px;
-    padding: 20px;
+    background: radial-gradient(circle at 78% 18%, #24543d 0%, #10281f 38%, #081813 100%);
+    border: 1px solid rgba(229,201,141,0.35);
+    border-radius: 2px;
+    padding: 26px 22px;
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(8,24,19,0.2);
   }
-  .prono-card.top { border-color: #d4af37; box-shadow: 0 4px 20px rgba(212,175,55,0.15); }
+  .prono-card::before {
+    content: '';
+    position: absolute;
+    inset: 10px;
+    border: 1px solid rgba(229,201,141,0.14);
+    pointer-events: none;
+  }
   .prono-rank {
-    position: absolute; top: 14px; right: 14px;
-    background: rgba(212,175,55,0.15); color: #d4af37;
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 15px;
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(229,201,141,0.12);
+    color: #e5c98d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Georgia, serif;
+    font-weight: 700;
+    font-size: 17px;
+    z-index: 2;
   }
-  .prono-card.top .prono-rank { background: #d4af37; color: #071b16; }
-  .prono-horse { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .prono-card.top .prono-rank {
+    background: #b28a4b;
+    color: #081813;
+  }
+  .prono-card .prono-inner {
+    position: relative;
+    z-index: 2;
+  }
+  .prono-horse {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-right: 50px;
+  }
   .prono-num {
-    background: rgba(212,175,55,0.15); color: #d4af37;
-    padding: 3px 9px; border-radius: 6px;
-    font-weight: 800; font-size: 13px;
+    background: rgba(229,201,141,0.15);
+    color: #e5c98d;
+    padding: 3px 9px;
+    border-radius: 2px;
+    font-family: Arial, sans-serif;
+    font-weight: 700;
+    font-size: 12px;
   }
-  .prono-name { font-size: 18px; font-weight: 700; color: #f5ecd6; }
-  .prono-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 14px; border-top: 1px solid rgba(212,175,55,0.15); }
+  .prono-name {
+    font-family: Georgia, serif;
+    font-size: 19px;
+    color: #f3eee5;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+  .prono-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(229,201,141,0.18);
+    position: relative;
+    z-index: 2;
+  }
   .prono-stats > div { text-align: center; }
-  .prono-stats small { font-size: 10px; color: #8aa39a; text-transform: uppercase; letter-spacing: 0.5px; }
-  .prono-stats b { display: block; font-size: 16px; color: #f5ecd6; margin-top: 2px; }
-  .prono-stats b.gold { color: #d4af37; }
+  .prono-stats small {
+    font-family: Arial, sans-serif;
+    font-size: 9px;
+    color: #8fa79b;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+  .prono-stats b {
+    display: block;
+    font-family: Georgia, serif;
+    font-size: 17px;
+    color: #f3eee5;
+    margin-top: 3px;
+  }
+  .prono-stats b.gold { color: #e5c98d; }
 
   /* TABLE */
   .table-wrap {
-    background: #0a1f1a;
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 16px;
+    background: #fffdf9;
+    border: 1px solid #e6dece;
+    border-radius: 2px;
     overflow: hidden;
+    box-shadow: 0 24px 70px rgba(22,39,31,0.08);
   }
   .table { width: 100%; border-collapse: collapse; }
   .table th {
-    background: #071b16; padding: 12px 14px; text-align: left;
-    font-size: 11px; color: #8aa39a; text-transform: uppercase;
-    letter-spacing: 0.5px; font-weight: 600;
+    background: #081813;
+    padding: 14px 16px;
+    text-align: left;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #e5c98d;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 600;
   }
-  .table td { padding: 12px 14px; border-top: 1px solid rgba(212,175,55,0.08); color: #e5f0ea; font-size: 14px; }
-  .table tr:hover td { background: rgba(212,175,55,0.03); }
-  .table .num { background: rgba(212,175,55,0.15); color: #d4af37; padding: 3px 8px; border-radius: 5px; font-weight: 700; font-size: 12px; }
-  .table .conf { color: #d4af37; font-weight: 700; }
-
-  /* FICHE COURSE */
-  .card-info {
-    background: #0a1f1a;
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 20px;
+  .table td {
+    padding: 14px 16px;
+    border-top: 1px solid #eee7da;
+    color: #17221d;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
   }
-  .card-info h3 { color: #d4af37; font-size: 15px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
-  .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; }
-  .info-item small { display: block; font-size: 11px; color: #8aa39a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
-  .info-item b { color: #f5ecd6; font-size: 15px; }
+  .table tr:hover td { background: rgba(178,138,75,0.04); }
+  .table .num {
+    background: rgba(178,138,75,0.12);
+    color: #b28a4b;
+    padding: 3px 9px;
+    border-radius: 2px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  .table .conf { color: #b28a4b; font-weight: 700; }
+  .table .horse { font-family: Georgia, serif; font-size: 15px; }
 
   /* FORM */
   .form-panel {
-    background: #0a1f1a;
-    border: 1px solid rgba(212,175,55,0.12);
-    border-radius: 16px;
-    padding: 24px;
+    background: radial-gradient(circle at 90% 0%, #23523c 0%, #10281f 38%, #081813 100%);
+    border: 1px solid rgba(229,201,141,0.35);
+    border-radius: 2px;
+    padding: 40px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 25px 70px rgba(8,24,19,0.2);
   }
-  .form-row { margin-bottom: 16px; }
-  .form-row label { display: block; font-size: 12px; color: #8aa39a; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .form-panel::before {
+    content: '';
+    position: absolute;
+    inset: 13px;
+    border: 1px solid rgba(229,201,141,0.14);
+    pointer-events: none;
+  }
+  .form-panel > * { position: relative; z-index: 2; }
+  .form-row { margin-bottom: 18px; }
+  .form-row label {
+    display: block;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    color: #e5c98d;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
   .form-row input, .form-row textarea {
-    width: 100%; padding: 12px 14px; background: #071b16;
-    border: 1px solid rgba(212,175,55,0.2); border-radius: 10px;
-    color: #f5ecd6; font-size: 14px; font-family: inherit; outline: none;
+    width: 100%;
+    padding: 14px 16px;
+    background: rgba(8,24,19,0.6);
+    border: 1px solid rgba(229,201,141,0.25);
+    border-radius: 1px;
+    color: #f3eee5;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    outline: none;
   }
-  .form-row input:focus, .form-row textarea:focus { border-color: #d4af37; }
+  .form-row input:focus, .form-row textarea:focus {
+    border-color: #e5c98d;
+  }
   .form-row textarea { min-height: 140px; resize: vertical; }
   .btn-gold {
-    background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
-    color: #071b16; border: none; padding: 14px 24px;
-    border-radius: 10px; font-size: 15px; font-weight: 700;
-    cursor: pointer; width: 100%;
+    background: linear-gradient(135deg, #b28a4b 0%, #e5c98d 100%);
+    color: #081813;
+    border: none;
+    padding: 16px 28px;
+    border-radius: 1px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    width: 100%;
+    box-shadow: 0 10px 22px rgba(8,24,19,0.15);
   }
-  .btn-gold:active { transform: scale(0.98); }
+  .btn-gold:active { transform: scale(0.99); }
   .btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  .empty { text-align: center; padding: 40px 20px; color: #8aa39a; font-size: 14px; }
+  .empty {
+    text-align: center;
+    padding: 50px 20px;
+    color: #7d857d;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    background: #fffdf9;
+    border: 1px solid #e6dece;
+  }
   .loader {
-    display: inline-block; width: 16px; height: 16px;
-    border: 2px solid rgba(212,175,55,0.3); border-top-color: #d4af37;
-    border-radius: 50%; animation: spin 0.7s linear infinite;
-    vertical-align: middle; margin-right: 8px;
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(178,138,75,0.3);
+    border-top-color: #b28a4b;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .toast {
-    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-    background: #0a1f1a; border: 1px solid #d4af37; color: #f5ecd6;
-    padding: 14px 24px; border-radius: 10px; font-size: 14px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 999;
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #081813;
+    border: 1px solid #b28a4b;
+    color: #f3eee5;
+    padding: 16px 28px;
+    font-family: Arial, sans-serif;
+    font-size: 13px;
+    z-index: 999;
+    box-shadow: 0 20px 50px rgba(8,24,19,0.4);
   }
 </style>
 </head>
@@ -173,89 +370,106 @@
   </div>
 </header>
 
-<main class="wrap">
+<main>
 
   <!-- HERO -->
-  <section class="hero">
-    <p class="eyebrow" style="color:#d4af37;font-size:12px;letter-spacing:2px;text-transform:uppercase;">Pronostics du jour</p>
-    <h1>Analyses et <span class="accent">informations hippiques</span>.</h1>
-    <p>Nos agents IA étudient la forme, la musique, les drivers et les conditions de course pour vous livrer un classement argumenté.</p>
+  <section class="page-hero">
+    <div class="container">
+      <p class="eyebrow">Pronostics du jour</p>
+      <h1>Analyses et <em>informations hippiques</em>.</h1>
+      <p>Nos agents IA étudient la forme, la musique, les drivers et les conditions de course pour vous livrer un classement argumenté.</p>
+    </div>
   </section>
 
   <!-- KPIs -->
-  <div class="kpis">
-    <div class="kpi"><small>Pronostics</small><strong id="kpiTotal">—</strong></div>
-    <div class="kpi"><small>Top 1 réussi</small><strong id="kpiTop1" class="accent">—</strong></div>
-    <div class="kpi"><small>Top 3 réussi</small><strong id="kpiTop3" class="accent">—</strong></div>
-    <div class="kpi"><small>Fiabilité</small><strong id="kpiAcc">—</strong></div>
-  </div>
-
-  <!-- PRONOSTIC EN COURS -->
-  <div class="section-title">
-    <h2>Pronostic en cours</h2>
-    <span id="raceName">—</span>
-  </div>
-  <div id="pronoGrid" class="prono-grid">
-    <div class="empty"><span class="loader"></span>Chargement du pronostic…</div>
-  </div>
-
-  <!-- TABLEAU COMPLET -->
-  <div class="section-title">
-    <h2>Classement complet</h2>
-    <span>Top 12</span>
-  </div>
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Rang</th>
-          <th>N°</th>
-          <th>Cheval</th>
-          <th>Driver / Jockey</th>
-          <th>Musique</th>
-          <th>Cote</th>
-          <th>Confiance</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="7" class="empty">Chargement…</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- NOUVELLE ANALYSE -->
-  <div class="section-title">
-    <h2>Analyser une course</h2>
-    <span>Collez les partants</span>
-  </div>
-  <form class="form-panel" id="predForm">
-    <div class="form-row">
-      <label>Nom de la course</label>
-      <input id="raceName2" placeholder="Ex: R4C4 Laval - Prix Transgourmet" value="Course du jour" required>
+  <div class="container">
+    <div class="kpis">
+      <div class="kpi"><small>Pronostics</small><strong id="kpiTotal">—</strong></div>
+      <div class="kpi"><small>Top 1 réussi</small><strong id="kpiTop1" class="gold">—</strong></div>
+      <div class="kpi"><small>Top 3 réussi</small><strong id="kpiTop3" class="gold">—</strong></div>
+      <div class="kpi"><small>Fiabilité</small><strong id="kpiAcc">—</strong></div>
     </div>
-    <div class="form-row">
-      <label>Identifiant</label>
-      <input id="raceKey" placeholder="Ex: r4c4-2026-09-24" required value="course-test">
+  </div>
+
+  <!-- PRONOSTIC -->
+  <div class="container">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Classement IA</p>
+        <h2>Pronostic en cours</h2>
+      </div>
+      <span class="note" id="raceName">—</span>
     </div>
-    <div class="form-row">
-      <label>Partants et cotes</label>
-      <textarea id="raceText" required>1. KAISER - cote 24 - driver F. Nivard - gains 210230
+    <div id="pronoGrid" class="prono-grid">
+      <div class="empty"><span class="loader"></span>Chargement du pronostic…</div>
+    </div>
+
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Détails</p>
+        <h2>Classement complet</h2>
+      </div>
+      <span class="note">Top 12</span>
+    </div>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Rang</th>
+            <th>N°</th>
+            <th>Cheval</th>
+            <th>Driver / Jockey</th>
+            <th>Musique</th>
+            <th>Cote</th>
+            <th>Confiance</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:#7d857d">Chargement…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FORMULAIRE -->
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Nouvelle analyse</p>
+        <h2>Analyser une course</h2>
+      </div>
+      <span class="note">Collez les partants</span>
+    </div>
+    <form class="form-panel" id="predForm">
+      <div class="form-row">
+        <label>Nom de la course</label>
+        <input id="raceName2" placeholder="Ex: R4C4 Laval - Prix Transgourmet" value="Course du jour" required>
+      </div>
+      <div class="form-row">
+        <label>Identifiant unique</label>
+        <input id="raceKey" placeholder="Ex: r4c4-2026-09-24" required value="course-test">
+      </div>
+      <div class="form-row">
+        <label>Partants et cotes</label>
+        <textarea id="raceText" required>1. KAISER - cote 24 - driver F. Nivard - gains 210230
 2. JOLYDOLE - cote 19 - driver M. Abrivard - gains 229120
 3. KOUREAS - cote 1.9 - driver B. Rochard - gains 231385
 4. EVERY TIME - cote 8.2 - driver E. Raffin - gains 214838</textarea>
+      </div>
+      <button type="submit" class="btn-gold" id="btnSubmit">Lancer l'analyse →</button>
+    </form>
+
+    <!-- HISTORIQUE -->
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Archive</p>
+        <h2>Historique des pronostics</h2>
+      </div>
+      <span class="note" id="histCount">—</span>
     </div>
-    <button type="submit" class="btn-gold" id="btnSubmit">Lancer l'analyse →</button>
-  </form>
+    <div id="history">
+      <div class="empty"><span class="loader"></span>Chargement…</div>
+    </div>
 
-  <!-- HISTORIQUE -->
-  <div class="section-title">
-    <h2>Historique des pronostics</h2>
-    <span id="histCount">—</span>
   </div>
-  <div id="history">
-    <div class="empty"><span class="loader"></span>Chargement…</div>
-  </div>
-
 </main>
 
 <footer class="site-footer">
@@ -284,18 +498,16 @@ async function api(url, opts = {}) {
   return r.json();
 }
 
-// ============ STATS DU MODELE ============
 async function loadStats() {
   try {
     const m = await api('/api/learning/metrics');
     $('kpiTotal').textContent = m.total_predictions ?? 0;
-    $('kpiTop1').textContent = (m.top1_rate ?? 0) + '%';
+    $('kpiTop1').textContent = (m.top1_rate ?? m.accuracy ?? 0) + '%';
     $('kpiTop3').textContent = (m.top3_rate ?? 0) + '%';
     $('kpiAcc').textContent = (m.accuracy ?? 0) + '%';
   } catch (e) { console.warn(e); }
 }
 
-// ============ PRONOSTIC ============
 async function loadProno() {
   const grid = $('pronoGrid');
   try {
@@ -303,42 +515,42 @@ async function loadProno() {
     const preds = data.predictions || [];
     if (!preds.length) {
       grid.innerHTML = '<div class="empty">Aucun pronostic enregistré. Lancez une analyse ci-dessous.</div>';
-      $('tableBody').innerHTML = '<tr><td colspan="7" class="empty">Aucun classement</td></tr>';
+      $('tableBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:#7d857d">Aucun classement</td></tr>';
       return;
     }
     const p = preds[0];
     const runners = p.recommendations || p.ranked || p.runners || [];
     $('raceName').textContent = p.race_name || p.race_key || '—';
 
-    // Cartes top 5
     grid.innerHTML = runners.slice(0, 5).map((r, i) => {
       const conf = ((r.proba ?? r.p_calibree ?? r.confidence ?? 0) * 100).toFixed(0);
       const isTop = i === 0;
       return `
         <div class="prono-card ${isTop ? 'top' : ''}">
           <div class="prono-rank">${i + 1}</div>
-          <div class="prono-horse">
-            <span class="prono-num">${esc(r.num ?? r.number ?? '?')}</span>
-            <span class="prono-name">${esc(r.nom ?? r.name ?? '—')}</span>
-          </div>
-          <div class="prono-stats">
-            <div><small>Confiance</small><b class="gold">${conf}%</b></div>
-            <div><small>Cote</small><b>${esc(r.cote ?? r.odds ?? '-')}</b></div>
-            <div><small>Rang IA</small><b>${i + 1}er</b></div>
+          <div class="prono-inner">
+            <div class="prono-horse">
+              <span class="prono-num">${esc(r.num ?? r.number ?? '?')}</span>
+              <span class="prono-name">${esc(r.nom ?? r.name ?? '—')}</span>
+            </div>
+            <div class="prono-stats">
+              <div><small>Confiance</small><b class="gold">${conf}%</b></div>
+              <div><small>Cote</small><b>${esc(r.cote ?? r.odds ?? '-')}</b></div>
+              <div><small>Rang IA</small><b>${i + 1}er</b></div>
+            </div>
           </div>
         </div>
       `;
     }).join('');
 
-    // Tableau complet
     $('tableBody').innerHTML = runners.slice(0, 12).map((r, i) => {
       const conf = ((r.proba ?? r.p_calibree ?? r.confidence ?? 0) * 100).toFixed(1);
       const musique = (r.musique || []).slice(0, 5).join(' · ') || '—';
       return `
         <tr>
-          <td><b style="color:#d4af37">${i + 1}</b></td>
+          <td><b style="color:#b28a4b">${i + 1}</b></td>
           <td><span class="num">${esc(r.num ?? r.number ?? '?')}</span></td>
-          <td><b>${esc(r.nom ?? r.name ?? '—')}</b></td>
+          <td class="horse"><b>${esc(r.nom ?? r.name ?? '—')}</b></td>
           <td>${esc(r.driver ?? r.jockey ?? '—')}</td>
           <td style="font-family:monospace;font-size:12px">${esc(musique)}</td>
           <td>${esc(r.cote ?? r.odds ?? '-')}</td>
@@ -352,7 +564,6 @@ async function loadProno() {
   }
 }
 
-// ============ HISTORIQUE ============
 async function loadHistory() {
   const div = $('history');
   try {
@@ -378,9 +589,9 @@ async function loadHistory() {
               return `
                 <tr>
                   <td>${esc(date)}</td>
-                  <td><b>${esc(nom)}</b></td>
+                  <td class="horse"><b>${esc(nom)}</b></td>
                   <td>${nb}</td>
-                  <td style="color:#d4af37"><b>${esc(top1)}</b></td>
+                  <td style="color:#b28a4b"><b>${esc(top1)}</b></td>
                   <td>${esc(arrivee)}</td>
                 </tr>
               `;
@@ -395,7 +606,6 @@ async function loadHistory() {
   }
 }
 
-// ============ FORM ============
 $('predForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('btnSubmit');
