@@ -7,7 +7,7 @@ from prediction_store import PredictionStore
 
 
 class PredictionEngine:
-    """Moteur déterministe et explicable. Calibré par l'historique."""
+    """Moteur déterministe et explicable. Accepte plusieurs formats de saisie."""
 
     def __init__(self, store: PredictionStore | None = None):
         self.store = store or PredictionStore()
@@ -18,23 +18,184 @@ class PredictionEngine:
 
     def parse_text(self, text: str) -> list[dict[str, Any]]:
         normalized = text.replace("\r", "").replace("\u00a0", " ")
+
+        # Détection : format multi-lignes PMU ou format ligne simple ?
+        if self._est_format_pmu(normalized):
+            return self._parse_format_pmu(normalized)
+        return self._parse_format_simple(normalized)
+
+    # ------------------------------------------------------------------
+    # DÉTECTION
+    # ------------------------------------------------------------------
+
+    def _est_format_pmu(self, text: str) -> bool:
+        """Détecte un format PMU (blocs multi-lignes avec Driver, Entr., etc.)"""
+        return bool(re.search(r"Driver\s*:", text)) and bool(re.search(r"Entr\.?\s*:", text))
+
+    # ------------------------------------------------------------------
+    # FORMAT PMU MULTI-LIGNES
+    # ------------------------------------------------------------------
+
+    def _parse_format_pmu(self, text: str) -> list[dict[str, Any]]:
+        """
+        Parse le format PMU :
+            1
+            HISCO DE PARNIERE
+            Driver : F. Desmigneux
+            Entr. : J.m. Marie
+            H / 9 ans
+            2850m / 118 355 €
+            6a
+            3a
+            ...
+        """
+        runners: list[dict[str, Any]] = []
+        lines = [l.rstrip() for l in text.split("\n")]
+
+        i = 0
+        while i < len(lines):
+            line = lines[i].strip()
+
+            # Détection d'un numéro seul (1 à 30) entouré de vide
+            if re.fullmatch(r"\d{1,2}", line):
+                number = int(line)
+                if not (1 <= number <= 30):
+                    i += 1
+                    continue
+
+                # Chercher le nom sur les lignes suivantes
+                name = None
+                j = i + 1
+                while j < len(lines) and j < i + 6:
+                    candidate = lines[j].strip()
+                    # Nom = ligne en MAJUSCULES avec lettres et espaces, pas trop courte
+                    if (candidate and len(candidate) >= 3
+                            and re.fullmatch(r"[A-ZÀ-Ý][A-ZÀ-Ý' \-\.]{2,40}", candidate)
+                            and not candidate.startswith(("DRIVER", "ENTR", "LÉGENDE", "LES ", "TRIER"))):
+                        name = candidate.title()
+                        break
+                    j += 1
+
+                if not name:
+                    i += 1
+                    continue
+
+                # Chercher la fin du bloc (numéro suivant ou fin)
+                j = j + 1
+                block_lines: list[str] = []
+                while j < len(lines):
+                    nxt = lines[j].strip()
+                    # Nouveau numéro détecté ?
+                    if re.fullmatch(r"\d{1,2}", nxt) and j + 1 < len(lines):
+                        # Vérifier que le suivant ressemble à un nom
+                        suiv = lines[j + 1].strip() if j + 1 < len(lines) else ""
+                        if suiv and re.fullmatch(r"[A-ZÀ-Ý][A-ZÀ-Ý' \-\.]{2,40}", suiv):
+                            break
+                    block_lines.append(nxt)
+                    j += 1
+
+                block = "\n".join(block_lines)
+
+                # Extraction des infos
+                driver = self._extraire_driver_pmu(block)
+                entraineur = self._extraire_entraineur_pmu(block)
+                gains = self._extraire_gains_pmu(block)
+                age, sexe = self._extraire_age_sexe_pmu(block)
+                musique = self._extraire_musique_pmu(block)
+                corde = self._extraire_corde_pmu(block)
+
+                runners.append({
+                    "number": number,
+                    "num": number,
+                    "name": name,
+                    "nom": name,
+                    "driver": driver,
+                    "jockey": driver,
+                    "entraineur": entraineur,
+                    "gains": gains,
+                    "age": age,
+                    "sexe": sexe,
+                    "musique": musique,
+                    "form": musique,
+                    "corde": corde,
+                    "odds": None,
+                    "cote": None,
+                    "cote_finale": None,
+                    "status": "active",
+                })
+
+                i = j
+                continue
+
+            i += 1
+
+        return runners
+
+    def _extraire_driver_pmu(self, block: str) -> str | None:
+        m = re.search(r"Driver\s*:\s*([^\n]+)", block)
+        if m:
+            return m.group(1).strip()
+        return None
+
+    def _extraire_entraineur_pmu(self, block: str) -> str | None:
+        m = re.search(r"Entr\.?\s*:\s*([^\n]+)", block)
+        if m:
+            return m.group(1).strip()
+        return None
+
+    def _extraire_gains_pmu(self, block: str) -> int | None:
+        # Format : "2850m / 118 355 €"
+        m = re.search(r"[\d]+m\s*/\s*([\d\s]{3,15})\s*€", block)
+        if m:
+            try:
+                return int(m.group(1).replace(" ", ""))
+            except ValueError:
+                pass
+        return None
+
+    def _extraire_age_sexe_pmu(self, block: str) -> tuple[int | None, str | None]:
+        # Format : "H / 9 ans" ou "F / 10 ans" ou "M / 6 ans"
+        m = re.search(r"\b([HFM])\s*/\s*(\d{1,2})\s*ans?", block)
+        if m:
+            sexe = m.group(1)
+            age = int(m.group(2))
+            return age, sexe
+        return None, None
+
+    def _extraire_musique_pmu(self, block: str) -> list[str]:
+        """Cherche les lignes qui sont des résultats : 6a, 3a, 8m, Da, Dm, 0a, etc."""
+        musique = []
+        for line in block.split("\n"):
+            ligne = line.strip()
+            if re.fullmatch(r"(0?[1-9]|[1-9]\d?|[DdAaPp])[apm]?", ligne, re.I):
+                musique.append(ligne.lower())
+                if len(musique) >= 10:
+                    break
+        return musique
+
+    def _extraire_corde_pmu(self, block: str) -> int | None:
+        m = re.search(r"Corde\s*:\s*(\d{1,2})", block, re.I)
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:
+                return None
+        return None
+
+    # ------------------------------------------------------------------
+    # FORMAT LIGNE SIMPLE
+    # ------------------------------------------------------------------
+
+    def _parse_format_simple(self, text: str) -> list[dict[str, Any]]:
+        """Format : 1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a"""
         runners: list[dict[str, Any]] = []
         vus: set[int] = set()
 
-        for raw_line in normalized.split("\n"):
+        for raw_line in text.split("\n"):
             line = raw_line.strip()
             if not line or len(line) < 4:
                 continue
 
-            # Ignorer les entêtes
-            low = line.lower()
-            if any(kw in low for kw in [
-                "liste", "partant", "course", "distance", "prix",
-                "réunion", "hippodrome", "corde", "terrain"
-            ]) and not re.match(r"^\d", line):
-                continue
-
-            # Chercher un numéro au début (1., 1), 1 -, 1  ou 01)
             m = re.match(r"^(\d{1,2})\s*[\.\)\-]?\s+(.+)$", line)
             if not m:
                 continue
@@ -45,31 +206,14 @@ class PredictionEngine:
 
             rest = m.group(2).strip()
 
-            # Non partant ?
             if re.search(r"\b(NP|Non Partant|Non-partant)\b", rest, re.I):
                 vus.add(number)
                 continue
 
-            # --- Nom ---
-            name = self._extraire_nom(rest)
-
-            # --- Cote ---
-            odds = self._extraire_cote(rest, name)
-
-            # --- Driver / Jockey ---
-            driver = self._extraire_driver(rest)
-
-            # --- Musique ---
-            musique = self._extraire_musique(rest)
-
-            # --- Poids ---
-            weight = self._extraire_poids(rest)
-
-            # --- Corde ---
-            corde = self._extraire_corde(rest)
-
-            # --- Gains ---
-            gains = self._extraire_gains(rest)
+            name = self._extraire_nom_simple(rest)
+            odds = self._extraire_cote_simple(rest, name)
+            driver = self._extraire_driver_simple(rest)
+            musique = self._extraire_musique_simple(rest)
 
             vus.add(number)
             runners.append({
@@ -82,45 +226,24 @@ class PredictionEngine:
                 "odds": odds,
                 "cote": odds,
                 "cote_finale": odds,
-                "weight": weight,
-                "poids": weight,
-                "corde": corde,
                 "driver": driver,
                 "jockey": driver,
-                "gains": gains,
                 "status": "active",
             })
 
         return runners
 
-    # ------------------------------------------------------------------
-    # HELPERS D'EXTRACTION
-    # ------------------------------------------------------------------
-
-    def _extraire_nom(self, rest: str) -> str:
-        """Extrait le nom du cheval (majuscules ou Title Case)."""
-        # Couper au premier séparateur courant
+    def _extraire_nom_simple(self, rest: str) -> str:
         coupe = re.split(
-            r"\s*[-–—]\s*|\s+cote\s+|\s+driver\s+|\s+jockey\s+|\s+musique\s+|\s+gains\s+|\s*\(|\s+\d{2,3}\s*€",
+            r"\s*[-–—]\s*|\s+cote\s+|\s+driver\s+|\s+jockey\s+|\s+musique\s+|\s+gains\s+",
             rest, maxsplit=1, flags=re.I
-        )[0]
-        coupe = coupe.strip()
+        )[0].strip()
+        return " ".join(coupe.split()[:4]).title() if coupe else rest[:40]
 
-        if not coupe:
-            return rest[:40]
-
-        # Prendre les 4 premiers mots maximum
-        mots = coupe.split()[:4]
-        return " ".join(mots).title()
-
-    def _extraire_cote(self, rest: str, name: str) -> float | None:
-        """Cherche une cote après le nom."""
-        # 1. Format explicite "cote 24" ou "cote : 24"
+    def _extraire_cote_simple(self, rest: str, name: str) -> float | None:
         m = re.search(r"cote\s*[:=]?\s*(\d{1,3}(?:[.,]\d)?)", rest, re.I)
         if m:
             return self._to_float(m.group(1))
-
-        # 2. Après le nom, chercher un nombre isolé
         idx = rest.find(name)
         if idx >= 0:
             after = rest[idx + len(name):]
@@ -129,48 +252,19 @@ class PredictionEngine:
                 v = self._to_float(m.group(1))
                 if v and 1.01 <= v <= 999:
                     return v
-
         return None
 
-    def _extraire_driver(self, rest: str) -> str | None:
+    def _extraire_driver_simple(self, rest: str) -> str | None:
         m = re.search(
-            r"(?:driver|jockey|entraîneur|entraineur)\s*[:=]?\s*"
-            r"([A-ZÀ-Ý][A-Za-zÀ-ÿ\.\-' ]{2,40}?)(?=\s*[-–—]|\s+(?:cote|musique|gains|corde|poids)|\s*$)",
+            r"(?:driver|jockey)\s*[:=]?\s*"
+            r"([A-ZÀ-Ý][A-Za-zÀ-ÿ\.\-' ]{2,40}?)(?=\s*[-–—]|\s+(?:cote|musique|gains)|\s*$)",
             rest, re.I
         )
-        if m:
-            return m.group(1).strip()
-        return None
+        return m.group(1).strip() if m else None
 
-    def _extraire_musique(self, rest: str) -> list[str]:
-        """Cherche une séquence de résultats type 6a 3a 2a 1a 7a ou Da Dm."""
+    def _extraire_musique_simple(self, rest: str) -> list[str]:
         results = re.findall(r"\b([0-9]{1,2}|[DdAaPp][apm]?)\s*([apm])\b", rest)
-        musique = [f"{a}{b}".lower() for a, b in results]
-        return musique[:10]
-
-    def _extraire_poids(self, rest: str) -> float | None:
-        m = re.search(r"(\d{2}(?:[.,]\d)?)\s*kg", rest, re.I)
-        if m:
-            return self._to_float(m.group(1))
-        return None
-
-    def _extraire_corde(self, rest: str) -> int | None:
-        m = re.search(r"corde\s*[:=]?\s*(\d{1,2})", rest, re.I)
-        if m:
-            try:
-                return int(m.group(1))
-            except ValueError:
-                return None
-        return None
-
-    def _extraire_gains(self, rest: str) -> int | None:
-        m = re.search(r"gains?\s*[:=]?\s*([\d\s]{3,15})", rest, re.I)
-        if m:
-            try:
-                return int(m.group(1).replace(" ", ""))
-            except ValueError:
-                return None
-        return None
+        return [f"{a}{b}".lower() for a, b in results][:10]
 
     def _to_float(self, value: str) -> float | None:
         try:
@@ -194,16 +288,18 @@ class PredictionEngine:
         if not runners:
             raise ValueError("Aucun partant actif reconnu")
 
+        # Détection : toutes les cotes sont absentes ?
+        ont_cote = [r for r in runners if r.get("odds") or r.get("cote") or r.get("cote_finale")]
+
         weights = self.store.weights()
         scored = []
 
         for runner in runners:
             # Forme (musique)
-            form = runner.get("form") or []
+            form = runner.get("form") or runner.get("musique") or []
             form_score = 0.0
             for index, place in enumerate(form[:5]):
                 if isinstance(place, str):
-                    # Format "1a", "Da", etc.
                     num = re.sub(r"[^0-9]", "", place)
                     if num:
                         p = int(num)
@@ -223,33 +319,43 @@ class PredictionEngine:
                 odds = 50
 
             # Poids
-            weight = runner.get("weight") or runner.get("poids")
-            weight_score = 1 / max(float(weight or 60), 1)
+            weight = runner.get("weight") or runner.get("poids") or 60
+            weight_score = 1 / max(float(weight), 1)
 
             # Corde
             corde = runner.get("corde") or 8
             corde_score = 1 - abs(corde - 8) / 16
 
-            # Score global
-            raw = (
-                weights["form"] * form_score
-                + weights["odds"] * market_score
-                + weights["weight"] * weight_score
-                + weights["corde"] * corde_score
-                + weights["market"] * market_score
-            )
+            # Gains (classe)
+            gains = runner.get("gains") or 0
+            gains_score = min(gains / 300000, 1) if gains else 0
+
+            # Score global — poids adaptés si cotes absentes
+            if ont_cote:
+                raw = (
+                    weights["form"] * form_score * 3
+                    + weights["odds"] * market_score * 2
+                    + weights["weight"] * weight_score
+                    + weights["corde"] * corde_score
+                    + gains_score * 0.5
+                )
+            else:
+                # Sans cotes : on privilégie forme + gains + corde
+                raw = (
+                    form_score * 2.0
+                    + gains_score * 1.5
+                    + corde_score * 0.5
+                    + weight_score * 0.3
+                )
 
             scored.append({
                 **runner,
                 "score": round(raw, 5),
-                "proba": round(raw, 5),
-                "p_calibree": round(raw, 5),
-                "confidence": round(min(raw * 8, 0.95), 4),
                 "reasons": {
                     "form": round(form_score, 3),
-                    "market": round(market_score, 3),
-                    "weight": round(weight_score, 3),
+                    "gains": round(gains_score, 3),
                     "corde": round(corde_score, 3),
+                    "market": round(market_score, 3),
                 },
             })
 
@@ -259,6 +365,10 @@ class PredictionEngine:
         total_score = sum(r["score"] for r in scored) or 1
         for r in scored:
             r["p_calibree"] = round(r["score"] / total_score, 4)
+            r["proba"] = r["p_calibree"]
+            r["confidence"] = round(min(r["p_calibree"] * 3, 0.95), 4)
+            r["cote"] = r.get("cote") or 50
+            r["cote_finale"] = r.get("cote_finale") or r["cote"]
 
         ranking = [
             {"rank": index + 1, **runner}
