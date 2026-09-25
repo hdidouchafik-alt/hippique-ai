@@ -63,6 +63,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .btn:hover{border-color:var(--teal);color:var(--teal)}
 .btn-primary{padding:12px 18px;background:linear-gradient(135deg,var(--teal),#0d9488);color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none}
 .btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.6;cursor:wait}
 .results-item{padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:12px}
 .results-item .info{flex:1;min-width:0}
 .results-item .info strong{font-size:13px;font-weight:700;display:block;margin-bottom:3px}
@@ -115,10 +116,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 </div>
 
 <script>
-const $ = (id) => document.getElementById(id);
-const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-
-const AGENTS_META = [
+var AGENTS_META = [
   {icon:'🐎', color:'#fbbf24', name:'FormAgent',     desc:'Analyse musique et forme',   base:75},
   {icon:'🏇', color:'#8b5cf6', name:'DriverAgent',   desc:'Statistiques des drivers',   base:68},
   {icon:'📊', color:'#14b8a6', name:'MarketAgent',   desc:'Détection de value',         base:55},
@@ -128,108 +126,136 @@ const AGENTS_META = [
   {icon:'🔮', color:'#a855f7', name:'ForecastAgent', desc:'Synthèse finale',            base:80}
 ];
 
+function $(id) { return document.getElementById(id); }
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]; }); }
 function cls(s) { return s >= 70 ? 'good' : s >= 40 ? 'medium' : 'low'; }
 function fb(s) {
-  if (s >= 70) return {cls:'good', txt:'Bonne performance, continue comme ça.'};
-  if (s >= 40) return {cls:'warn', txt:'Performance moyenne. À surveiller.'};
+  if (s >= 70) return {cls:'good', txt:'Bonne performance.'};
+  if (s >= 40) return {cls:'warn', txt:'Performance moyenne.'};
   return {cls:'bad', txt:'Performance faible. Nécessite une correction.'};
 }
 
-async function collecter() {
-  const btn = $('btnCollect');
+function collecter() {
+  var btn = $('btnCollect');
   btn.disabled = true;
   btn.textContent = '⏳ Collecte en cours…';
-  try {
-    const r = await fetch('/api/agent/collect', { method: 'POST' });
-    const data = await r.json();
-    if (data.error) {
-      alert('Erreur : ' + data.error);
+
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/agent/collect', true);
+  xhr.setRequestHeader('Content-Type', 'application/json');
+  xhr.onload = function() {
+    btn.disabled = false;
+    btn.textContent = '🤖 Lancer la collecte';
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.error) {
+          alert('Erreur : ' + data.error);
+        } else {
+          alert('Collecte terminee ! Nouvelles arrivees : ' + data.nouvelles_arrivees + ' / Total : ' + data.total_collecte);
+          loadAll();
+        }
+      } catch (e) {
+        alert('Reponse invalide : ' + xhr.responseText.substring(0, 150));
+      }
     } else {
-      alert('✅ Collecte terminée !\n\nNouvelles arrivées : ' + data.nouvelles_arrivees + '\nTotal collecté : ' + data.total_collecte);
-      loadAll();
+      alert('Erreur serveur : ' + xhr.status);
     }
-  } catch (e) {
-    alert('Erreur : ' + e.message);
-  }
-  btn.disabled = false;
-  btn.textContent = '🤖 Lancer la collecte';
+  };
+  xhr.onerror = function() {
+    btn.disabled = false;
+    btn.textContent = '🤖 Lancer la collecte';
+    alert('Erreur reseau');
+  };
+  xhr.send('{}');
 }
 
-async function loadResults() {
-  try {
-    const r = await fetch('/api/results?limit=20');
-    const data = await r.json();
-    const results = data.results || [];
-    $('resultsCount').textContent = data.count || 0;
-    if (!results.length) {
-      $('resultsList').innerHTML = '<div class="empty">Aucune arrivée collectée. Cliquez sur "🤖 Lancer la collecte".</div>';
-      return;
-    }
-    $('resultsList').innerHTML = results.reverse().map(x => {
-      const arr = (x.arrivee || []).join(' - ');
-      return `<div class="results-item">
-        <div class="info">
-          <strong>${esc(x.course)}</strong>
-          <small>${esc(x.hippodrome)} · R${x.reunion}C${x.num_course} · ${x.partants} partants</small>
-        </div>
-        <div class="arrivee">${esc(arr)}</div>
-      </div>`;
-    }).join('');
-  } catch (e) {
-    console.warn(e);
-  }
+function loadResults() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/results?limit=20', true);
+  xhr.onload = function() {
+    if (xhr.status !== 200) return;
+    try {
+      var data = JSON.parse(xhr.responseText);
+      var results = data.results || [];
+      $('resultsCount').textContent = data.count || 0;
+      if (!results.length) {
+        $('resultsList').innerHTML = '<div class="empty">Aucune arrivée collectée. Cliquez sur "🤖 Lancer la collecte".</div>';
+        return;
+      }
+      var html = '';
+      for (var i = results.length - 1; i >= 0; i--) {
+        var x = results[i];
+        var arr = (x.arrivee || []).join(' - ');
+        html += '<div class="results-item"><div class="info"><strong>' + esc(x.course) + '</strong><small>' + esc(x.hippodrome) + ' · R' + x.reunion + 'C' + x.num_course + ' · ' + x.partants + ' partants</small></div><div class="arrivee">' + esc(arr) + '</div></div>';
+      }
+      $('resultsList').innerHTML = html;
+    } catch (e) {}
+  };
+  xhr.send();
 }
 
-async function loadAll() {
-  let m = {};
-  try { const r = await fetch('/api/learning/metrics'); m = await r.json(); } catch {}
+function loadMetrics() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', '/api/learning/metrics', true);
+  xhr.onload = function() {
+    if (xhr.status !== 200) return;
+    try {
+      var m = JSON.parse(xhr.responseText);
+      var preds = m.evaluated_predictions || 0;
+      var top1 = (m.top1_hit_rate || 0) * 100;
+      var top5 = (m.top5_hit_rate || 0) * 100;
+      var factor = preds > 0 ? (0.6 + top1 / 100) : 1;
 
-  const preds = m.evaluated_predictions ?? 0;
-  const top1 = (m.top1_hit_rate ?? 0) * 100;
-  const top5 = (m.top5_hit_rate ?? 0) * 100;
-  const factor = preds > 0 ? (0.6 + top1 / 100) : 1;
+      $('kpiPred').textContent = preds;
+      $('kpiTop1').textContent = preds > 0 ? top1.toFixed(1) + '%' : '—';
+      $('kpiTop5').textContent = preds > 0 ? top5.toFixed(1) + '%' : '—';
 
-  $('kpiPred').textContent = preds;
-  $('kpiTop1').textContent = preds > 0 ? top1.toFixed(1) + '%' : '—';
-  $('kpiTop5').textContent = preds > 0 ? top5.toFixed(1) + '%' : '—';
+      var status = 'Aucune donnée', scls = '';
+      if (preds > 0) {
+        if (top1 >= 30) { status = 'Bon'; scls = 'green'; }
+        else if (top1 >= 15) { status = 'Moyen'; scls = 'gold'; }
+        else { status = 'À améliorer'; scls = 'red'; }
+      }
+      $('kpiStatus').textContent = status;
+      $('kpiStatus').className = 'kpi-value ' + scls;
 
-  let status = 'Aucune donnée', scls = '';
-  if (preds > 0) {
-    if (top1 >= 30) { status = 'Bon'; scls = 'green'; }
-    else if (top1 >= 15) { status = 'Moyen'; scls = 'gold'; }
-    else { status = 'À améliorer'; scls = 'red'; }
-  }
-  $('kpiStatus').textContent = status;
-  $('kpiStatus').className = 'kpi-value ' + scls;
+      var html = '';
+      for (var i = 0; i < AGENTS_META.length; i++) {
+        var a = AGENTS_META[i];
+        var score = Math.min(100, Math.round(a.base * factor));
+        var c = cls(score);
+        var f = fb(score);
+        html += '<div class="agent-row"><div class="agent-head"><div class="agent-id"><div class="agent-icon" style="background:' + a.color + '22;color:' + a.color + '">' + a.icon + '</div><div><div class="agent-name">' + esc(a.name) + '</div><div class="agent-desc">' + esc(a.desc) + '</div></div></div><div class="agent-score">' + score + '<small>/100</small></div></div><div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div><div class="agent-feedback ' + f.cls + '">' + esc(f.txt) + '</div></div>';
+      }
+      $('agentsList').innerHTML = html;
+      $('agentsCount').textContent = AGENTS_META.length;
 
-  $('agentsList').innerHTML = AGENTS_META.map(a => {
-    const score = Math.min(100, Math.round(a.base * factor));
-    const c = cls(score);
-    const f = fb(score);
-    return `<div class="agent-row">
-      <div class="agent-head">
-        <div class="agent-id">
-          <div class="agent-icon" style="background:${a.color}22;color:${a.color}">${a.icon}</div>
-          <div><div class="agent-name">${esc(a.name)}</div><div class="agent-desc">${esc(a.desc)}</div></div>
-        </div>
-        <div class="agent-score">${score}<small>/100</small></div>
-      </div>
-      <div class="progress"><div class="progress-bar ${c}" style="width:${score}%"></div></div>
-      <div class="agent-feedback ${f.cls}">${esc(f.txt)}</div>
-    </div>`;
-  }).join('');
-  $('agentsCount').textContent = AGENTS_META.length;
+      var actions = [];
+      if (preds === 0) {
+        actions.push({t:'Collecter des résultats', i:['Cliquez sur "🤖 Lancer la collecte"','Chaque arrivée alimente les agents','Objectif : 30 à 50 arrivées']});
+      }
+      actions.push({t:'Fusion des sources', i:['FormAgent + DriverAgent : redondance à surveiller','MarketAgent dépend des cotes','TrackAgent : ajouter météo auto']});
+      actions.push({t:'Prochaines étapes', i:['Base SQLite pour les prédictions','Automatiser la collecte via cron','ROI théorique par agent']});
 
-  const actions = [];
-  if (preds === 0) {
-    actions.push({t:'Collecter des résultats', i:['Cliquez sur "🤖 Lancer la collecte" pour récupérer les arrivées du PMU','Chaque arrivée alimente les agents','Objectif : 30 à 50 arrivées']});
-  }
-  actions.push({t:'Fusion des sources', i:['FormAgent + DriverAgent : redondance à surveiller','MarketAgent dépend des cotes disponibles','TrackAgent : ajouter météo automatique']});
-  actions.push({t:'Prochaines étapes', i:['Base SQLite pour les prédictions','Automatiser la collecte via cron','ROI théorique par agent']});
+      $('actionsCount').textContent = actions.length;
+      var ah = '';
+      for (var j = 0; j < actions.length; j++) {
+        var act = actions[j];
+        ah += '<div class="actions"><h3>⚠ ' + esc(act.t) + '</h3><ul>';
+        for (var k = 0; k < act.i.length; k++) {
+          ah += '<li>' + esc(act.i[k]) + '</li>';
+        }
+        ah += '</ul></div>';
+      }
+      $('actionsList').innerHTML = ah;
+    } catch (e) {}
+  };
+  xhr.send();
+}
 
-  $('actionsCount').textContent = actions.length;
-  $('actionsList').innerHTML = actions.map(a => `<div class="actions"><h3>⚠ ${esc(a.t)}</h3><ul>${a.i.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>`).join('');
-
+function loadAll() {
+  loadMetrics();
   loadResults();
 }
 
