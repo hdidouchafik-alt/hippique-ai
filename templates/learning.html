@@ -161,9 +161,13 @@ function cls(s) { return s >= 70 ? 'good' : s >= 40 ? 'medium' : 'low'; }
 function collecter(offset, btn) {
   var original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⏳ ' + (offset === 0 ? "Aujourd'hui" : offset === -1 ? 'Hier' : 'Avant-hier') + '...';
+  var labels = {0:'Aujourd\'hui', '-1':'Hier', '-2':'Avant-hier'};
+  btn.textContent = '⏳ ' + (labels[String(offset)] || 'Collecte') + '...';
+
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/agent/collect?offset=' + offset, true);
+  // Utiliser POST avec l'offset en paramètre de requête
+  var url = '/api/agent/collect?offset=' + offset;
+  xhr.open('POST', url, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.onload = function() {
     btn.disabled = false;
@@ -267,15 +271,14 @@ function loadMetrics() {
       $('agentsCount').textContent = arr.length + ' agents';
 
       var actions = [];
-      if (preds < 10) actions.push({t:'Continuer la collecte', i:['Objectif : 50 courses évaluées','Utilisez les 3 boutons : Aujourd\'hui, Hier, Avant-hier']});
-      if (preds >= 10 && preds < 50) actions.push({t:'Enrichir le dataset', i:[preds + ' courses sur 50','Encore ' + (50 - preds) + ' à collecter']});
+      if (preds < 50) actions.push({t:'Continuer la collecte', i:[preds + ' courses sur 50','Utilisez les 3 boutons : Aujourd\'hui, Hier, Avant-hier']});
       for (var j = 0; j < arr.length; j++) {
         var s2 = Math.min(100, arr[j].data.score || 50);
-        if (arr[j].data.total >= 5 && s2 < 30) {
-          actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + s2.toFixed(0) + '/100)','Réduire son poids dans la décision finale']});
+        if (arr[j].data.total >= 20 && s2 < 30) {
+          actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + s2.toFixed(0) + '/100) sur ' + arr[j].data.total + ' courses','Réduire son poids dans la décision finale']});
         }
       }
-      actions.push({t:'Prochaines étapes', i:['Base SQLite pour persister','ROI théorique par agent','Alertes sur les agents faibles']});
+      actions.push({t:'Prochaines étapes', i:['ROI théorique par agent','Alertes sur les agents faibles']});
 
       $('actionsCount').textContent = actions.length;
       var ah = '';
