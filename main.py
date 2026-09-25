@@ -24,7 +24,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="2.2.0")
+app = FastAPI(title="Hippique AI", version="2.3.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -172,9 +172,12 @@ async def learning_metrics():
         if s["total"] > 0:
             top1_rate = s["hits_top1"] / s["total"]
             top5_rate = s["hits_top5"] / (s["total"] * 5)
+            # Score entre 0 et 100
             score = round((top1_rate * 60 + top5_rate * 40) * 100, 1)
+            # Sécurité : on plafonne à 100
+            score = min(100.0, score)
         else:
-            score = 50
+            score = 50.0
         agents_scores[name] = {
             "score": score,
             "total": s["total"],
@@ -186,8 +189,10 @@ async def learning_metrics():
 
     if evaluated > 0:
         nb = len(LEARNING_STATS["agents"])
-        avg_top1 = sum(s["hits_top1"] for s in LEARNING_STATS["agents"].values()) / (evaluated * nb)
-        avg_top5 = sum(s["hits_top5"] for s in LEARNING_STATS["agents"].values()) / (evaluated * nb * 5)
+        total_top1 = sum(s["hits_top1"] for s in LEARNING_STATS["agents"].values())
+        total_top5 = sum(s["hits_top5"] for s in LEARNING_STATS["agents"].values())
+        avg_top1 = total_top1 / (evaluated * nb)
+        avg_top5 = total_top5 / (evaluated * nb * 5)
     else:
         avg_top1 = 0
         avg_top5 = 0
