@@ -4,732 +4,129 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0e1a">
-<title>Hippique AI — L'intelligence des courses</title>
+<title>Hippique AI</title>
 <style>
-:root {
-  --bg: #0a0e1a;
-  --bg-2: #111827;
-  --bg-3: #1a2234;
-  --bg-card: #131a2b;
-  --border: #1e2740;
-  --border-glow: #2a3552;
-  --text: #f8fafc;
-  --text-2: #94a3b8;
-  --text-3: #64748b;
-  --teal: #14b8a6;
-  --teal-2: #0d9488;
-  --teal-glow: rgba(20, 184, 166, 0.4);
-  --gold: #fbbf24;
-  --green: #22c55e;
-  --red: #ef4444;
-  --purple: #8b5cf6;
-  --blue: #3b82f6;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  padding-bottom: 90px;
-  -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
-}
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
-input, textarea { font-family: inherit; }
-
-/* ============ HEADER ============ */
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  background: rgba(10, 14, 26, 0.85);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid var(--border);
-}
-.header-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-.logo-icon {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  border-radius: 10px;
-  font-size: 20px;
-  box-shadow: 0 4px 16px var(--teal-glow);
-}
-.logo em { color: var(--teal); font-style: normal; }
-.live {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4ade80;
-  letter-spacing: 0.05em;
-}
-.live::before {
-  content: '';
-  width: 6px; height: 6px;
-  background: #4ade80;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #4ade80;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-/* ============ CONTAINER ============ */
-.container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
-
-/* ============ TABS ============ */
-.tabs {
-  display: flex;
-  gap: 6px;
-  padding: 16px 20px 8px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.tabs::-webkit-scrollbar { display: none; }
-.tab {
-  flex-shrink: 0;
-  padding: 9px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-2);
-  transition: all 0.2s;
-}
-.tab.active {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  color: #fff;
-  border-color: transparent;
-  box-shadow: 0 4px 12px var(--teal-glow);
-}
-
-/* ============ VIEWS ============ */
-.view { display: none; animation: fadeIn 0.3s; }
-.view.active { display: block; }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* ============ HERO ============ */
-.hero {
-  padding: 32px 0 24px;
-}
-.hero h1 {
-  font-size: clamp(28px, 5vw, 42px);
-  font-weight: 800;
-  line-height: 1.1;
-  letter-spacing: -0.03em;
-  margin-bottom: 12px;
-}
-.hero h1 span {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--gold) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.hero p {
-  color: var(--text-2);
-  font-size: 15px;
-  line-height: 1.6;
-  max-width: 600px;
-  margin-bottom: 24px;
-}
-
-/* ============ KPI GRID ============ */
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 32px;
-}
-@media (max-width: 720px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
-.kpi {
-  padding: 20px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-.kpi::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--teal) 0%, var(--gold) 100%);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.kpi:hover::before { opacity: 1; }
-.kpi:hover { border-color: var(--border-glow); transform: translateY(-2px); }
-.kpi-icon { font-size: 24px; margin-bottom: 12px; }
-.kpi-label { font-size: 11px; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-.kpi-value { font-size: 28px; font-weight: 800; margin-top: 6px; letter-spacing: -0.02em; }
-.kpi-value.teal { color: var(--teal); }
-.kpi-value.gold { color: var(--gold); }
-
-/* ============ SECTION ============ */
-.section { margin-bottom: 40px; }
-.section-title {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.section-title h2 {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.section-title h2::before {
-  content: '';
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(180deg, var(--teal) 0%, var(--gold) 100%);
-  border-radius: 2px;
-}
-.section-title .count {
-  font-size: 12px;
-  color: var(--text-3);
-  padding: 4px 10px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-}
-
-/* ============ AGENTS ============ */
-.agents-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
-}
-.agent {
-  padding: 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-  cursor: pointer;
-}
-.agent:hover {
-  border-color: var(--teal);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(20, 184, 166, 0.15);
-}
-.agent-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  margin-bottom: 12px;
-}
-.agent-name { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
-.agent-desc { font-size: 11px; color: var(--text-3); line-height: 1.4; }
-.agent-status {
-  position: absolute;
-  top: 12px; right: 12px;
-  width: 8px; height: 8px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--green);
-}
-
-/* ============ RACE CARD ============ */
-.races-list { display: flex; flex-direction: column; gap: 10px; }
-.race-card {
-  padding: 16px 18px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  align-items: center;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.race-card:hover {
-  border-color: var(--teal);
-  transform: translateX(4px);
-}
-.race-time {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  background: linear-gradient(135deg, var(--bg-3) 0%, var(--bg-2) 100%);
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--teal);
-  min-width: 60px;
-}
-.race-time small { font-size: 9px; font-weight: 600; color: var(--text-3); letter-spacing: 0.08em; }
-.race-info h3 {
-  font-size: 15px;
-  font-weight: 700;
-  margin-bottom: 4px;
-  letter-spacing: -0.01em;
-}
-.race-info p {
-  font-size: 12px;
-  color: var(--text-2);
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.race-tag {
-  padding: 2px 8px;
-  background: rgba(20, 184, 166, 0.12);
-  color: var(--teal);
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.race-tag.plat { background: rgba(139, 92, 246, 0.12); color: var(--purple); }
-.race-arrow { color: var(--text-3); font-size: 20px; }
-
-/* ============ RACE DETAIL ============ */
-.race-detail {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-.race-detail-header {
-  padding: 24px;
-  background: linear-gradient(135deg, var(--bg-3) 0%, var(--bg-2) 100%);
-  border-bottom: 1px solid var(--border);
-  position: relative;
-  overflow: hidden;
-}
-.race-detail-header::before {
-  content: '♞';
-  position: absolute;
-  right: -20px; bottom: -40px;
-  font-size: 140px;
-  color: rgba(20, 184, 166, 0.05);
-  pointer-events: none;
-}
-.race-detail-header h2 {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
-  position: relative;
-  z-index: 1;
-}
-.race-meta {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--text-2);
-  position: relative;
-  z-index: 1;
-}
-.race-meta strong { color: var(--text); font-weight: 700; }
-
-.runners-list { padding: 8px; }
-.runner {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  display: grid;
-  grid-template-columns: 44px 1fr auto;
-  gap: 14px;
-  align-items: center;
-  transition: background 0.2s;
-}
-.runner:last-child { border-bottom: none; }
-.runner:hover { background: var(--bg-2); }
-.runner-rank {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  background: var(--bg-3);
-  color: var(--text-2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 800;
-  font-size: 14px;
-}
-.runner-rank.top1 { background: linear-gradient(135deg, var(--gold), #f59e0b); color: #000; }
-.runner-rank.top2 { background: linear-gradient(135deg, #cbd5e1, #94a3b8); color: #000; }
-.runner-rank.top3 { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; }
-.runner-num {
-  display: inline-block;
-  padding: 2px 7px;
-  background: rgba(20, 184, 166, 0.15);
-  color: var(--teal);
-  border-radius: 5px;
-  font-size: 11px;
-  font-weight: 700;
-  margin-right: 8px;
-}
-.runner-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-.runner-info { font-size: 11px; color: var(--text-3); display: flex; gap: 8px; flex-wrap: wrap; }
-.runner-musique {
-  font-family: ui-monospace, monospace;
-  font-size: 10px;
-  padding: 3px 8px;
-  background: var(--bg-3);
-  border-radius: 5px;
-  letter-spacing: 0.04em;
-}
-.runner-conf {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--gold);
-  text-align: right;
-}
-.runner-conf small { display: block; font-size: 9px; font-weight: 600; color: var(--text-3); letter-spacing: 0.06em; text-transform: uppercase; }
-
-/* ============ ARRIVÉE ============ */
-.arrivee {
-  padding: 20px;
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(20, 184, 166, 0.05) 100%);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  border-radius: 14px;
-  margin-bottom: 20px;
-}
-.arrivee h3 {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--green);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.arrivee h3::before { content: '🏆'; font-size: 16px; }
-.arrivee-podium { display: flex; gap: 8px; flex-wrap: wrap; }
-.podium-item {
-  flex: 1;
-  min-width: 120px;
-  padding: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  text-align: center;
-}
-.podium-place {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-3);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-.podium-place.gold { color: var(--gold); }
-.podium-name {
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-/* ============ FORM ANALYSE ============ */
-.analyse-form {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 24px;
-}
-.analyse-form label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-2);
-  margin-bottom: 8px;
-}
-.analyse-form input,
-.analyse-form textarea {
-  width: 100%;
-  padding: 13px 14px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-  margin-bottom: 16px;
-  transition: border-color 0.2s;
-}
-.analyse-form input:focus,
-.analyse-form textarea:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.12);
-}
-.analyse-form textarea {
-  font-family: ui-monospace, 'SF Mono', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-  min-height: 160px;
-  resize: vertical;
-}
-.btn-primary {
-  width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  color: #fff;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  transition: all 0.2s;
-  box-shadow: 0 4px 16px var(--teal-glow);
-}
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--teal-glow);
-}
-.btn-primary:disabled { opacity: 0.6; cursor: wait; transform: none; }
-
-/* ============ CHAT ============ */
-.chat-container {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 600px;
-}
-.chat-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, var(--bg-3) 0%, var(--bg-2) 100%);
-}
-.chat-avatar {
-  width: 40px; height: 40px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 4px 12px var(--teal-glow);
-}
-.chat-header-info h3 { font-size: 14px; font-weight: 700; }
-.chat-header-info p { font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 5px; }
-.chat-header-info p::before {
-  content: '';
-  width: 6px; height: 6px;
-  background: var(--green);
-  border-radius: 50%;
-  box-shadow: 0 0 6px var(--green);
-}
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.chat-messages::-webkit-scrollbar { width: 4px; }
-.chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-.bubble {
-  max-width: 80%;
-  padding: 11px 15px;
-  border-radius: 14px;
-  font-size: 14px;
-  line-height: 1.55;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  animation: bubbleIn 0.25s;
-}
-@keyframes bubbleIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.bubble.bot {
-  background: var(--bg-3);
-  color: var(--text);
-  border-bottom-left-radius: 4px;
-  align-self: flex-start;
-}
-.bubble.user {
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  color: #fff;
-  border-bottom-right-radius: 4px;
-  align-self: flex-end;
-}
-.bubble.pending {
-  background: var(--bg-3);
-  color: var(--text-3);
-  font-style: italic;
-  align-self: flex-start;
-}
-.bubble.pending::after {
-  content: '';
-  display: inline-block;
-  width: 4px; height: 4px;
-  background: var(--teal);
-  border-radius: 50%;
-  margin-left: 6px;
-  animation: dots 1.2s infinite;
-}
-@keyframes dots {
-  0%, 60%, 100% { opacity: 0.3; }
-  30% { opacity: 1; }
-}
-.chat-input-area {
-  padding: 14px 16px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  gap: 8px;
-  background: var(--bg);
-}
-.chat-input-area input {
-  flex: 1;
-  padding: 12px 16px;
-  background: var(--bg-2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 14px;
-  outline: none;
-}
-.chat-input-area input:focus { border-color: var(--teal); }
-.chat-input-area button {
-  width: 46px;
-  height: 46px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px var(--teal-glow);
-}
-
-/* ============ BOTTOM NAV ============ */
-.bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(10, 14, 26, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: space-around;
-  padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
-  z-index: 100;
-}
-.nav-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 6px;
-  color: var(--text-3);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  transition: color 0.2s;
-  cursor: pointer;
-  background: none;
-  border: none;
-}
-.nav-item.active { color: var(--teal); }
-.nav-item-icon { font-size: 20px; }
-
-/* ============ EMPTY ============ */
-.empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-3);
-  font-size: 14px;
-}
-
-/* ============ LOADER ============ */
-.loader {
-  display: inline-block;
-  width: 14px; height: 14px;
-  border: 2px solid rgba(20, 184, 166, 0.3);
-  border-top-color: var(--teal);
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ============ RESPONSIVE ============ */
-@media (max-width: 720px) {
-  .header-inner { padding: 12px 16px; }
-  .container { padding: 0 16px; }
-  .tabs { padding: 14px 16px 6px; }
-  .hero { padding: 24px 0 20px; }
-  .runner { grid-template-columns: 40px 1fr auto; gap: 10px; padding: 12px; }
-  .runner-rank { width: 36px; height: 36px; font-size: 13px; }
-  .chat-container { height: 500px; }
-  .agents-grid { grid-template-columns: repeat(2, 1fr); }
-}
+:root{--bg:#0a0e1a;--bg-2:#111827;--bg-3:#1a2234;--bg-card:#131a2b;--border:#1e2740;--border-2:#2a3552;--text:#f8fafc;--text-2:#94a3b8;--text-3:#64748b;--teal:#14b8a6;--teal-2:#0d9488;--gold:#fbbf24;--green:#22c55e;--red:#ef4444;--purple:#8b5cf6}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:inherit}
+.header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
+.header-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.02em}
+.logo-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);border-radius:10px;font-size:20px;box-shadow:0 4px 16px rgba(20,184,166,.4)}
+.logo em{color:var(--teal);font-style:normal}
+.live{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:100px;font-size:11px;font-weight:700;color:#4ade80;letter-spacing:.05em}
+.live::before{content:'';width:6px;height:6px;background:#4ade80;border-radius:50%;box-shadow:0 0 8px #4ade80;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+.tabs{display:flex;gap:6px;padding:16px 20px 8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:9px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:100px;font-size:13px;font-weight:600;color:var(--text-2);transition:all .2s}
+.tab.active{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(20,184,166,.4)}
+.view{display:none;animation:fadeIn .3s}
+.view.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.hero{padding:32px 0 24px}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:800;line-height:1.1;letter-spacing:-.03em;margin-bottom:12px}
+.hero h1 span{background:linear-gradient(135deg,var(--teal) 0%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--text-2);font-size:15px;line-height:1.6;max-width:600px;margin-bottom:24px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px;transition:all .3s}
+.kpi:hover{border-color:var(--border-2);transform:translateY(-2px)}
+.kpi-icon{font-size:24px;margin-bottom:12px}
+.kpi-label{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.kpi-value{font-size:28px;font-weight:800;margin-top:6px;letter-spacing:-.02em}
+.kpi-value.teal{color:var(--teal)}
+.kpi-value.gold{color:var(--gold)}
+.section{margin-bottom:40px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title h2{font-size:20px;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:10px}
+.section-title h2::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--teal) 0%,var(--gold) 100%);border-radius:2px}
+.section-title .count{font-size:12px;color:var(--text-3);padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:100px}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.agent{padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;position:relative;transition:all .3s}
+.agent:hover{border-color:var(--teal);transform:translateY(-3px)}
+.agent-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.agent-name{font-size:12px;font-weight:700;margin-bottom:3px}
+.agent-desc{font-size:10px;color:var(--text-3);line-height:1.4}
+.agent-status{position:absolute;top:12px;right:12px;width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green)}
+.races-list{display:flex;flex-direction:column;gap:8px}
+.race-card{padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;cursor:pointer;transition:all .2s}
+.race-card:hover{border-color:var(--teal);transform:translateX(4px)}
+.race-time{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 12px;background:var(--bg-3);border-radius:10px;font-size:15px;font-weight:800;color:var(--teal);min-width:58px}
+.race-time small{font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.08em;text-transform:uppercase}
+.race-info h3{font-size:14px;font-weight:700;margin-bottom:4px;letter-spacing:-.01em}
+.race-info p{font-size:11px;color:var(--text-2);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.race-tag{padding:2px 7px;background:rgba(20,184,166,.12);color:var(--teal);border-radius:5px;font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.race-tag.plat{background:rgba(139,92,246,.12);color:var(--purple)}
+.race-tag.finished{background:rgba(34,197,94,.12);color:var(--green)}
+.race-arrow{color:var(--text-3);font-size:20px}
+.race-detail{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.race-detail-header{padding:22px;background:linear-gradient(135deg,var(--bg-3) 0%,var(--bg-2) 100%);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.race-detail-header h2{font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px}
+.race-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2)}
+.runners-list{padding:6px}
+.runner{padding:12px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center}
+.runner:last-child{border-bottom:none}
+.runner:hover{background:var(--bg-2)}
+.runner-rank{width:38px;height:38px;border-radius:9px;background:var(--bg-3);color:var(--text-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.runner-rank.top1{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#000}
+.runner-rank.top2{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#000}
+.runner-rank.top3{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
+.runner-num{display:inline-block;padding:2px 7px;background:rgba(20,184,166,.15);color:var(--teal);border-radius:5px;font-size:11px;font-weight:700;margin-right:8px}
+.runner-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.runner-info{font-size:11px;color:var(--text-3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.runner-musique{font-family:ui-monospace,monospace;font-size:10px;padding:2px 7px;background:var(--bg-3);border-radius:5px;letter-spacing:.04em}
+.runner-conf{font-size:15px;font-weight:800;color:var(--gold);text-align:right}
+.runner-conf small{display:block;font-size:9px;font-weight:600;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase}
+.arrivee{padding:18px;background:linear-gradient(135deg,rgba(34,197,94,.08) 0%,rgba(20,184,166,.05) 100%);border:1px solid rgba(34,197,94,.3);border-radius:14px;margin:14px}
+.arrivee h3{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+.arrivee-podium{display:flex;gap:8px;flex-wrap:wrap}
+.podium-item{flex:1;min-width:100px;padding:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;text-align:center}
+.podium-place{font-size:10px;font-weight:700;color:var(--text-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.podium-place.gold{color:var(--gold)}
+.podium-name{font-size:13px;font-weight:700}
+.analyse-form{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:22px}
+.analyse-form label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px}
+.analyse-form input,.analyse-form textarea{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;margin-bottom:16px;transition:border-color .2s}
+.analyse-form input:focus,.analyse-form textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,184,166,.12)}
+.analyse-form textarea{font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;min-height:160px;resize:vertical}
+.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 16px rgba(20,184,166,.4)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(20,184,166,.4)}
+.btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
+.chat-container{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:580px}
+.chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg-3) 0%,var(--bg-2) 100%)}
+.chat-avatar{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(20,184,166,.4)}
+.chat-header-info h3{font-size:14px;font-weight:700}
+.chat-header-info p{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px}
+.chat-header-info p::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green)}
+.chat-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;animation:bubbleIn .25s}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.bubble.bot{background:var(--bg-3);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
+.bubble.user{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.bubble.pending{background:var(--bg-3);color:var(--text-3);font-style:italic;align-self:flex-start}
+.bubble.pending::after{content:'';display:inline-block;width:4px;height:4px;background:var(--teal);border-radius:50%;margin-left:6px;animation:dots 1.2s infinite}
+@keyframes dots{0%,60%,100%{opacity:.3}30%{opacity:1}}
+.chat-input-area{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg)}
+.chat-input-area input{flex:1;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.chat-input-area input:focus{border-color:var(--teal)}
+.chat-input-area button{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;font-size:18px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,14,26,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;color:var(--text-3);font-size:10px;font-weight:600;transition:color .2s;background:none;border:none}
+.nav-item.active{color:var(--teal)}
+.nav-item-icon{font-size:20px}
+.empty{text-align:center;padding:50px 20px;color:var(--text-3);font-size:14px}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(20,184,166,.3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:720px){.header-inner{padding:12px 16px}.container{padding:0 16px}.tabs{padding:14px 16px 6px}.hero{padding:24px 0 20px}.runner{grid-template-columns:38px 1fr auto;gap:10px;padding:10px}.runner-rank{width:34px;height:34px;font-size:12px}.chat-container{height:480px}.agents-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header class="header">
   <div class="header-inner">
     <div class="logo">
@@ -740,7 +137,6 @@ input, textarea { font-family: inherit; }
   </div>
 </header>
 
-<!-- TABS -->
 <div class="container">
   <div class="tabs">
     <button class="tab active" data-view="home">🏠 Accueil</button>
@@ -752,111 +148,72 @@ input, textarea { font-family: inherit; }
 
 <main class="container">
 
-  <!-- VIEW: HOME -->
   <section class="view active" id="view-home">
     <div class="hero">
       <h1>L'intelligence au service<br>des <span>courses hippiques.</span></h1>
-      <p>Analyses en direct, pronostics assistés par IA, programmes du jour et résultats. Une lecture claire de chaque course.</p>
+      <p>Programmes en direct, analyses assistées par IA, résultats officiels. Tirés de l'API PMU.</p>
     </div>
 
     <div class="kpis">
       <div class="kpi">
         <div class="kpi-icon">♞</div>
         <div class="kpi-label">Agents actifs</div>
-        <div class="kpi-value teal" id="kpiAgents">7</div>
+        <div class="kpi-value teal">7</div>
       </div>
       <div class="kpi">
         <div class="kpi-icon">📅</div>
-        <div class="kpi-label">Courses du jour</div>
+        <div class="kpi-label">Courses aujourd'hui</div>
         <div class="kpi-value" id="kpiCourses">—</div>
       </div>
       <div class="kpi">
-        <div class="kpi-icon">🎯</div>
-        <div class="kpi-label">Pronostics</div>
-        <div class="kpi-value" id="kpiPronos">—</div>
+        <div class="kpi-icon">🏁</div>
+        <div class="kpi-label">Terminées</div>
+        <div class="kpi-value gold" id="kpiFinished">—</div>
       </div>
       <div class="kpi">
         <div class="kpi-icon">⚡</div>
-        <div class="kpi-label">Fiabilité</div>
-        <div class="kpi-value gold" id="kpiFiab">82%</div>
+        <div class="kpi-label">Source</div>
+        <div class="kpi-value teal" style="font-size:16px;">API PMU</div>
       </div>
     </div>
 
-    <!-- AGENTS -->
     <div class="section">
       <div class="section-title">
         <h2>Agents spécialisés</h2>
         <span class="count">7 actifs</span>
       </div>
-      <div class="agents-grid" id="agentsGrid">
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(20,184,166,0.15); color: #14b8a6;">🎯</div>
-          <div class="agent-name">CourseAgent</div>
-          <div class="agent-desc">Analyse le rythme et la distance</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(251,191,36,0.15); color: #fbbf24;">🐎</div>
-          <div class="agent-name">HorseAgent</div>
-          <div class="agent-desc">Étudie la forme et les aptitudes</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(139,92,246,0.15); color: #8b5cf6;">🏇</div>
-          <div class="agent-name">JockeyAgent</div>
-          <div class="agent-desc">Évalue la stratégie du pilote</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(59,130,246,0.15); color: #3b82f6;">🏛️</div>
-          <div class="agent-name">TrainerAgent</div>
-          <div class="agent-desc">Préparation de l'écurie</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(34,197,94,0.15); color: #22c55e;">🌤️</div>
-          <div class="agent-name">TrackAgent</div>
-          <div class="agent-desc">Piste, terrain et météo</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(239,68,68,0.15); color: #ef4444;">📅</div>
-          <div class="agent-name">CalendarAgent</div>
-          <div class="agent-desc">Échéances et réunions</div>
-        </div>
-        <div class="agent">
-          <div class="agent-status"></div>
-          <div class="agent-icon" style="background: rgba(168,85,247,0.15); color: #a855f7;">📊</div>
-          <div class="agent-name">ForecastAgent</div>
-          <div class="agent-desc">Consolide les signaux</div>
-        </div>
+      <div class="agents-grid">
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(20,184,166,.15);color:#14b8a6">🎯</div><div class="agent-name">CourseAgent</div><div class="agent-desc">Rythme et distance</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(251,191,36,.15);color:#fbbf24">🐎</div><div class="agent-name">HorseAgent</div><div class="agent-desc">Forme du cheval</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">🏇</div><div class="agent-name">JockeyAgent</div><div class="agent-desc">Stratégie driver</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(59,130,246,.15);color:#3b82f6">🏛️</div><div class="agent-name">TrainerAgent</div><div class="agent-desc">Préparation écurie</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(34,197,94,.15);color:#22c55e">🌤️</div><div class="agent-name">TrackAgent</div><div class="agent-desc">Piste et météo</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(239,68,68,.15);color:#ef4444">📅</div><div class="agent-name">CalendarAgent</div><div class="agent-desc">Échéances</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(168,85,247,.15);color:#a855f7">📊</div><div class="agent-name">ForecastAgent</div><div class="agent-desc">Consolidation</div></div>
       </div>
     </div>
 
-    <!-- COURSES DU JOUR -->
     <div class="section">
       <div class="section-title">
-        <h2>À la une aujourd'hui</h2>
+        <h2>Prochaines courses</h2>
         <span class="count" id="countToday">—</span>
       </div>
       <div class="races-list" id="racesToday">
-        <div class="empty"><span class="loader"></span>Chargement…</div>
+        <div class="empty"><span class="loader"></span>Chargement depuis l'API PMU…</div>
       </div>
     </div>
   </section>
 
-  <!-- VIEW: COURSES -->
   <section class="view" id="view-courses">
     <div class="hero">
       <h1>Programmes <span>hippiques</span></h1>
-      <p>Courses du jour, de la veille et de l'avant-veille avec détails, partants et arrivées.</p>
+      <p>Courses du jour, de la veille et de l'avant-veille avec partants et arrivées officielles.</p>
     </div>
 
-    <div class="tabs" style="padding: 0 0 16px;">
-      <button class="tab active" data-day="today">Aujourd'hui</button>
-      <button class="tab" data-day="yesterday">Hier</button>
-      <button class="tab" data-day="before">Avant-hier</button>
+    <div class="tabs" style="padding:0 0 14px">
+      <button class="tab active" data-day="0">Aujourd'hui</button>
+      <button class="tab" data-day="-1">Hier</button>
+      <button class="tab" data-day="-2">Avant-hier</button>
     </div>
 
     <div id="racesProgram">
@@ -864,37 +221,32 @@ input, textarea { font-family: inherit; }
     </div>
   </section>
 
-  <!-- VIEW: ANALYSE -->
   <section class="view" id="view-analyse">
     <div class="hero">
       <h1>Analyser une <span>course</span></h1>
-      <p>Collez la liste des partants. Notre IA analyse la musique, les gains et les drivers.</p>
+      <p>Collez la liste des partants. L'IA analyse musique, gains et drivers.</p>
     </div>
 
     <form class="analyse-form" id="analyseForm">
       <label for="raceName">Nom de la course</label>
       <input id="raceName" value="Course du jour">
-
-      <label for="raceText">Partants (une ligne par cheval)</label>
+      <label for="raceText">Partants</label>
       <textarea id="raceText">1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a 1a 7a
 2. JOLYDOLE - cote 19 - driver M. Abrivard - musique 1a Dm 2a 7m 3a
 3. KOUREAS D'ELA - cote 1.9 - driver B. Rochard - musique 1a 1a 1a 2a 1a
 4. EVERY TIME WINNER - cote 8.2 - driver E. Raffin - musique 6a 2a 4a 8a 4a
 5. KING DE L'OUEST - cote 3.5 - driver A. Barrier - musique 4a 2a 1a 7a 5a</textarea>
-
       <button type="submit" class="btn-primary" id="btnAnalyse">Lancer l'analyse →</button>
     </form>
 
-    <div id="analyseResults" style="margin-top:24px;"></div>
+    <div id="analyseResults" style="margin-top:24px"></div>
   </section>
 
-  <!-- VIEW: CHAT -->
   <section class="view" id="view-chat">
     <div class="hero">
       <h1>Assistant <span>hippique</span></h1>
       <p>Posez vos questions sur les chevaux, drivers, hippodromes et stratégies.</p>
     </div>
-
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-avatar">♞</div>
@@ -904,10 +256,10 @@ input, textarea { font-family: inherit; }
         </div>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="bubble bot">Bonjour ! Je suis votre assistant hippique. Posez-moi une question sur les chevaux, les drivers, la musique ou les courses. 🏇</div>
+        <div class="bubble bot">Bonjour ! Posez-moi une question sur les courses, les chevaux ou les drivers. 🏇</div>
       </div>
       <form class="chat-input-area" id="chatForm">
-        <input id="chatInput" type="text" placeholder="Posez votre question…" autocomplete="off">
+        <input id="chatInput" type="text" placeholder="Votre question…" autocomplete="off">
         <button type="submit">→</button>
       </form>
     </div>
@@ -915,24 +267,11 @@ input, textarea { font-family: inherit; }
 
 </main>
 
-<!-- BOTTOM NAV -->
 <nav class="bottom-nav">
-  <button class="nav-item active" data-view="home">
-    <span class="nav-item-icon">🏠</span>
-    <span>Accueil</span>
-  </button>
-  <button class="nav-item" data-view="courses">
-    <span class="nav-item-icon">📅</span>
-    <span>Courses</span>
-  </button>
-  <button class="nav-item" data-view="analyse">
-    <span class="nav-item-icon">🔍</span>
-    <span>Analyser</span>
-  </button>
-  <button class="nav-item" data-view="chat">
-    <span class="nav-item-icon">💬</span>
-    <span>Assistant</span>
-  </button>
+  <button class="nav-item active" data-view="home"><span class="nav-item-icon">🏠</span><span>Accueil</span></button>
+  <button class="nav-item" data-view="courses"><span class="nav-item-icon">📅</span><span>Courses</span></button>
+  <button class="nav-item" data-view="analyse"><span class="nav-item-icon">🔍</span><span>Analyser</span></button>
+  <button class="nav-item" data-view="chat"><span class="nav-item-icon">💬</span><span>Assistant</span></button>
 </nav>
 
 <script src="https://js.puter.com/v2/"></script>
@@ -940,148 +279,39 @@ input, textarea { font-family: inherit; }
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-// ============ DATA DÉMO ============
-const DEMO_RACES = {
-  today: [
-    {
-      id: 'r1c1',
-      time: '13:47', hippodrome: 'Vincennes', name: 'Prix de Melun',
-      discipline: 'Trot', distance: 2850, participants: 16,
-      arrivee: null,
-      partants: [
-        { num: 10, nom: 'HERDUNO', driver: 'P.A. Delacour', musique: '0a 1a 2a 1a 1a', conf: 34 },
-        { num: 9, nom: 'HELLO DE LOIRON', driver: 'B. Rochard', musique: '2a 1a 0a 4a 3a', conf: 28 },
-        { num: 16, nom: 'FOREVER DE PAME', driver: 'X. Bovay', musique: '1a 7a 3a 2a 2a', conf: 22 },
-        { num: 7, nom: 'HAPPY ATOUT', driver: 'P.Y. Verva', musique: '7a 3a 4a 4a 3a', conf: 18 },
-        { num: 13, nom: 'HALFAN SPEED', driver: 'E. Raffin', musique: '3a 8a 0a 9a (25)', conf: 14 },
-      ]
-    },
-    {
-      id: 'r1c2',
-      time: '14:20', hippodrome: 'Vincennes', name: 'Prix de Bourgogne',
-      discipline: 'Trot', distance: 2100, participants: 12,
-      arrivee: null,
-      partants: [
-        { num: 3, nom: 'IDEAL DU MOULIN', driver: 'E. Raffin', musique: '1a 2a 1a 3a 1a', conf: 42 },
-        { num: 7, nom: 'IDYLLE DU BOCAGE', driver: 'M. Abrivard', musique: '2a 4a 1a 2a 5a', conf: 26 },
-        { num: 1, nom: 'IN LOVE WITH YOU', driver: 'F. Nivard', musique: '3a 1a 6a 2a 4a', conf: 20 },
-      ]
-    },
-    {
-      id: 'r2c1',
-      time: '15:05', hippodrome: 'Chantilly', name: 'Prix du Jockey Club',
-      discipline: 'Plat', distance: 1600, participants: 14,
-      arrivee: null,
-      partants: [
-        { num: 5, nom: 'ROYAL SPEED', driver: 'C. Demuro', musique: '1p 2p 1p 3p 1p', conf: 38 },
-        { num: 8, nom: 'LADY GRACE', driver: 'M. Guyon', musique: '2p 1p 4p 1p 2p', conf: 27 },
-        { num: 2, nom: 'DIAMOND KING', driver: 'S. Pasquier', musique: '1p 3p 2p 5p 1p', conf: 18 },
-      ]
-    },
-    {
-      id: 'r3c1',
-      time: '16:15', hippodrome: 'Deauville', name: 'Prix de la Plage',
-      discipline: 'Plat', distance: 2000, participants: 11,
-      arrivee: null,
-      partants: [
-        { num: 4, nom: 'SEA BREEZE', driver: 'A. Hamelin', musique: '3p 2p 1p 4p 2p', conf: 32 },
-        { num: 9, nom: 'GOLDEN SAND', driver: 'T. Bachelot', musique: '1p 5p 3p 2p 4p', conf: 24 },
-      ]
-    },
-  ],
-  yesterday: [
-    {
-      id: 'y-r1c1',
-      time: '13:50', hippodrome: 'Enghien', name: 'Prix de la Bastille',
-      discipline: 'Trot', distance: 2875, participants: 15,
-      arrivee: [
-        { place: 1, num: 6, nom: 'KAPITO DE HOUELLE' },
-        { place: 2, num: 11, nom: 'KAMIKAZE DU VIVIER' },
-        { place: 3, num: 3, nom: 'JUPITER DU PONT' },
-      ],
-      partants: [
-        { num: 6, nom: 'KAPITO DE HOUELLE', driver: 'E. Raffin', musique: '1a 3a 1a 2a 1a', conf: 38 },
-        { num: 11, nom: 'KAMIKAZE DU VIVIER', driver: 'F. Nivard', musique: '2a 1a 4a 1a 3a', conf: 26 },
-        { num: 3, nom: 'JUPITER DU PONT', driver: 'M. Abrivard', musique: '4a 2a 1a 3a 5a', conf: 20 },
-      ]
-    },
-    {
-      id: 'y-r1c3',
-      time: '15:10', hippodrome: 'Enghien', name: 'Prix de la Concorde',
-      discipline: 'Trot', distance: 2875, participants: 13,
-      arrivee: [
-        { place: 1, num: 2, nom: 'LADY OF THE NIGHT' },
-        { place: 2, num: 9, nom: 'LORD D\'AMOUR' },
-        { place: 3, num: 5, nom: 'LOVE ME DO' },
-      ],
-      partants: [
-        { num: 2, nom: 'LADY OF THE NIGHT', driver: 'B. Rochard', musique: '1a 2a 1a 1a 3a', conf: 42 },
-        { num: 9, nom: 'LORD D\'AMOUR', driver: 'D. Thomain', musique: '2a 3a 1a 4a 2a', conf: 28 },
-      ]
-    },
-    {
-      id: 'y-r2c1',
-      time: '14:30', hippodrome: 'Longchamp', name: 'Prix de l\'Étoile',
-      discipline: 'Plat', distance: 1800, participants: 12,
-      arrivee: [
-        { place: 1, num: 7, nom: 'SILVER STAR' },
-        { place: 2, num: 3, nom: 'MIDNIGHT MOON' },
-        { place: 3, num: 10, nom: 'GOLDEN BOLT' },
-      ],
-      partants: [
-        { num: 7, nom: 'SILVER STAR', driver: 'C. Demuro', musique: '1p 2p 1p 2p 1p', conf: 40 },
-        { num: 3, nom: 'MIDNIGHT MOON', driver: 'M. Guyon', musique: '2p 1p 3p 1p 4p', conf: 25 },
-      ]
-    },
-  ],
-  before: [
-    {
-      id: 'b-r1c1',
-      time: '13:45', hippodrome: 'Vincennes', name: 'Prix de l\'Atlantique',
-      discipline: 'Trot', distance: 2100, participants: 14,
-      arrivee: [
-        { place: 1, num: 8, nom: 'MAGIC NIGHT' },
-        { place: 2, num: 12, nom: 'MOONSHINE' },
-        { place: 3, num: 4, nom: 'MISTRAL' },
-      ],
-      partants: [
-        { num: 8, nom: 'MAGIC NIGHT', driver: 'E. Raffin', musique: '1a 1a 2a 1a 3a', conf: 45 },
-        { num: 12, nom: 'MOONSHINE', driver: 'F. Nivard', musique: '2a 2a 1a 3a 1a', conf: 24 },
-      ]
-    },
-  ]
-};
-
-// ============ NAVIGATION ============
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.tab[data-view]').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[data-view]').forEach(t => t.classList.remove('active'));
   $('view-' + name)?.classList.add('active');
   document.querySelectorAll(`.tab[data-view="${name}"]`).forEach(t => t.classList.add('active'));
   document.querySelectorAll(`.nav-item[data-view="${name}"]`).forEach(t => t.classList.add('active'));
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => showView(el.dataset.view)));
+
+function formatHeure(ts) {
+  if (!ts) return '--:--';
+  const d = new Date(ts);
+  return d.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
 }
 
-document.querySelectorAll('[data-view]').forEach(el => {
-  el.addEventListener('click', () => showView(el.dataset.view));
-});
-
-// ============ RENDER RACE CARD ============
-function raceCard(race, day) {
-  const isTrot = (race.discipline || '').toLowerCase().includes('trot');
+function raceCard(course) {
+  const isTrot = (course.discipline || '').toLowerCase().includes('trot');
+  const isFinished = (course.statut || '').toUpperCase().includes('FIN');
+  const heures = formatHeure(course.heure);
   return `
-    <div class="race-card" onclick="openRace('${day}', '${race.id}')">
-      <div class="race-time">${race.time}<small>${race.discipline}</small></div>
+    <div class="race-card" onclick="openRace('${course.date}', ${course.reunion}, ${course.course})">
+      <div class="race-time">${heures}<small>${esc((course.discipline || '?').substring(0,4))}</small></div>
       <div class="race-info">
-        <h3>${esc(race.name)}</h3>
+        <h3>${esc(course.nom)}</h3>
         <p>
-          <span class="race-tag ${isTrot ? '' : 'plat'}">${esc(race.discipline)}</span>
-          <span>${esc(race.hippodrome)}</span>
+          <span class="race-tag ${isTrot ? '' : 'plat'}">${esc(course.discipline)}</span>
+          ${isFinished ? '<span class="race-tag finished">Terminée</span>' : ''}
+          <span>${esc(course.hippodrome)}</span>
           <span>·</span>
-          <span>${race.distance}m</span>
+          <span>${course.distance}m</span>
           <span>·</span>
-          <span>${race.participants} partants</span>
+          <span>${course.partants} partants</span>
         </p>
       </div>
       <div class="race-arrow">›</div>
@@ -1089,115 +319,128 @@ function raceCard(race, day) {
   `;
 }
 
-// ============ OPEN RACE DETAIL ============
-function openRace(day, raceId) {
-  const race = DEMO_RACES[day]?.find(r => r.id === raceId);
-  if (!race) return;
+async function loadProgram(day) {
+  document.querySelectorAll('.tab[data-day]').forEach(t => {
+    t.classList.toggle('active', t.dataset.day === String(day));
+  });
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement API PMU…</div>';
+  try {
+    const r = await fetch(`/api/pmu/programme?day=${day}`);
+    const data = await r.json();
+    const courses = data.courses || [];
+    if (!courses.length) {
+      $('racesProgram').innerHTML = '<div class="empty">Aucune course pour cette journée.</div>';
+      return;
+    }
+    $('racesProgram').innerHTML = `<div class="races-list">${courses.map(raceCard).join('')}</div>`;
+  } catch (e) {
+    $('racesProgram').innerHTML = '<div class="empty">Erreur de chargement : ' + esc(e.message) + '</div>';
+  }
+}
 
-  let html = `
-    <div class="race-detail">
-      <div class="race-detail-header">
-        <h2>${esc(race.name)}</h2>
-        <div class="race-meta">
-          <span><strong>${esc(race.hippodrome)}</strong></span>
-          <span>🕐 ${race.time}</span>
-          <span>📏 ${race.distance}m</span>
-          <span>🐎 ${race.participants} partants</span>
-          <span>🏷️ ${esc(race.discipline)}</span>
+async function openRace(dateStr, reunion, course) {
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement du détail…</div>';
+  try {
+    const r = await fetch(`/api/pmu/course/${dateStr}/R${reunion}/C${course}`);
+    const data = await r.json();
+
+    if (data.error) {
+      $('racesProgram').innerHTML = '<div class="empty">Erreur : ' + esc(data.error) + '</div>';
+      return;
+    }
+
+    let html = `
+      <button onclick="loadProgram(0)" style="margin-bottom:16px;color:var(--teal);font-size:13px;font-weight:600;">← Retour</button>
+      <div class="race-detail">
+        <div class="race-detail-header">
+          <h2>R${reunion}C${course}</h2>
+          <div class="race-meta">
+            <span>📅 ${esc(dateStr)}</span>
+            <span>🐎 ${(data.partants || []).length} partants</span>
+          </div>
         </div>
-      </div>
-  `;
+    `;
 
-  if (race.arrivee && race.arrivee.length) {
-    html += `
-      <div style="padding: 20px;">
+    if (data.arrivee && data.arrivee.length) {
+      html += `
         <div class="arrivee">
           <h3>Arrivée officielle</h3>
           <div class="arrivee-podium">
-            ${race.arrivee.map(a => `
-              <div class="podium-item">
-                <div class="podium-place ${a.place === 1 ? 'gold' : ''}">${a.place}${a.place === 1 ? 'er' : 'e'}</div>
-                <div class="podium-name">${esc(a.nom)}</div>
-              </div>
-            `).join('')}
+            ${data.arrivee.slice(0, 3).map((num, i) => {
+              const p = (data.partants || []).find(x => x.num === num);
+              return `
+                <div class="podium-item">
+                  <div class="podium-place ${i === 0 ? 'gold' : ''}">${i+1}${i === 0 ? 'er' : 'e'}</div>
+                  <div class="podium-name">${esc(p?.nom || 'N°' + num)}</div>
+                </div>
+              `;
+            }).join('')}
           </div>
         </div>
-      </div>
-    `;
-  }
+      `;
+    }
 
-  html += `
-    <div class="runners-list">
-      ${(race.partants || []).map((p, i) => {
-        const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-        return `
+    html += `
+      <div class="runners-list">
+        ${(data.partants || []).map(p => `
           <div class="runner">
-            <div class="runner-rank ${rankClass}">${i + 1}</div>
+            <div class="runner-rank">${esc(p.num)}</div>
             <div>
-              <div class="runner-name">
-                <span class="runner-num">N°${p.num}</span>${esc(p.nom)}
-              </div>
+              <div class="runner-name">${esc(p.nom)}</div>
               <div class="runner-info">
                 <span>${esc(p.driver || '—')}</span>
-                <span class="runner-musique">${esc(p.musique || '—')}</span>
+                ${p.musique && p.musique.length ? `<span class="runner-musique">${esc(p.musique.slice(0,5).join(' '))}</span>` : ''}
+                ${p.gains ? `<span>${p.gains.toLocaleString('fr-FR')} €</span>` : ''}
               </div>
             </div>
             <div class="runner-conf">
-              ${p.conf || 0}%
-              <small>Confiance</small>
+              ${p.cote ? esc(p.cote) : '—'}
+              <small>Cote</small>
             </div>
           </div>
-        `;
-      }).join('')}
-    </div>
-    </div>
-  `;
-
-  // Remplacer la vue courses par le détail
-  $('racesProgram').innerHTML = `
-    <button onclick="loadProgram('today')" style="margin-bottom:16px;color:var(--teal);font-size:13px;font-weight:600;">← Retour aux programmes</button>
-    ${html}
-  `;
-}
-
-// ============ LOAD PROGRAM ============
-let currentDay = 'today';
-function loadProgram(day) {
-  currentDay = day;
-  const races = DEMO_RACES[day] || [];
-  document.querySelectorAll('.tab[data-day]').forEach(t => {
-    t.classList.toggle('active', t.dataset.day === day);
-  });
-
-  if (!races.length) {
-    $('racesProgram').innerHTML = '<div class="empty">Aucune course pour cette journée.</div>';
-    return;
+        `).join('')}
+      </div>
+      </div>
+    `;
+    $('racesProgram').innerHTML = html;
+  } catch (e) {
+    $('racesProgram').innerHTML = '<div class="empty">Erreur : ' + esc(e.message) + '</div>';
   }
-
-  $('racesProgram').innerHTML = `<div class="races-list">${races.map(r => raceCard(r, day)).join('')}</div>`;
 }
 
-// ============ INIT HOME ============
-function initHome() {
-  const today = DEMO_RACES.today;
-  $('countToday').textContent = today.length + ' courses';
-  $('racesToday').innerHTML = today.slice(0, 4).map(r => raceCard(r, 'today')).join('');
-  $('kpiCourses').textContent = today.length;
-  $('kpiPronos').textContent = today.length;
-  $('kpiAgents').textContent = '7';
+async function loadHome() {
+  try {
+    const r = await fetch('/api/pmu/programme?day=0');
+    const data = await r.json();
+    const courses = data.courses || [];
+    $('countToday').textContent = courses.length + ' courses';
+    $('kpiCourses').textContent = courses.length;
+    const finished = courses.filter(c => (c.statut || '').toUpperCase().includes('FIN'));
+    $('kpiFinished').textContent = finished.length;
+
+    if (!courses.length) {
+      $('racesToday').innerHTML = '<div class="empty">Aucune course disponible.</div>';
+      return;
+    }
+    $('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
+  } catch (e) {
+    $('racesToday').innerHTML = '<div class="empty">Erreur de chargement.</div>';
+  }
 }
 
-// ============ ANALYSE ============
+document.querySelectorAll('.tab[data-day]').forEach(t => {
+  t.addEventListener('click', () => loadProgram(parseInt(t.dataset.day)));
+});
+
 $('analyseForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('btnAnalyse');
   btn.disabled = true;
   btn.innerHTML = '<span class="loader"></span>Analyse…';
-
   try {
     const r = await fetch('/api/predictions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         race_key: 'race-' + Date.now(),
         race_name: $('raceName').value.trim(),
@@ -1207,40 +450,30 @@ $('analyseForm').addEventListener('submit', async (e) => {
     });
     const data = await r.json();
     const runners = data.ranking || data.recommendations || [];
-
     if (!runners.length) {
       $('analyseResults').innerHTML = '<div class="empty">Aucun classement généré.</div>';
       return;
     }
-
     $('analyseResults').innerHTML = `
       <div class="race-detail">
         <div class="race-detail-header">
           <h2>Classement proposé</h2>
-          <div class="race-meta">
-            <span>🎯 ${runners.length} partants analysés</span>
-          </div>
+          <div class="race-meta"><span>🎯 ${runners.length} partants</span></div>
         </div>
         <div class="runners-list">
           ${runners.map((r, i) => {
-            const rankClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-            const conf = ((r.p_calibree || 0) * 100).toFixed(1);
+            const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
             return `
               <div class="runner">
-                <div class="runner-rank ${rankClass}">${i + 1}</div>
+                <div class="runner-rank ${cls}">${i+1}</div>
                 <div>
-                  <div class="runner-name">
-                    <span class="runner-num">N°${esc(r.num)}</span>${esc(r.nom)}
-                  </div>
+                  <div class="runner-name"><span class="runner-num">N°${esc(r.num)}</span>${esc(r.nom)}</div>
                   <div class="runner-info">
                     <span>${esc(r.driver || '—')}</span>
-                    <span class="runner-musique">${esc((r.musique || []).join(' ') || '—')}</span>
+                    ${r.musique && r.musique.length ? `<span class="runner-musique">${esc(r.musique.join(' '))}</span>` : ''}
                   </div>
                 </div>
-                <div class="runner-conf">
-                  ${conf}%
-                  <small>Confiance</small>
-                </div>
+                <div class="runner-conf">${((r.p_calibree || 0) * 100).toFixed(1)}%<small>Confiance</small></div>
               </div>
             `;
           }).join('')}
@@ -1251,47 +484,40 @@ $('analyseForm').addEventListener('submit', async (e) => {
     $('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</div>';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = 'Lancer l\'analyse →';
+    btn.innerHTML = "Lancer l'analyse →";
   }
 });
 
-// ============ CHAT PUTER ============
 $('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const input = $('chatInput');
   const text = input.value.trim();
   if (!text) return;
-
   const messages = $('chatMessages');
-
   const userMsg = document.createElement('div');
   userMsg.className = 'bubble user';
   userMsg.textContent = text;
   messages.appendChild(userMsg);
   input.value = '';
-
   const pending = document.createElement('div');
   pending.className = 'bubble pending';
   pending.textContent = 'Réflexion';
   messages.appendChild(pending);
   messages.scrollTop = messages.scrollHeight;
-
   try {
     if (typeof puter === 'undefined' || !puter.ai) {
       pending.className = 'bubble bot';
-      pending.textContent = 'IA non disponible. Recharge la page.';
+      pending.textContent = 'IA non chargée. Rechargez la page.';
       return;
     }
-
-    const response = await puter.ai.chat(text, { model: 'gpt-5-nano' });
+    const response = await puter.ai.chat(text, {model: 'gpt-5-nano'});
     let reply = '';
     if (typeof response === 'string') reply = response;
     else if (response?.message?.content) {
       const c = response.message.content;
       reply = Array.isArray(c) ? c.map(x => x.text || '').join('') : String(c);
     } else if (response?.text) reply = response.text;
-    else reply = 'Réponse impossible.';
-
+    else reply = 'Réponse indisponible.';
     pending.className = 'bubble bot';
     pending.textContent = reply;
   } catch (err) {
@@ -1301,14 +527,8 @@ $('chatForm').addEventListener('submit', async (e) => {
   messages.scrollTop = messages.scrollHeight;
 });
 
-// ============ TAB DAY ============
-document.querySelectorAll('.tab[data-day]').forEach(t => {
-  t.addEventListener('click', () => loadProgram(t.dataset.day));
-});
-
-// ============ BOOT ============
-initHome();
-loadProgram('today');
+loadHome();
+loadProgram(0);
 </script>
 </body>
 </html>
