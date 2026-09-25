@@ -26,7 +26,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="3.1.0")
+app = FastAPI(title="Hippique AI", version="3.3.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -45,7 +45,6 @@ LEARNING_STATS = {
     }
 }
 
-# Charger depuis la DB si dispo
 if DB_OK:
     try:
         db.init()
@@ -147,7 +146,6 @@ async def learning_metrics():
         if s["total"] > 0:
             t1r = s["hits_top1"] / s["total"]
             t5r = s["hits_top5"] / (s["total"] * 5)
-            # Score sur 100 : top1 sur 60 points + top5 sur 40 points
             score = round(t1r * 60 + t5r * 40, 1)
             score = min(100.0, max(0.0, score))
         else:
@@ -337,6 +335,35 @@ async def _get_arrivee(parts):
     return [n for _, n in cls[:5]]
 
 
+PAYS_OK = [
+    "FRANCE",
+    "UNITED KINGDOM",
+    "IRELAND",
+    "MOROCCO", "MAROC", "MARRAKECH", "CASABLANCA",
+    "SPAIN", "ESPAGNE", "ESPANA", "ESPAÑA",
+    "BELGIUM", "BELGIQUE", "BELGIQUE",
+]
+
+
+def _pays_ok(hippodrome_obj, nom_hippo):
+    """Retourne True si le pays de l'hippodrome est dans la liste acceptée."""
+    if isinstance(hippodrome_obj, dict):
+        pays = hippodrome_obj.get("pays") or {}
+        if isinstance(pays, dict):
+            nom_pays = (pays.get("libelle") or "").upper()
+            if nom_pays:
+                return any(p in nom_pays for p in PAYS_OK)
+        elif isinstance(pays, str):
+            if any(p in pays.upper() for p in PAYS_OK):
+                return True
+    if nom_hippo:
+        nom_up = nom_hippo.upper()
+        for p in PAYS_OK:
+            if p in nom_up:
+                return True
+    return False
+
+
 @app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
@@ -347,11 +374,16 @@ async def agent_collect(offset: int = 0):
     reunions = (prog.get("programme") or {}).get("reunions") or []
     nouv = 0
     eval_ = 0
+    ignorees = 0
     for r in reunions:
         if not isinstance(r, dict):
             continue
         nr = r.get("numOfficiel")
-        hippo = (r.get("hippodrome") or {}).get("libelleLong", "?")
+        hippo_obj = r.get("hippodrome") or {}
+        hippo = hippo_obj.get("libelleLong", "?")
+        if not _pays_ok(hippo_obj, hippo):
+            ignorees += 1
+            continue
         for c in (r.get("courses") or []):
             if not isinstance(c, dict):
                 continue
@@ -380,7 +412,7 @@ async def agent_collect(offset: int = 0):
             if DB_OK:
                 db.save_result(item)
             nouv += 1
-    return {"ok": True, "nouvelles": nouv, "evaluees": eval_,
+    return {"ok": True, "nouvelles": nouv, "evaluees": eval_, "ignorees": ignorees,
             "total": len(COLLECTED_RESULTS), "total_evaluees": LEARNING_STATS["evaluated"]}
 
 
