@@ -26,7 +26,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="3.3.0")
+app = FastAPI(title="Hippique AI", version="3.5.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -75,8 +75,6 @@ class PredictionRequest(BaseModel):
     text: str = Field(min_length=20, max_length=100000)
 
 
-# ============ PAGES ============
-
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
@@ -92,8 +90,6 @@ async def learning_page(request: Request):
     return templates.TemplateResponse(request, "learning.html")
 
 
-# ============ API ============
-
 @app.get("/api/health")
 async def health():
     return {
@@ -104,11 +100,6 @@ async def health():
         "results_collected": len(COLLECTED_RESULTS),
         "evaluated": LEARNING_STATS["evaluated"],
     }
-
-
-@app.get("/api/agents")
-async def agents():
-    return {"agents": {}, "multitask": MultiTaskAgent.catalog()}
 
 
 @app.get("/api/tracks")
@@ -172,6 +163,7 @@ async def learning_metrics():
 
 
 @app.post("/api/learning/reset")
+@app.get("/api/learning/reset")
 async def learning_reset():
     COLLECTED_RESULTS.clear()
     LEARNING_STATS["evaluated"] = 0
@@ -179,7 +171,20 @@ async def learning_reset():
         LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50}
     if DB_OK:
         db.reset_all()
-    return {"ok": True}
+    return {"ok": True, "message": "Reset effectué"}
+
+
+@app.get("/api/admin/purge")
+async def admin_purge(confirm: str = ""):
+    if confirm != "yes":
+        return {"error": "Ajoute ?confirm=yes à l'URL"}
+    COLLECTED_RESULTS.clear()
+    LEARNING_STATS["evaluated"] = 0
+    for name in LEARNING_STATS["agents"]:
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50}
+    if DB_OK:
+        db.reset_all()
+    return {"ok": True, "message": "Base purgée complètement"}
 
 
 @app.post("/api/agents/analyse")
@@ -293,6 +298,64 @@ def _evaluer(participants, arrivee):
     return res
 
 
+# ============ FILTRE BLACKLIST ============
+
+BLACKLIST = [
+    "CHILI", "CHILE", "VALPARAISO",
+    "SAN ISIDRO", "PALERMO", "LA PLATA", "ARGENTINE",
+    "SUEDE", "SWEDEN", "SOLVALLA",
+    "URUGUAY", "MONTEVIDEO",
+    "BRESIL", "BRAZIL", "SAO PAULO",
+    "USA", "UNITED STATES", "NEW YORK", "LOS ANGELES",
+    "AUSTRALIA", "AUSTRALIE", "SYDNEY", "MELBOURNE",
+    "JAPON", "JAPAN", "TOKYO",
+    "HONG KONG",
+    "SINGAPOUR", "SINGAPORE",
+    "INDE", "INDIA", "MUMBAI",
+    "MAURICE",
+    "AFRIQUE DU SUD",
+    "PEROU", "PERU", "LIMA",
+    "MEXIQUE", "MEXICO",
+    "CANADA", "TORONTO",
+    "NORVEGE", "OSLO",
+    "DANEMARK", "COPENHAGUE",
+    "FINLANDE", "HELSINKI",
+    "RUSSIE", "MOSCOU",
+    "TURQUIE", "ISTANBUL",
+    "EMIRATS", "DUBAI",
+    "QATAR",
+    "ARABIE",
+    "COREE", "SEOUL",
+    "CHINE", "SHANGHAI",
+    "THAILANDE", "BANGKOK",
+    "MALAISIE",
+    "INDONESIE",
+    "NOUVELLE-ZELANDE", "NEW ZEALAND",
+    "VENEZUELA", "CARACAS",
+    "COLOMBIE", "BOGOTA",
+    "EQUATEUR",
+    "BOLIVIE",
+    "PARAGUAY", "ASUNCION",
+]
+
+
+def _hippodrome_ok(hippodrome_obj, nom_hippo):
+    if not nom_hippo:
+        return False
+    nom_up = nom_hippo.upper()
+    for mot in BLACKLIST:
+        if mot.upper() in nom_up:
+            return False
+    if isinstance(hippodrome_obj, dict):
+        pays = hippodrome_obj.get("pays") or {}
+        if isinstance(pays, dict):
+            nom_pays = (pays.get("libelle") or "").upper()
+            for mot in BLACKLIST:
+                if mot.upper() in nom_pays:
+                    return False
+    return True
+
+
 # ============ COLLECTE ============
 
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
@@ -335,35 +398,6 @@ async def _get_arrivee(parts):
     return [n for _, n in cls[:5]]
 
 
-PAYS_OK = [
-    "FRANCE",
-    "UNITED KINGDOM",
-    "IRELAND",
-    "MOROCCO", "MAROC", "MARRAKECH", "CASABLANCA",
-    "SPAIN", "ESPAGNE", "ESPANA", "ESPAÑA",
-    "BELGIUM", "BELGIQUE", "BELGIQUE",
-]
-
-
-def _pays_ok(hippodrome_obj, nom_hippo):
-    """Retourne True si le pays de l'hippodrome est dans la liste acceptée."""
-    if isinstance(hippodrome_obj, dict):
-        pays = hippodrome_obj.get("pays") or {}
-        if isinstance(pays, dict):
-            nom_pays = (pays.get("libelle") or "").upper()
-            if nom_pays:
-                return any(p in nom_pays for p in PAYS_OK)
-        elif isinstance(pays, str):
-            if any(p in pays.upper() for p in PAYS_OK):
-                return True
-    if nom_hippo:
-        nom_up = nom_hippo.upper()
-        for p in PAYS_OK:
-            if p in nom_up:
-                return True
-    return False
-
-
 @app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
@@ -381,7 +415,7 @@ async def agent_collect(offset: int = 0):
         nr = r.get("numOfficiel")
         hippo_obj = r.get("hippodrome") or {}
         hippo = hippo_obj.get("libelleLong", "?")
-        if not _pays_ok(hippo_obj, hippo):
+        if not _hippodrome_ok(hippo_obj, hippo):
             ignorees += 1
             continue
         for c in (r.get("courses") or []):
