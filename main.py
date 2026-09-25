@@ -1,204 +1,494 @@
-from __future__ import annotations
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<title>Hippique AI</title>
+<style>
+:root{--bg:#0a0e1a;--bg-2:#111827;--bg-3:#1a2234;--bg-card:#131a2b;--border:#1e2740;--text:#f8fafc;--text-2:#94a3b8;--text-3:#64748b;--teal:#14b8a6;--teal-2:#0d9488;--gold:#fbbf24;--green:#22c55e;--red:#ef4444;--purple:#8b5cf6}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,textarea{font-family:inherit}
+.header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.header-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800}
+.logo-icon{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--teal),var(--teal-2));border-radius:10px;font-size:20px;box-shadow:0 4px 16px rgba(20,184,166,.4)}
+.logo em{color:var(--teal);font-style:normal}
+.live{display:flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);border-radius:100px;font-size:11px;font-weight:700;color:#4ade80}
+.live::before{content:'';width:6px;height:6px;background:#4ade80;border-radius:50%;box-shadow:0 0 8px #4ade80}
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+.tabs{display:flex;gap:6px;padding:16px 20px 8px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:9px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:100px;font-size:13px;font-weight:600;color:var(--text-2)}
+.tab.active{background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;border-color:transparent}
+.view{display:none}
+.view.active{display:block}
+.hero{padding:32px 0 24px}
+.hero h1{font-size:clamp(28px,5vw,42px);font-weight:800;line-height:1.1;margin-bottom:12px}
+.hero h1 span{background:linear-gradient(135deg,var(--teal),var(--gold));-webkit-background-clip:text;-webkit-text"></-fill-color:transparent;background-clipspan:text}
+.hero p{color:var(-->text-2);font-size:15px;Chmax-width:600px;margin-bottom:24px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:32px}
+@media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+.kpi{padding:20px;background:var(--bg-card);border:1px solid var(--border);border-radius:16px}
+.kpi-icon{font-size:24px;margin-bottom:12px}
+.kpi-label{font-size:11px;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.kpi-value{font-size:28px;font-weight:800;margin-top:6px}
+.kpi-value.teal{color:var(--teal)}
+.kpi-value.gold{color:var(--gold)}
+.section{margin-bottom:40px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.section-title h2{font-size:20px;font-weight:700;display:flex;align-items:center;gap:10px}
+.section-title h2::before{content:'';width:4px;height:20px;background:linear-gradient(180deg,var(--teal),var(--gold));border-radius:2px}
+.section-title .count{font-size:12px;color:var(--text-3);padding:4px 10px;background:var(--bg-card);border:1px solid var(--border);border-radius:100px}
+.agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.agent{padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;position:relative}
+.agent.active{border-color:var(--teal);background:linear-gradient(135deg,rgba(20,184,166,.08),transparent)}
+.agent-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
+.agent-name{font-size:12px;font-weight:700;margin-bottom:3px}
+.agent-desc{font-size:10px;color:var(--text-3)}
+.agent-status{position:absolute;top:12px;right:12px;width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 8px var(--green)}
+.races-list{display:flex;flex-direction:column;gap:8px}
+.race-card{padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;cursor:pointer}
+.race-card:hover{border-color:var(--teal)}
+.race-time{display:flex;flex-direction:column;align-items:center;padding:8px 12px;background:var(--bg-3);border-radius:10px;font-size:15px;font-weight:800;color:var(--teal);min-width:58px}
+.race-time small{font-size:9px;color:var(--text-3);text-transform:uppercase}
+.race-info h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.race-info p{font-size:11px;color:var(--text-2);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.race-tag{padding:2px 7px;background:rgba(20,184,166,.12);color:var(--teal);border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase}
+.race-tag.plat{background:rgba(139,92,246,.12);color:var(--purple)}
+.race-tag.monte{background:rgba(251,191,36,.12);color:var(--gold)}
+.race-tag.finished{background:rgba(34,197,94,.12);color:var(--green)}
+.race-tag.live{background:rgba(239,68,68,.15);color:#f87171}
+.race-arrow{color:var(--text-3);font-size:20px}
+.race-detail{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:20px}
+.race-detail-header{padding:22px;background:linear-gradient(135deg,var(--bg-3),var(--bg-2));border-bottom:1px solid var(--border)}
+.race-detail-header h2{font-size:20px;font-weight:800;margin-bottom:8px}
+.race-meta{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-2)}
+.runners-list{padding:6px}
+.runner{padding:12px 14px;border-bottom:1px solid var(--border);display:grid;grid-template-columns:42px 1fr auto;gap:12px;align-items:center}
+.runner:last-child{border-bottom:none}
+.runner-rank{width:38px;height:38px;border-radius:9px;background:var(--bg-3);color:var(--text-2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px}
+.runner-rank.top1{background:linear-gradient(135deg,var(--gold),#f59e0b);color:#000}
+.runner-rank.top2{background:linear-gradient(135deg,#cbd5e1,#94a3b8);color:#000}
+.runner-rank.top3{background:linear-gradient(135deg,#d97706,#b45309);color:#fff}
+.runner-num{display:inline-block;padding:2px 7px;background:rgba(20,184,166,.15);color:var(--teal);border-radius:5px;font-size:11px;font-weight:700;margin-right:8px}
+.runner-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.runner-info{font-size:11px;color:var(--text-3);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.runner-musique{font-family:ui-monospace,monospace;font-size:10px;padding:2px 7px;background:var(--bg-3);border-radius:5px}
+.runner-conf{font-size:15px;font-weight:800;color:var(--gold);text-align:right}
+.runner-conf small{display:block;font-size:9px;color:var(--text-3);text-transform:uppercase}
+.analyse-form{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:22px}
+.analyse-form label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--text-2);margin-bottom:8px}
+.analyse-form input,.analyse-form textarea{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none;margin-bottom:16px}
+.analyse-form input:focus,.analyse-form textarea:focus{border-color:var(--teal)}
+.analyse-form textarea{font-family:ui-monospace,monospace;font-size:13px;min-height:160px;resize:vertical}
+.btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;border-radius:12px;font-size:14px;font-weight:700}
+.btn-secondary{padding:12px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-size:13px;font-weight:600}
+.history-item{padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
+.history-item h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.history-item p{font-size:11px;color:var(--text-3)}
+.chat-container{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:580px}
+.chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg-3),var(--bg-2))}
+.chat-avatar{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--teal),var(--teal-2));display:flex;align-items:center;justify-content:center;font-size:18px}
+.chat-header-info h3{font-size:14px;font-weight:700}
+.chat-header-info p{font-size:11px;color:var(--green)}
+.chat-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
+.bubble{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+.bubble.bot{background:var(--bg-3);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
+.bubble.user{background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.chat-input-area{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg)}
+.chat-input-area input{flex:1;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
+.chat-input-area button{width:46px;height:46px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--teal-2));color:#fff;font-size:18px;font-weight:700}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(10,14,26,.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:10px 0 calc(10px + env(safe-area-inset-bottom));z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;color:var(--text-3);font-size:10px;font-weight:600;background:none;border:none}
+.nav-item.active{color:var(--teal)}
+.nav-item-icon{font-size:20px}
+.empty{text-align:center;padding:50px 20px;color:var(--text-3);font-size:14px}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(20,184,166,.3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:720px){.header-inner{padding:12px 16px}.container{padding:0 16px}.runner{grid-template-columns:38px 1fr auto;gap:10px;padding:10px}.runner-rank{width:34px;height:34px;font-size:12px}.agents-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
 
-from pathlib import Path
-from typing import Any
+<header class="header">
+  <div class="header-inner">
+    <div class="logo"><span class="logo-icon">♞</span><span>Hippique <em>AI</em></span></div>
+    <div class="live">EN LIGNE</div>
+  </div>
+</header>
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel, Field
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" data-view="home">🏠 Accueil</button>
+    <button class="tab" data-view="courses">📅 Courses</button>
+    <button class="tab" data-view="analyse">🔍 Analyser</button>
+    <button class="tab" data-view="historique">📜 Historique</button>
+    <button class="tab" data-view="chat">💬 Assistant</button>
+  </div>
+</div>
 
-from multitask_agent import MultiTaskAgent
-from prediction_engine import PredictionEngine
-from prediction_store import PredictionStore
-from racing_data_agent import RacingDataAgent
+<main class="container">
+  <section class="view active" id="view-home">
+    <div class="hero"><h1>L'intelligence au service<br>des <span>courses hippiques.</span></h1><p>Programmes en direct du PMU, analyses assistées par IA.</p></div>
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-icon">♞</div><div class="kpi-label">Agents actifs</div><div class="kpi-value teal">7</div></div>
+      <div class="kpi"><div class="kpi-icon">📅</div><div class="kpi-label">Courses à venir</div><div class="kpi-value" id="kpiCourses">—</div></div>
+      <div class="kpi"><div class="kpi-icon">🏁</div><div class="kpi-label">Historique</div><div class="kpi-value gold" id="kpiHistory">—</div></div>
+      <div class="kpi"><div class="kpi-icon">⚡</div><div class="kpi-label">Source</div><div class="kpi-value teal" style="font-size:14px">PMU</div></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><h2>Agents spécialisés</h2><span class="count">7 actifs</span></div>
+      <div class="agents-grid" id="agentsGrid"></div>
+    </div>
+    <div class="section">
+      <div class="section-title"><h2>Prochaines courses</h2><span class="count" id="countToday">—</span></div>
+      <div class="races-list" id="racesToday"><div class="empty"><span class="loaderargement PMU…</div></div>
+    </div>
+  </section>
 
-try:
-    from agents import analyse_course
-    AGENTS_MODULE_OK = True
-except ImportError:
-    AGENTS_MODULE_OK = False
+  <section class="view" id="view-courses">
+    <div class="hero"><h1>Programmes <span>hippiques</span></h1><p>Courses du jour, hier et avant-hier.</p></div>
+    <div class="tabs" style="padding:0 0 14px">
+      <button class="tab active" data-day="0">Aujourd'hui</button>
+      <button class="tab" data-day="-1">Hier</button>
+      <button class="tab" data-day="-2">Avant-hier</button>
+    </div>
+    <div id="racesProgram"><div class="empty"><span class="loader"></span>Chargement…</div></div>
+  </section>
 
-app = FastAPI(title="Hippique AI", version="0.9.0")
-BASE_DIR = Path(__file__).resolve().parent
-templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+  <section class="view" id="view-analyse">
+    <div class="hero"><h1>Analyser une <span>course</span></h1><p>Collez la liste des partants.</p></div>
+    <form class="analyse-form" id="analyseForm">
+      <label>Nom de la course</label>
+      <input id="raceName" value="Course du jour">
+      <label>Partants</label>
+      <textarea id="raceText">1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a 1a 7a
+2. JOLYDOLE - cote 19 - driver M. Abrivard - musique 1a Dm 2a 7m 3a
+3. KOUREAS D'ELA - cote 1.9 - driver B. Rochard - musique 1a 1a 1a 2a 1a
+4. EVERY TIME WINNER - cote 8.2 - driver E. Raffin - musique 6a 2a 4a 8a 4a
+5. KING DE L'OUEST - cote 3.5 - driver A. Barrier - musique 4a 2a 1a 7a 5a</textarea>
+      <button type="submit" class="btn-primary" id="btnAnalyse">Lancer l'analyse →</button>
+    </form>
+    <div id="analyseResults" style="margin-top:24px"></div>
+  </section>
 
-HORSES = {
-    "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
-    "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]},
-    "Mistral de Noir": {"age": 6, "form": 71, "surface": "gazon", "distance": "2400m", "speed": 78, "stamina": 90, "traction": 74, "last_runs": ["3e", "2e", "4e"]},
-    "Luna de la Mer": {"age": 3, "form": 88, "surface": "gazon", "distance": "1800m", "speed": 91, "stamina": 82, "traction": 79, "last_runs": ["1er", "1er", "2e"]},
+  <section class="view" id="view-historique">
+    <div class="hero"><h1>Votre <span>historique</span></h1><p>Retrouvez vos analyses passées.</p></div>
+    <div id="historyList"></div>
+  </section>
+
+  <section class="view" id="view-chat">
+    <div class="hero"><h1>Assistant <span>hippique</span></h1><p>Posez vos questions.</p></div>
+    <div class="chat-container">
+      <div class="chat-header"><div class="chat-avatar">♞</div><div class="chat-header-info"><h3>Hippique AI</h3><p>Disponible 24/7</p></div></div>
+      <div class="chat-messages" id="chatMessages"><div class="bubble bot">Bonjour ! Posez-moi une question sur les courses hippiques. 🏇</div></div>
+      <form class="chat-input-area" id="chatForm">
+        <input id="chatInput" type="text" placeholder="Votre question…">
+        <button type="submit">→</button>
+      </form>
+    </div>
+  </section>
+</main>
+
+<nav class="bottom-nav">
+  <button class="nav-item active" data-view="home"><span class="nav-item-icon">🏠</span><span>Accueil</span></button>
+  <button class="nav-item" data-view="courses"><span class="nav-item-icon">📅</span><span>Courses</span></button>
+  <button class="nav-item" data-view="analyse"><span class="nav-item-icon">🔍</span><span>Analyser</span></button>
+  <button class="nav-item" data-view="historique"><span class="nav-item-icon">📜</span><span>Historique</span></button>
+  <button class="nav-item" data-view="chat"><span class="nav-item-icon">💬</span><span>Assistant</span></button>
+</nav>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('[data-view]').forEach(t => t.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+  document.querySelectorAll('[data-view="' + name + '"]').forEach(t => t.classList.add('active'));
+  if (name === 'historique') loadHistory();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => showView(el.dataset.view)));
+
+const AGENTS = [
+  {icon:'🐎', color:'#fbbf24', name:'FormAgent', desc:'Analyse musique'},
+  {icon:'🏇', color:'#8b5cf6', name:'DriverAgent', desc:'Stats drivers'},
+  {icon:'📊', color:'#14b8a6', name:'MarketAgent', desc:'Cotes et value'},
+  {icon:'🌤️', color:'#22c55e', name:'TrackAgent', desc:'Piste et météo'},
+  {icon:'🏛️', color:'#3b82f6', name:'ClassAgent', desc:'Gains et niveau'},
+  {icon:'🛡️', color:'#ef4444', name:'RiskAgent', desc:'Gestion risque'},
+  {icon:'🔮', color:'#a855f7', name:'ForecastAgent', desc:'Synthèse finale'}
+];
+$('agentsGrid').innerHTML = AGENTS.map(a => `<div class="agent active"><div class="agent-status"></div><div class="agent-icon" style="background:${a.color}22;color:${a.color}">${a.icon}</div><div class="agent-name">${a.name}</div><div class="agent-desc">${a.desc}</div></div>`).join('');
+
+// ============ PROXY ============
+async function fetchPMU(path) {
+  const url = '/api/pmu/proxy' + path;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const data = await r.json();
+  if (data.error) throw new Error(data.error);
+  return data;
 }
 
-AGENTS = {
-    "CourseAgent": "Analyse le rythme et la distance.",
-    "HorseAgent": "Analyse la forme et les aptitudes.",
-    "JockeyAgent": "Évalue la stratégie du jockey.",
-    "TrainerAgent": "Évalue la préparation de l'écurie.",
-    "TrackAgent": "Analyse piste, terrain et météo.",
-    "CalendarAgent": "Organise les prochaines échéances.",
-    "ForecastAgent": "Consolide les signaux sans garantie.",
+function dateStr(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  return String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0') + d.getFullYear();
 }
 
-data_agent = RacingDataAgent()
-prediction_store = PredictionStore()
-prediction_engine = PredictionEngine(prediction_store)
+// Heure du PMU : le timestamp est déjà en heure de Paris, on l'affiche tel quel
+function heureStr(ts) {
+  if (!ts) return '--:--';
+  const d = new Date(ts);
+  // Compenser le fuseau local pour afficher l'heure de Paris
+  const tzOffset = d.getTimezoneOffset(); // en minutes
+  const paris = new Date(ts + tzOffset * 60000);
+  return String(paris.getHours()).padStart(2,'0') + ':' + String(paris.getMinutes()).padStart(2,'0');
+}
 
+// Statut visuel
+function statutCourse(course) {
+  const statut = (course.statut || '').toUpperCase();
+  if (statut.indexOf('FIN') >= 0 || statut.indexOf('ARRIVE') >= 0) return {label:'Terminée', cls:'finished'};
+  if (statut.indexOf('COURSE') >= 0 || statut.indexOf('DEPART') >= 0) return {label:'En cours', cls:'live'};
+  // Vérifier l'heure
+  const maintenant = Date.now();
+  if (course.heureTri && course.heureTri < maintenant) return {label:'Terminée', cls:'finished'};
+  if (course.heureTri && course.heureTri - maintenant < 15 * 60 * 1000) return {label:'Imminente', cls:'live'};
+  return null;
+}
 
-class ChatMessage(BaseModel):
-    message: str = Field(min_length=1, max_length=2000)
+function disciplineTag(discipline) {
+  const d = (discipline || '').toLowerCase();
+  if (d.indexOf('trot') >= 0 && d.indexOf('mont') >= 0) return 'monte';
+  if (d.indexOf('trot') >= 0) return '';
+  return 'plat';
+}
 
-
-class MultiTaskRequest(BaseModel):
-    task: str = Field(min_length=1, max_length=4000)
-    horse: str | None = None
-    sources: list[str] = Field(default_factory=list)
-
-
-class PredictionRequest(BaseModel):
-    race_key: str = Field(min_length=1, max_length=150)
-    race_name: str = Field(default="Course importée", max_length=200)
-    race_date: str | None = None
-    text: str = Field(min_length=20, max_length=100000)
-
-
-class OutcomeRequest(BaseModel):
-    arrival: list[int] = Field(min_length=1, max_length=50)
-
-
-def analysis(name: str):
-    h = HORSES.get(name, {"form": 0, "surface": "inconnue", "distance": "inconnue", "last_runs": []})
-    return {
-        "horse": {"name": name, **h},
-        "summary": f"{name} présente une forme de {h['form']}/100 et préfère {h['surface']} sur {h['distance']}.",
-        "agents": [
-            {
-                "name": n,
-                "specialty": d,
-                "score": h["form"] if n in ("HorseAgent", "ForecastAgent") else 80,
-                "insight": f"{n} a analysé {name}.",
-            }
-            for n, d in AGENTS.items()
-        ],
+// ============ COURSES ============
+async function loadProgram(day) {
+  document.querySelectorAll('[data-day]').forEach(t => t.classList.toggle('active', t.dataset.day === String(day)));
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement PMU…</div>';
+  try {
+    const data = await fetchPMU('/programme/' + dateStr(day));
+    const reunions = (data.programme && data.programme.reunions) || [];
+    let courses = [];
+    for (const r of reunions) {
+      const hippo = (r.hippodrome && r.hippodrome.libelleLong) || '?';
+      const nr = r.numOfficiel;
+      for (const c of (r.courses || [])) {
+        courses.push({
+          dateStr: dateStr(day), reunion: nr, course: c.numOrdre,
+          hippodrome: hippo, nom: c.libelle || 'Course',
+          discipline: c.discipline || '?', distance: c.distance || '?',
+          partants: c.nombreDeclaresPartants || 0,
+          time: heureStr(c.heureDepart), statut: c.statut || '',
+          heureTri: c.heureDepart || 0
+        });
+      }
     }
 
-
-# ============ PAGES HTML ============
-
-@app.get("/", response_class=HTMLResponse)
-async def root(request: Request):
-    return templates.TemplateResponse(request, "index.html")
-
-
-@app.get("/pronostics", response_class=HTMLResponse)
-async def pronostics_page(request: Request):
-    return templates.TemplateResponse(request, "pronostics.html")
-
-
-# ============ API HIPPIQUE ============
-
-@app.get("/api/health")
-async def health():
-    return {
-        "status": "ok",
-        "service": "Hippique AI",
-        "version": app.version,
-        "agents_module": AGENTS_MODULE_OK,
-        "learning": prediction_store.metrics(),
+    // Aujourd'hui : garder les courses à venir + celles en cours
+    if (day === 0) {
+      const maintenant = Date.now();
+      courses = courses.filter(c => !c.heureTri || c.heureTri >= maintenant - 30 * 60 * 1000);
     }
 
+    // Trier par heure croissante
+    courses.sort((a, b) => (a.heureTri || 0) - (b.heureTri || 0));
 
-@app.get("/api/agents")
-async def agents():
-    return {"agents": AGENTS, "multitask": MultiTaskAgent.catalog()}
+    if (!courses.length) {
+      $('racesProgram').innerHTML = '<div class="empty">Aucune course à venir.</div>';
+      return;
+    }
+    $('racesProgram').innerHTML = '<div class="races-list">' + courses.map(raceCard).join('') + '</div>';
+  } catch (e) {
+    $('racesProgram').innerHTML = '<div class="empty">Erreur : ' + esc(e.message) + '<br><br><button class="btn-secondary" onclick="loadProgram(' + day + ')">Réessayer</button></div>';
+  }
+}
 
+function raceCard(course) {
+  const tag = disciplineTag(course.discipline);
+  const st = statutCourse(course);
+  let tagCls = '';
+  if (tag === 'plat') tagCls = 'plat';
+  else if (tag === 'monte') tagCls = 'monte';
+  return '<div class="race-card" onclick="openRace(\'' + course.dateStr + '\',' + course.reunion + ',' + course.course + ')">' +
+    '<div class="race-time">' + esc(course.time) + '<small>' + esc(course.discipline.substring(0,4)) + '</small></div>' +
+    '<div class="race-info"><h3>' + esc(course.nom) + '</h3><p>' +
+      '<span class="race-tag ' +me tagCls + '">' + esc(course.discipline) + '</span>' +
+      (st ? '<span class="race-tag ' + st.cls + '">' + st.label + '</span>' : '') +
+      '<span>' + esc(course.hippodrome) + '</span><span>·</span>' +
+      '<span>' + course.distance + 'm</span><span>·</span>' +
+      '<span>' + course.partants + ' partants</span>' +
+    '</p></div><div class="race-arrow">›</div></div>';
+}
 
-@app.get("/api/capabilities")
-async def capabilities():
-    return MultiTaskAgent(HORSES, AGENTS).health()
+async function openRace(ds, reunion, course) {
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement détail…</div>';
+  try {
+    const data = await fetchPMU('/program/' + ds + '/R' + reunion + '/C' + course + '/participants');
+    const participants = data.participants || [];
+    if (!participants.length) {
+      $('racesProgram').innerHTML = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button><div class="empty">Aucun partant.</div>';
+      return;
+    }
+    let html = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button>';
+    html += '<div class="race-detail"><div class="race-detail-header"><h2>R' + reunion + 'C' + course + '</h2><div class="race-meta"><span>🐎 ' + participants.length + ' partants</span></div></div><div class="runners-list">';
+    participants.forEach((p, i) => {
+      const musique = (p.musique || '').split(' ').filter(x => x).slice(0,5).join(' ');
+      const driver = p.driver || p.jockey || '—';
+      const cote = (p.dernierRapportDirect && p.dernierRapportDirect.rapport) || '—';
+      const gains = (p.gainsParticipant && p.gainsParticipant.gainsCarriere) || 0;
+      const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      html += '<div class="runner"><div class="runner-rank ' + cls + '">' + (p.numPmu || i+1) + '</div>';
+      html += '<div><div class="runner-name">' + esc(p.nom || '?') + '</div>';
+      html += '<div class="runner-info"><span>' + esc(driver) + '</span>';
+      if (musique) html += '<span class="runner-musique">' + esc(musique) + '</span>';
+      if (gains) html += '<span>' + gains.toLocaleString('fr-FR') + ' €</span>';
+      html += '</div></div><div class="runner-conf">' + esc(cote) + '<small>Cote</small></div></div>';
+    });
+    html += '</div></div>';
+    $('racesProgram').innerHTML = html;
+  } catch (e) {
+    $('racesProgram').innerHTML = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button><div class="empty">Erreur : ' + esc(e.message) + '</div>';
+  }
+}
 
+async function loadHome() {
+  try {
+    const data = await fetchPMU('/programme/' + dateStr(0));
+    const reunions = (data.programme && data.programme.reunions) || [];
+    const maintenant = Date.now();
+    let courses = [];
+    for (const r of reunions) {
+      for (const c of (r.courses || [])) {
+        const heure = c.heureDepart || 0;
+        if (heure && heure < maintenant - 30 * 60 * 1000) continue;
+        courses.push({
+          dateStr: dateStr(0), reunion: r.numOfficiel, course: c.numOrdre,
+          hippodrome: (r.hippodrome && r.hippodrome.libelleLong) || '?',
+          nom: c.libelle || 'Course', discipline: c.discipline || '?',
+          distance: c.distance || '?', partants: c.nombreDeclaresPartants || 0,
+          time: heureStr(heure), statut: c.statut || '',
+          heureTri: heure || 0
+        });
+      }
+    }
 
-@app.get("/api/tracks")
-async def tracks():
-    return {"tracks": data_agent.tracks()}
+    courses.sort((a, b) => a.heureTri - b.heureTri);
 
+    $('kpiCourses').textContent = courses.length;
+    $('countToday').textContent = courses.length + ' à venir';
 
-@app.get("/api/races")
-async def races():
-    return {"races": data_agent.races()}
+    if (!courses.length) {
+      $('racesToday').innerHTML = '<div class="empty">Aucune course à venir aujourd\'hui.</div>';
+      return;
+    }
+    $('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
+  } catch (e) {
+    $('kpiCourses').textContent = '0';
+    $('countToday').textContent = 'Hors ligne';
+    $('racesToday').innerHTML = '<div class="empty">PMU indisponible.<br><br><button class="btn-secondary" onclick="loadHome()">Réessayer</button></div>';
+  }
+}
 
+// ============ HISTORIQUE ============
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('hippique_history') || '[]'); }
+  catch { return []; }
+}
+function saveHistory(entry) {
+  const h = getHistory();
+  h.unshift(entry);
+  localStorage.setItem('hippique_history', JSON.stringify(h.slice(0, 50)));
+}
+function loadHistory() {
+  const h = getHistory();
+  $('kpiHistory').textContent = h.length;
+  if (!h.length) { $('historyList').innerHTML = '<div class="empty">Aucune analyse enregistrée.</div>'; return; }
+  $('historyList').innerHTML = h.map(e => '<div class="history-item"><h4>' + esc(e.race_name) + '</h4><p>' + esc(e.date) + ' · ' + e.nb + ' partants · Top: ' + esc(e.top) + '</p></div>').join('');
+}
 
-@app.get("/api/analysis")
-async def get_analysis(horse: str = "Asteria du Clos"):
-    return analysis(horse)
+// ============ ANALYSE ============
+$('analyseForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var btn = $('btnAnalyse');
+  btn.disabled = true;
+  btn.textContent = 'Analyse en cours...';
+  try {
+    var r = await fetch('/api/predictions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        race_key: 'race-' + Date.now(),
+        race_name: $('raceName').value.trim(),
+        race_date: new Date().toISOString().split('T')[0],
+        text: $('raceText').value.trim()
+      })
+    });
+    var data = await r.json();
+    var runners = data.ranking || data.recommendations || [];
+    if (!runners.length) { $('analyseResults').innerHTML = '<div class="empty">Aucun classement généré.</div>'; return; }
+    saveHistory({ race_name: $('raceName').value.trim(), date: new Date().toLocaleString('fr-FR'), nb: runners.length, top: runners.slice(0, 3).map(x => x.nom).join(' - ') });
+    var html = '<div class="race-detail"><div class="race-detail-header"><h2>Classement proposé</h2><div class="race-meta"><span>🎯 ' + runners.length + ' partants</span></div></div><div class="runners-list">';
+    runners.forEach(function(rr, i) {
+      var cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      var conf = ((rr.p_calibree || 0) * 100).toFixed(1);
+      var mus = (rr.musique || []).join(' ');
+      html += '<div class="runner"><div class="runner-rank ' + cls + '">' + (i+1) + '</div><div><div class="runner-name"><span class="runner-num">N°' + esc(rr.num) + '</span>' + esc(rr.nom) + '</div><div class="runner-info"><span>' + esc(rr.driver || '—') + '</span>' + (mus ? '<span class="runner-musique">' + esc(mus) + '</span>' : '') + '</div></div><div class="runner-conf">' + conf + '%<small>Confiance</small></div></div>';
+    });
+    html += '</div></div>';
+    $('analyseResults').innerHTML = html;
+    $('kpiHistory').textContent = getHistory().length;
+  } catch (err) {
+    $('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Lancer l'analyse →";
+  }
+});
 
+// ============ CHAT ============
+$('chatForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var input = $('chatInput');
+  var text = input.value.trim();
+  if (!text) return;
+  var messages = $('chatMessages');
+  var userMsg = document.createElement('div');
+  userMsg.className = 'bubble user';
+  userMsg.textContent = text;
+  messages.appendChild(userMsg);
+  input.value = '';
+  var reply = document.createElement('div');
+  reply.className = 'bubble bot';
+  var lower = text.toLowerCase();
+  var rep = "Posez-moi une question plus précise sur les courses, chevaux, drivers ou hippodromes.";
+  if (lower.includes('musique')) rep = "La musique, c'est l'historique des performances récentes. Ex: 1a 3a 2a = 1er, 3e, 2e sur ses 3 dernières courses. 'a' = attelé, 'm' = monté, 'p' = plat.";
+  else if (lower.includes('driver') || lower.includes('jockey')) rep = "Un bon driver comme Éric Raffin ou Franck Nivard a environ 20% de victoires. Leur présence augmente les chances d'un cheval.";
+  else if (lower.includes('corde')) rep = "La corde est la position de départ. En plat, les cordes 1-4 sont avantagées. En trot autostart, les 1-5 sont avantagés.";
+  else if (lower.includes('trot')) rep = "Le trot se court attelé (sulky) ou monté (jockey). Discipline très populaire en France, avec Vincennes comme temple.";
+  else if (lower.includes('plat')) rep = "Le plat se court sans obstacles, de 1000m à 4000m. Les jockeys portent des poids pour équilibrer.";
+  else if (lower.includes('bonjour') || lower.includes('salut')) rep = "Bonjour ! Comment puis-je vous aider avec les courses hippiques ? 🏇";
+  reply.textContent = rep;
+  messages.appendChild(reply);
+  messages.scrollTop = messages.scrollHeight;
+});
 
-@app.post("/api/multitask")
-async def multitask(payload: MultiTaskRequest):
-    return await MultiTaskAgent(HORSES, AGENTS).run(payload.task, payload.horse, payload.sources)
+document.querySelectorAll('[data-day]').forEach(t => t.addEventListener('click', function() { loadProgram(parseInt(this.dataset.day)); }));
 
-
-@app.post("/api/chat")
-async def chat(payload: ChatMessage):
-    return {"reply": "Le chat est géré côté navigateur par Puter.js."}
-
-
-@app.post("/api/predictions")
-async def create_prediction(payload: PredictionRequest):
-    runners = prediction_engine.parse_text(payload.text)
-    result = prediction_engine.rank(runners, payload.race_key, payload.race_name, payload.race_date)
-    result["runners_count"] = len(runners)
-    return result
-
-
-@app.post("/api/predictions/{prediction_id}/outcome")
-async def record_outcome(prediction_id: int, payload: OutcomeRequest):
-    try:
-        return prediction_store.save_outcome(prediction_id, payload.arrival)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-
-
-@app.get("/api/predictions")
-async def prediction_history(limit: int = 20):
-    return {"predictions": prediction_store.history(limit)}
-
-
-@app.get("/api/learning/metrics")
-async def learning_metrics():
-    return prediction_store.metrics()
-
-
-# ============ API AGENTS ACTIFS ============
-
-@app.post("/api/agents/analyse")
-async def agents_analyse(payload: dict):
-    if not AGENTS_MODULE_OK:
-        return {"error": "Module agents non disponible", "resultats": []}
-    runners = payload.get("runners", [])
-    try:
-        return {"resultats": analyse_course(runners)}
-    except Exception as e:
-        return {"error": str(e), "resultats": []} 
-        
-
-# ============ PROXY PMU (contourne CORS) ============
-
-import httpx
-
-PMU_BASE_URL = "https://online.turfinfo.api.pmu.fr/rest/client/61"
-
-@app.get("/api/pmu/proxy/{path:path}")
-async def proxy_pmu(path: str):
-    """Proxy vers l'API PMU pour contourner CORS."""
-    url = f"{PMU_BASE_URL}/{path}"
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            r = await client.get(url)
-            if r.status_code != 200:
-                return {"error": f"PMU HTTP {r.status_code}", "path": path}
-            return r.json()
-    except Exception as e:
-        return {"error": str(e), "path": path}
+// ============ INIT ============
+$('kpiHistory').textContent = getHistory().length;
+loadHome();
+loadProgram(0);
+</script>
+</body>
+</html>
