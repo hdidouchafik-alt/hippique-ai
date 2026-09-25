@@ -55,12 +55,19 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .actions{padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
 .actions h3{font-size:14px;font-weight:700;margin-bottom:10px}
 .actions ul{list-style:none}
-.actions li{padding:8px 0 8px 24px;position:agentsrelative;font-size:13px;color:var(--textCount-2);border-bottom:1').px solid var(--border)}
-.actions li:lasttext-child{border-bottom:none}
-.actions li::before{content:'→';position:Contentabsolute;left:0;color:var(--teal);font-weight:700}
-.empty{text-align =:center;padding:40px 20px;color:var(--text-3);font-size:13px;background:var(--bg-card);border:1px dashed var(--border);border-radius:12px}
-.btn{padding:12px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-size:13px;font-weight:600}
+.actions li{padding:8px 0 8px 24px;position:relative;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border)}
+.actions li:last-child{border-bottom:none}
+.actions li::before{content:'→';position:absolute;left:0;color:var(--teal);font-weight:700}
+.empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px;background:var(--bg-card);border:1px dashed var(--border);border-radius:12px}
+.btn{padding:12px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--teal);color:var(--teal)}
+.btn-primary{padding:12px 18px;background:linear-gradient(135deg,var(--teal),#0d9488);color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none}
+.btn-primary:hover{opacity:.9}
+.results-item{padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.results-item .info{flex:1;min-width:0}
+.results-item .info strong{font-size:13px;font-weight:700;display:block;margin-bottom:3px}
+.results-item .info small{font-size:11px;color:var(--text-3)}
+.results-item .arrivee{font-family:ui-monospace,monospace;font-size:12px;color:var(--gold);padding:4px 8px;background:rgba(251,191,36,.1);border-radius:6px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -76,7 +83,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <div class="container">
   <div class="hero">
     <h1>État d'apprentissage des agents</h1>
-    <p>Suivi de la progression des agents IA : performance, taux de réussite et points à corriger.</p>
+    <p>Suivi de la progression des agents IA. Les arrivées sont collectées automatiquement depuis le PMU.</p>
   </div>
 
   <div class="kpis">
@@ -92,12 +99,18 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   </div>
 
   <div class="section">
+    <div class="section-title"><h2>Arrivées collectées</h2><span class="count" id="resultsCount">0</span></div>
+    <div id="resultsList"><div class="empty">Aucune arrivée collectée. Cliquez sur "🤖 Lancer la collecte".</div></div>
+  </div>
+
+  <div class="section">
     <div class="section-title"><h2>Points à corriger</h2><span class="count" id="actionsCount">—</span></div>
     <div id="actionsList"></div>
   </div>
 
   <div style="text-align:center;margin-top:32px;">
-    <button class="btn" onclick="loadAll()">↻ Rafraîchir</button>
+    <button class="btn-primary" id="btnCollect" onclick="collecter()">🤖 Lancer la collecte</button>
+    <button class="btn" onclick="loadAll()" style="margin-left:8px;">↻ Rafraîchir</button>
   </div>
 </div>
 
@@ -120,6 +133,51 @@ function fb(s) {
   if (s >= 70) return {cls:'good', txt:'Bonne performance, continue comme ça.'};
   if (s >= 40) return {cls:'warn', txt:'Performance moyenne. À surveiller.'};
   return {cls:'bad', txt:'Performance faible. Nécessite une correction.'};
+}
+
+async function collecter() {
+  const btn = $('btnCollect');
+  btn.disabled = true;
+  btn.textContent = '⏳ Collecte en cours…';
+  try {
+    const r = await fetch('/api/agent/collect', { method: 'POST' });
+    const data = await r.json();
+    if (data.error) {
+      alert('Erreur : ' + data.error);
+    } else {
+      alert('✅ Collecte terminée !\n\nNouvelles arrivées : ' + data.nouvelles_arrivees + '\nTotal collecté : ' + data.total_collecte);
+      loadAll();
+    }
+  } catch (e) {
+    alert('Erreur : ' + e.message);
+  }
+  btn.disabled = false;
+  btn.textContent = '🤖 Lancer la collecte';
+}
+
+async function loadResults() {
+  try {
+    const r = await fetch('/api/results?limit=20');
+    const data = await r.json();
+    const results = data.results || [];
+    $('resultsCount').textContent = data.count || 0;
+    if (!results.length) {
+      $('resultsList').innerHTML = '<div class="empty">Aucune arrivée collectée. Cliquez sur "🤖 Lancer la collecte".</div>';
+      return;
+    }
+    $('resultsList').innerHTML = results.reverse().map(x => {
+      const arr = (x.arrivee || []).join(' - ');
+      return `<div class="results-item">
+        <div class="info">
+          <strong>${esc(x.course)}</strong>
+          <small>${esc(x.hippodrome)} · R${x.reunion}C${x.num_course} · ${x.partants} partants</small>
+        </div>
+        <div class="arrivee">${esc(arr)}</div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    console.warn(e);
+  }
 }
 
 async function loadAll() {
@@ -160,22 +218,19 @@ async function loadAll() {
       <div class="agent-feedback ${f.cls}">${esc(f.txt)}</div>
     </div>`;
   }).join('');
-  $(' AGENTS_META.length;
+  $('agentsCount').textContent = AGENTS_META.length;
 
   const actions = [];
   if (preds === 0) {
-    actions.push({t:'Collecter des résultats', i:['Aucune prédiction évaluée','Enregistrer les arrivées via /api/predictions/{id}/outcome','Objectif : 30 à 50 résultats']});
-  } else if (preds < 20) {
-    actions.push({t:'Enrichir le dataset', i:[`${preds} prédiction(s) évaluée(s)`,'Continuer jusqu\'à 30+ résultats','Scores plus fiables ensuite']});
-  }
-  if (preds > 0 && top1 < 15) {
-    actions.push({t:'Améliorer MarketAgent', i:['Top 1 < 15%','Réduire le poids des cotes','Augmenter le poids de la musique']});
+    actions.push({t:'Collecter des résultats', i:['Cliquez sur "🤖 Lancer la collecte" pour récupérer les arrivées du PMU','Chaque arrivée alimente les agents','Objectif : 30 à 50 arrivées']});
   }
   actions.push({t:'Fusion des sources', i:['FormAgent + DriverAgent : redondance à surveiller','MarketAgent dépend des cotes disponibles','TrackAgent : ajouter météo automatique']});
-  actions.push({t:'Prochaines étapes', i:['Base SQLite pour les prédictions','Saisie arrivée auto','ROI théorique par agent']});
+  actions.push({t:'Prochaines étapes', i:['Base SQLite pour les prédictions','Automatiser la collecte via cron','ROI théorique par agent']});
 
   $('actionsCount').textContent = actions.length;
   $('actionsList').innerHTML = actions.map(a => `<div class="actions"><h3>⚠ ${esc(a.t)}</h3><ul>${a.i.map(x => '<li>' + esc(x) + '</li>').join('')}</ul></div>`).join('');
+
+  loadResults();
 }
 
 loadAll();
