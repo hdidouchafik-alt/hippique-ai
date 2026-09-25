@@ -27,7 +27,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="4.0.0")
+app = FastAPI(title="Hippique AI", version="4.1.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -102,6 +102,25 @@ async def health():
         "results_collected": len(COLLECTED),
         "evaluated": STATS["evaluated"],
     }
+
+
+@app.get("/api/db-test")
+async def db_test():
+    r = {"DB_OK": DB_OK, "has_url": False, "has_psycopg": False, "connect_ok": False, "error": None}
+    url = os.environ.get("DATABASE_URL", "")
+    r["has_url"] = bool(url)
+    r["url_len"] = len(url)
+    try:
+        import psycopg
+        r["has_psycopg"] = True
+        if url:
+            with psycopg.connect(url, connect_timeout=10) as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1")
+                    r["connect_ok"] = True
+    except Exception as e:
+        r["error"] = str(e)
+    return r
 
 
 @app.post("/api/chat")
@@ -189,6 +208,17 @@ async def learning_metrics():
     }
 
 
+@app.get("/api/learning/reset")
+async def learning_reset():
+    COLLECTED.clear()
+    STATS["evaluated"] = 0
+    for name in STATS["agents"]:
+        STATS["agents"][name] = {"h1": 0, "h5": 0, "tot": 0}
+    if DB_OK:
+        db.reset_all()
+    return {"ok": True}
+
+
 @app.get("/api/admin/purge")
 async def admin_purge(confirm: str = ""):
     if confirm != "yes":
@@ -199,7 +229,7 @@ async def admin_purge(confirm: str = ""):
         STATS["agents"][name] = {"h1": 0, "h5": 0, "tot": 0}
     if DB_OK:
         db.reset_all()
-    return {"ok": True}
+    return {"ok": True, "message": "Base purge"}
 
 
 def parse_musique(s):
