@@ -34,10 +34,6 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .kpi-value.gold{color:var(--gold)}
 .kpi-value.green{color:var(--green)}
 .kpi-value.red{color:var(--red)}
-.progress-global{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:24px}
-.progress-global .label{display:flex;justify-content:space-between;font-size:12px;color:var(--text-2);margin-bottom:8px}
-.progress-global .bar{height:8px;background:var(--bg-3);border-radius:4px;overflow:hidden}
-.progress-global .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--gold));border-radius:4px;transition:width .5s}
 .agent-row{padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;position:relative}
 .agent-row.rank-1{border-color:var(--gold);background:linear-gradient(135deg,rgba(251,191,36,.08),transparent 40%)}
 .agent-row.rank-2{border-color:var(--silver)}
@@ -55,19 +51,12 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .progress-bar.good{background:linear-gradient(90deg,#22c55e,#14b8a6)}
 .progress-bar.medium{background:linear-gradient(90deg,#fbbf24,#f97316)}
 .progress-bar.low{background:linear-gradient(90deg,#ef4444,#f97316)}
-.agent-stats{display:flex;gap:12px;font-size:11px;color:var(--text-3);margin-top:6px}
+.agent-stats{display:flex;gap:12px;font-size:11px;color:var(--text-3);margin-top:6px;flex-wrap:wrap}
 .agent-stats span{display:flex;align-items:center;gap:4px}
 .agent-stats b{color:var(--text-2)}
-.results-item{padding:12px 14px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
-.results-item .top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.results-item .info{flex:1;min-width:0}
-.results-item .info strong{font-size:13px;font-weight:700;display:block;margin-bottom:3px}
-.results-item .info small{font-size:11px;color:var(--text-3)}
-.results-item .arrivee{font-family:ui-monospace,monospace;font-size:12px;color:var(--gold);padding:4px 8px;background:rgba(251,191,36,.1);border-radius:6px;white-space:nowrap}
-.results-item .eval{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
-.eval-badge{font-size:10px;padding:3px 7px;border-radius:5px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
-.eval-badge.hit{background:rgba(34,197,94,.15);color:#4ade80}
-.eval-badge.miss{background:rgba(239,68,68,.12);color:#f87171}
+.roi{display:inline-block;padding:3px 8px;border-radius:6px;font-weight:700;font-size:11px;margin-top:8px}
+.roi.pos{background:rgba(34,197,94,.15);color:#4ade80}
+.roi.neg{background:rgba(239,68,68,.12);color:#f87171}
 .actions{padding:16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:10px}
 .actions h3{font-size:14px;font-weight:700;margin-bottom:10px}
 .actions ul{list-style:none}
@@ -77,12 +66,8 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .empty{text-align:center;padding:40px 20px;color:var(--text-3);font-size:13px;background:var(--bg-card);border:1px dashed var(--border);border-radius:12px}
 .btn{padding:12px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
 .btn:hover{border-color:var(--teal);color:var(--teal)}
-.btn-primary{padding:12px 18px;background:linear-gradient(135deg,var(--teal),#0d9488);color:#fff;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border:none}
-.btn-primary:hover{opacity:.9}
-.btn-primary:disabled{opacity:.6;cursor:wait}
 .btn-danger{padding:12px 18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#f87171;font-size:13px;font-weight:600;cursor:pointer}
 .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:32px}
-.collect-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:24px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -98,43 +83,29 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 <div class="container">
   <div class="hero">
     <h1>État d'apprentissage des agents</h1>
-    <p>Suivi de la progression réelle. Chaque arrivée collectée est comparée aux prédictions des 7 agents.</p>
+    <p>Suivi de la progression réelle + ROI théorique (mise de 10€ sur le Top1 de chaque agent).</p>
   </div>
 
   <div class="kpis">
     <div class="kpi"><div class="kpi-label">Courses évaluées</div><div class="kpi-value" id="kpiPred">—</div></div>
     <div class="kpi"><div class="kpi-label">Top 1 global</div><div class="kpi-value teal" id="kpiTop1">—</div></div>
     <div class="kpi"><div class="kpi-label">Top 5 global</div><div class="kpi-value gold" id="kpiTop5">—</div></div>
-    <div class="kpi"><div class="kpi-label">Statut</div><div class="kpi-value" id="kpiStatus">—</div></div>
-  </div>
-
-  <div class="progress-global">
-    <div class="label">
-      <span>Objectif d'apprentissage</span>
-      <strong id="progressLabel">0 / 50</strong>
-    </div>
-    <div class="bar"><i id="progressBar" style="width:0%"></i></div>
+    <div class="kpi"><div class="kpi-label">Meilleur ROI</div><div class="kpi-value green" id="kpiBestRoi">—</div></div>
   </div>
 
   <div class="section">
-    <div class="section-title"><h2>Classement des agents</h2><span class="count" id="agentsCount">7</span></div>
+    <div class="section-title"><h2>Classement des agents (par score)</h2><span class="count" id="agentsCount">7</span></div>
     <div id="agentsList"></div>
   </div>
 
   <div class="section">
-    <div class="section-title"><h2>Dernières courses évaluées</h2><span class="count" id="resultsCount">0</span></div>
-    <div id="resultsList"><div class="empty">Aucune course évaluée.</div></div>
+    <div class="section-title"><h2>Rentabilité (ROI sur 10€ par pari)</h2><span class="count" id="roiCount">7</span></div>
+    <div id="roiList"></div>
   </div>
 
   <div class="section">
     <div class="section-title"><h2>Points à corriger</h2><span class="count" id="actionsCount">—</span></div>
     <div id="actionsList"></div>
-  </div>
-
-  <div class="collect-row">
-    <button class="btn-primary" onclick="collecter(0, this)">📅 Aujourd'hui</button>
-    <button class="btn-primary" onclick="collecter(-1, this)">📆 Hier</button>
-    <button class="btn-primary" onclick="collecter(-2, this)">📅 Avant-hier</button>
   </div>
 
   <div class="btns">
@@ -158,55 +129,17 @@ function $(id) { return document.getElementById(id); }
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]; }); }
 function cls(s) { return s >= 70 ? 'good' : s >= 40 ? 'medium' : 'low'; }
 
-function collecter(offset, btn) {
-  var original = btn.textContent;
-  btn.disabled = true;
-  var labels = {0:'Aujourd\'hui', '-1':'Hier', '-2':'Avant-hier'};
-  btn.textContent = '⏳ ' + (labels[String(offset)] || 'Collecte') + '...';
-
-  var xhr = new XMLHttpRequest();
-  // Utiliser POST avec l'offset en paramètre de requête
-  var url = '/api/agent/collect?offset=' + offset;
-  xhr.open('POST', url, true);
-  xhr.setRequestHeader('Content-Type', 'application/json');
-  xhr.onload = function() {
-    btn.disabled = false;
-    btn.textContent = original;
-    if (xhr.status === 200) {
-      try {
-        var data = JSON.parse(xhr.responseText);
-        if (data.ok === false) {
-          alert('PMU indisponible');
-        } else {
-          alert('✅ Collecte OK\n\nNouvelles : ' + data.nouvelles + '\nEvaluees : ' + data.evaluees + '\nTotal : ' + data.total);
-          loadAll();
-        }
-      } catch (e) {
-        alert('Erreur JSON');
-      }
-    } else {
-      alert('Erreur serveur : ' + xhr.status);
-    }
-  };
-  xhr.onerror = function() {
-    btn.disabled = false;
-    btn.textContent = original;
-    alert('Erreur reseau');
-  };
-  xhr.send('{}');
-}
-
 function resetStats() {
   if (!confirm('Effacer toutes les donnees d\'apprentissage ?')) return;
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/learning/reset', true);
+  xhr.open('GET', '/api/learning/reset', true);
   xhr.onload = function() {
     if (xhr.status === 200) {
       alert('Reinitialise !');
       loadAll();
     }
   };
-  xhr.send('{}');
+  xhr.send();
 }
 
 function loadMetrics() {
@@ -224,23 +157,21 @@ function loadMetrics() {
       $('kpiTop1').textContent = preds > 0 ? top1.toFixed(1) + '%' : '—';
       $('kpiTop5').textContent = preds > 0 ? top5.toFixed(1) + '%' : '—';
 
-      var status = 'Démarrage', scls = '';
-      if (preds === 0) { status = 'Aucune donnée'; }
-      else if (top1 >= 30) { status = 'Bon'; scls = 'green'; }
-      else if (top1 >= 15) { status = 'Moyen'; scls = 'gold'; }
-      else { status = 'À améliorer'; scls = 'red'; }
-      $('kpiStatus').textContent = status;
-      $('kpiStatus').className = 'kpi-value ' + scls;
-
-      var pct = Math.min(100, (preds / 50) * 100);
-      $('progressBar').style.width = pct + '%';
-      $('progressLabel').textContent = preds + ' / 50';
-
       var agents = m.agents || {};
       var arr = [];
       for (var name in agents) arr.push({name: name, data: agents[name]});
-      arr.sort(function(a, b) { return (b.data.score || 0) - (a.data.score || 0); });
 
+      // Meilleur ROI
+      var bestRoi = 0;
+      var bestName = '—';
+      for (var i = 0; i < arr.length; i++) {
+        var r = arr[i].data.roi_pct || 0;
+        if (r > bestRoi) { bestRoi = r; bestName = arr[i].name; }
+      }
+      $('kpiBestRoi').textContent = bestName === '—' ? '—' : bestRoi.toFixed(1) + '%';
+
+      // Classement par score
+      arr.sort(function(a, b) { return (b.data.score || 0) - (a.data.score || 0); });
       var html = '';
       for (var i = 0; i < arr.length; i++) {
         var a = arr[i];
@@ -253,6 +184,9 @@ function loadMetrics() {
         var t5 = a.data.top5 || 0;
         var tot = a.data.total || 0;
         var t5max = tot * 5;
+        var roiPct = a.data.roi_pct || 0;
+        var roiPnl = a.data.roi_pnl || 0;
+        var roiClass = roiPct >= 0 ? 'pos' : 'neg';
 
         html += '<div class="agent-row ' + rankClass + '">';
         html += '<div class="agent-head"><div class="agent-id">';
@@ -265,78 +199,70 @@ function loadMetrics() {
         html += '<div class="agent-stats">';
         html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
         html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
-        html += '</div></div>';
+        html += '</div>';
+        html += '<div class="roi ' + roiClass + '">ROI : ' + (roiPct >= 0 ? '+' : '') + roiPct.toFixed(1) + '% (' + (roiPnl >= 0 ? '+' : '') + roiPnl.toFixed(0) + '€)</div>';
+        html += '</div>';
       }
       $('agentsList').innerHTML = html;
       $('agentsCount').textContent = arr.length + ' agents';
 
+      // Classement par ROI
+      var arrRoi = arr.slice().sort(function(a, b) {
+        return (b.data.roi_pct || -999) - (a.data.roi_pct || -999);
+      });
+      var roiHtml = '';
+      for (var j = 0; j < arrRoi.length; j++) {
+        var a2 = arrRoi[j];
+        var meta2 = AGENTS_META[a2.name] || {icon:'⚙️', color:'#64748b', desc:''};
+        var r2 = a2.data.roi_pct || 0;
+        var pnl2 = a2.data.roi_pnl || 0;
+        var mise2 = a2.data.roi_mise || 0;
+        var gain2 = a2.data.roi_gain || 0;
+        var pari2 = a2.data.roi_pari || 0;
+        var gagne2 = a2.data.roi_gagne || 0;
+        var roiCls = r2 >= 0 ? 'pos' : 'neg';
+        var medalR = j === 0 ? '🥇' : j === 1 ? '🥈' : j === 2 ? '🥉' : '';
+
+        roiHtml += '<div class="agent-row">';
+        roiHtml += '<div class="agent-head"><div class="agent-id">';
+        roiHtml += '<div class="agent-icon" style="background:' + meta2.color + '22;color:' + meta2.color + '">' + (medalR ? '<span class="medal">' + medalR + '</span>' : '') + meta2.icon + '</div>';
+        roiHtml += '<div><div class="agent-name">' + esc(a2.name) + '</div><div class="agent-desc">' + pari2 + ' paris · ' + gagne2 + ' gagnants</div></div>';
+        roiHtml += '</div><div class="agent-score"><div class="roi ' + roiCls + '" style="font-size:16px;padding:6px 12px;">' + (r2 >= 0 ? '+' : '') + r2.toFixed(1) + '%</div></div></div>';
+        roiHtml += '<div class="agent-stats">';
+        roiHtml += '<span>💸 Mise : <b>' + mise2.toFixed(0) + '€</b></span>';
+        roiHtml += '<span>💰 Gain : <b>' + gain2.toFixed(0) + '€</b></span>';
+        roiHtml += '<span>' + (pnl2 >= 0 ? '📈' : '📉') + ' PnL : <b>' + (pnl2 >= 0 ? '+' : '') + pnl2.toFixed(0) + '€</b></span>';
+        roiHtml += '</div></div>';
+      }
+      $('roiList').innerHTML = roiHtml;
+      $('roiCount').textContent = arrRoi.length + ' agents';
+
+      // Points à corriger
       var actions = [];
-      if (preds < 50) actions.push({t:'Continuer la collecte', i:[preds + ' courses sur 50','Utilisez les 3 boutons : Aujourd\'hui, Hier, Avant-hier']});
-      for (var j = 0; j < arr.length; j++) {
-        var s2 = Math.min(100, arr[j].data.score || 50);
-        if (arr[j].data.total >= 20 && s2 < 30) {
-          actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + s2.toFixed(0) + '/100) sur ' + arr[j].data.total + ' courses','Réduire son poids dans la décision finale']});
+      if (preds < 50) actions.push({t:'Continuer la collecte', i:[preds + ' courses sur 50']});
+      for (var k = 0; k < arr.length; k++) {
+        var s2 = Math.min(100, arr[k].data.score || 50);
+        if (arr[k].data.total >= 20 && s2 < 30) {
+          actions.push({t:'Améliorer ' + arr[k].name, i:['Score faible (' + s2.toFixed(0) + '/100) sur ' + arr[k].data.total + ' courses','Réduire son poids dans la décision finale']});
         }
       }
-      actions.push({t:'Prochaines étapes', i:['ROI théorique par agent','Alertes sur les agents faibles']});
-
+      actions.push({t:'Prochaines étapes', i:['Alertes sur les agents faibles','Ajuster les poids automatiquement']});
       $('actionsCount').textContent = actions.length;
       var ah = '';
-      for (var k = 0; k < actions.length; k++) {
-        var act = actions[k];
+      for (var l = 0; l < actions.length; l++) {
+        var act = actions[l];
         ah += '<div class="actions"><h3>⚠ ' + esc(act.t) + '</h3><ul>';
-        for (var l = 0; l < act.i.length; l++) ah += '<li>' + esc(act.i[l]) + '</li>';
+        for (var m2 = 0; m2 < act.i.length; m2++) ah += '<li>' + esc(act.i[m2]) + '</li>';
         ah += '</ul></div>';
       }
       $('actionsList').innerHTML = ah;
+
     } catch (e) { console.warn(e); }
   };
   xhr.send();
 }
 
-function loadResults() {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '/api/results?limit=10', true);
-  xhr.onload = function() {
-    if (xhr.status !== 200) return;
-    try {
-      var data = JSON.parse(xhr.responseText);
-      var results = data.results || [];
-      $('resultsCount').textContent = data.count || 0;
-      if (!results.length) {
-        $('resultsList').innerHTML = '<div class="empty">Aucune course évaluée.</div>';
-        return;
-      }
-      var html = '';
-      for (var i = results.length - 1; i >= 0 && i >= results.length - 10; i--) {
-        var x = results[i];
-        var arr2 = (x.arrivee || []).join(' - ');
-        var eval2 = x.evaluations || {};
-        html += '<div class="results-item"><div class="top">';
-        html += '<div class="info"><strong>' + esc(x.course) + '</strong><small>' + esc(x.hippodrome) + ' · R' + x.reunion + 'C' + x.num_course + ' · ' + x.partants + ' partants</small></div>';
-        html += '<div class="arrivee">' + esc(arr2) + '</div></div>';
-        var evalHtml = '';
-        var hasEval = false;
-        for (var agentName in eval2) {
-          hasEval = true;
-          var e = eval2[agentName];
-          var hit = e.top1 === 1;
-          evalHtml += '<span class="eval-badge ' + (hit ? 'hit' : 'miss') + '">' + (hit ? '✓ ' : '✗ ') + agentName + '</span>';
-        }
-        if (hasEval) html += '<div class="eval">' + evalHtml + '</div>';
-        html += '</div>';
-      }
-      $('resultsList').innerHTML = html;
-    } catch (e) { console.warn(e); }
-  };
-  xhr.send();
-}
-
-function loadAll() {
-  loadMetrics();
-  loadResults();
-}
-
+function loadAll() { loadMetrics(); }
 loadAll();
 </script>
 </body>
