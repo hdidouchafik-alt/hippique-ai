@@ -23,7 +23,7 @@ except ImportError:
 import httpx
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="1.3.0")
+app = FastAPI(title="Hippique AI", version="1.4.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -31,7 +31,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 COLLECTED_RESULTS = []
 
 HORSES = {
-    "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
+    "Asteria du Clos": {"age": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
     "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]},
 }
 
@@ -164,7 +164,7 @@ async def agents_analyse(payload: dict):
         return {"error": str(e), "resultats": []}
 
 
-# ============ AGENT COLLECTE ARRIVÉES ============
+# ============ AGENT COLLECTE ARRIVÉES (méthode participants) ============
 
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HippiqueAI/1.0)"}
@@ -186,34 +186,31 @@ async def _pmu_get(url: str):
         return None
 
 
-def _extract_arrivee(data) -> list:
-    """Extrait l'arrivée depuis n'importe quel format de réponse PMU."""
-    if not data:
+async def _get_arrivee_participants(date_str: str, reunion: int, course: int) -> list:
+    """Récupère l'arrivée depuis les participants (champ 'place')."""
+    url = f"{PMU_BASE}/programme/{date_str}/R{reunion}/C{course}/participants"
+    data = await _pmu_get(url)
+    if not data or not isinstance(data, dict):
         return []
 
-    # Normaliser en liste
-    liste = []
-    if isinstance(data, list):
-        liste = data
-    elif isinstance(data, dict):
-        liste = data.get("rapports") or data.get("combinaisons") or []
+    participants = data.get("participants") or []
+    classes = []
 
-    for rap in liste:
-        if not isinstance(rap, dict):
+    for p in participants:
+        if not isinstance(p, dict):
             continue
-        type_pari = (rap.get("typePari") or "").upper()
-        if "SIMPLE" in type_pari and "GAGNANT" in type_pari:
-            for comb in (rap.get("combinaisons") or []):
-                if not isinstance(comb, dict):
-                    continue
-                nums = comb.get("combinaison") or []
-                if nums:
-                    try:
-                        return [int(n) for n in nums]
-                    except (ValueError, TypeError):
-                        continue
+        # Le champ 'place' contient le classement final
+        place = p.get("place") or p.get("ordreArrivee") or p.get("position")
+        num = p.get("numPmu")
+        if place and num:
+            try:
+                classes.append((int(place), int(num)))
+            except (ValueError, TypeError):
+                continue
 
-    return []
+    # Trier par place croissante
+    classes.sort(key=lambda x: x[0])
+    return [num for _, num in classes[:5]]
 
 
 @app.post("/api/agent/collect")
@@ -229,6 +226,7 @@ async def agent_collect(offset: int = 0):
         reunions = (programme.get("programme") or {}).get("reunions") or []
 
     nouvelles = 0
+    courses_scan = 0
 
     for r in reunions:
         if not isinstance(r, dict):
@@ -242,14 +240,14 @@ async def agent_collect(offset: int = 0):
             if "FIN" not in statut and "ARRIVE" not in statut:
                 continue
 
+            courses_scan += 1
             num_course = c.get("numOrdre")
             key = f"{date_str}-R{nr}C{num_course}"
             if any(x.get("key") == key for x in COLLECTED_RESULTS):
                 continue
 
-            url = f"{PMU_BASE}/programme/{date_str}/R{nr}/C{num_course}/rapports-definitifs"
-            rapports = await _pmu_get(url)
-            arrivee = _extract_arrivee(rapports)
+            # Utiliser les participants au lieu des rapports
+            arrivee = await _get_arrivee_participants(date_str, nr, num_course)
 
             if arrivee:
                 COLLECTED_RESULTS.append({
@@ -268,6 +266,7 @@ async def agent_collect(offset: int = 0):
 
     return {
         "date": date_str,
+        "courses_scan": courses_scan,
         "nouvelles_arrivees": nouvelles,
         "total_collecte": len(COLLECTED_RESULTS),
     }
