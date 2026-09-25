@@ -181,4 +181,4 @@ async def agents_analyse(payload: dict):
     try:
         return {"resultats": analyse_course(runners)}
     except Exception as e:
-        return {"error": str(e), "resultats": []}
+        return {"error": str(e), "resultats": []} 
