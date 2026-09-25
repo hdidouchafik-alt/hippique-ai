@@ -24,7 +24,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="2.1.0")
+app = FastAPI(title="Hippique AI", version="2.2.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -44,8 +44,8 @@ LEARNING_STATS = {
 }
 
 HORSES = {
-    "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
-    "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]},
+    "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m"},
+    "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m"},
 }
 
 AGENTS = {
@@ -85,7 +85,7 @@ class OutcomeRequest(BaseModel):
 
 
 def analysis(name: str):
-    h = HORSES.get(name, {"form": 0, "surface": "inconnue", "distance": "inconnue", "last_runs": []})
+    h = HORSES.get(name, {"form": 0, "surface": "inconnue", "distance": "inconnue"})
     return {
         "horse": {"name": name, **h},
         "summary": f"{name} présente une forme de {h['form']}/100.",
@@ -165,13 +165,13 @@ async def prediction_history(limit: int = 20):
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     base = prediction_store.metrics()
-
     evaluated = LEARNING_STATS["evaluated"]
     agents_scores = {}
+
     for name, s in LEARNING_STATS["agents"].items():
         if s["total"] > 0:
             top1_rate = s["hits_top1"] / s["total"]
-            top5_rate = s["hits_top5"] / s["total"]
+            top5_rate = s["hits_top5"] / (s["total"] * 5)
             score = round((top1_rate * 60 + top5_rate * 40) * 100, 1)
         else:
             score = 50
@@ -181,12 +181,13 @@ async def learning_metrics():
             "top1": s["hits_top1"],
             "top5": s["hits_top5"],
             "top1_rate": round(s["hits_top1"] / s["total"], 3) if s["total"] > 0 else None,
-            "top5_rate": round(s["hits_top5"] / s["total"], 3) if s["total"] > 0 else None,
+            "top5_rate": round(s["hits_top5"] / (s["total"] * 5), 3) if s["total"] > 0 else None,
         }
 
     if evaluated > 0:
-        avg_top1 = sum(s["hits_top1"] for s in LEARNING_STATS["agents"].values()) / (evaluated * len(LEARNING_STATS["agents"]))
-        avg_top5 = sum(s["hits_top5"] for s in LEARNING_STATS["agents"].values()) / (evaluated * len(LEARNING_STATS["agents"]))
+        nb = len(LEARNING_STATS["agents"])
+        avg_top1 = sum(s["hits_top1"] for s in LEARNING_STATS["agents"].values()) / (evaluated * nb)
+        avg_top5 = sum(s["hits_top5"] for s in LEARNING_STATS["agents"].values()) / (evaluated * nb * 5)
     else:
         avg_top1 = 0
         avg_top5 = 0
@@ -220,7 +221,7 @@ async def agents_analyse(payload: dict):
         return {"error": str(e), "resultats": []}
 
 
-# ============ MOTEUR D'APPRENTISSAGE ============
+# ============ MOTEUR ============
 
 def _parse_musique(musique_str: str) -> list:
     if not musique_str:
@@ -278,16 +279,9 @@ def _score_risk(musique: list) -> float:
 
 
 def _predire_avec_agents(participants: list) -> dict:
-    predictions = {
-        "FormAgent": [],
-        "DriverAgent": [],
-        "MarketAgent": [],
-        "ClassAgent": [],
-        "RiskAgent": [],
-        "ForecastAgent": [],
-    }
-
+    predictions = {k: [] for k in LEARNING_STATS["agents"].keys()}
     scored = []
+
     for p in participants:
         if not isinstance(p, dict):
             continue
@@ -307,13 +301,8 @@ def _predire_avec_agents(participants: list) -> dict:
         forecast = sf * 0.35 + sd * 0.25 + sc * 0.20 + sg * 0.15 + sr * 0.05
 
         scored.append({
-            "num": num,
-            "form": sf,
-            "driver": sd,
-            "market": sc,
-            "class": sg,
-            "risk": sr,
-            "forecast": forecast,
+            "num": num, "form": sf, "driver": sd, "market": sc,
+            "class": sg, "risk": sr, "forecast": forecast,
         })
 
     for agent in predictions:
@@ -354,7 +343,7 @@ def _evaluer_arrivee(participants: list, arrivee_reelle: list) -> dict:
     return resultats
 
 
-# ============ COLLECTE + ÉVALUATION ============
+# ============ COLLECTE ============
 
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HippiqueAI/1.0)"}
@@ -445,26 +434,17 @@ async def agent_collect(offset: int = 0):
                 evaluees += 1
 
             COLLECTED_RESULTS.append({
-                "key": key,
-                "date": date_str,
-                "reunion": nr,
-                "num_course": num_course,
-                "course": c.get("libelle", "Course"),
-                "hippodrome": hippo,
-                "discipline": c.get("discipline", "?"),
-                "distance": c.get("distance", 0),
+                "key": key, "date": date_str, "reunion": nr, "num_course": num_course,
+                "course": c.get("libelle", "Course"), "hippodrome": hippo,
+                "discipline": c.get("discipline", "?"), "distance": c.get("distance", 0),
                 "partants": c.get("nombreDeclaresPartants", 0),
-                "arrivee": arrivee[:5],
-                "evaluations": eval_result,
+                "arrivee": arrivee[:5], "evaluations": eval_result,
             })
             nouvelles += 1
 
     return {
-        "ok": True,
-        "nouvelles": nouvelles,
-        "evaluees": evaluees,
-        "total": len(COLLECTED_RESULTS),
-        "total_evaluees": LEARNING_STATS["evaluated"],
+        "ok": True, "nouvelles": nouvelles, "evaluees": evaluees,
+        "total": len(COLLECTED_RESULTS), "total_evaluees": LEARNING_STATS["evaluated"],
     }
 
 
@@ -472,8 +452,6 @@ async def agent_collect(offset: int = 0):
 async def list_results(limit: int = 50):
     return {"count": len(COLLECTED_RESULTS), "results": COLLECTED_RESULTS[-limit:]}
 
-
-# ============ PROXY PMU ============
 
 @app.get("/api/pmu/proxy/{path:path}")
 async def proxy_pmu(path: str):
