@@ -24,7 +24,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="2.0.0")
+app = FastAPI(title="Hippique AI", version="2.1.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -164,14 +164,12 @@ async def prediction_history(limit: int = 20):
 
 @app.get("/api/learning/metrics")
 async def learning_metrics():
-    """Retourne les stats d'apprentissage réelles."""
     base = prediction_store.metrics()
 
     evaluated = LEARNING_STATS["evaluated"]
     agents_scores = {}
     for name, s in LEARNING_STATS["agents"].items():
         if s["total"] > 0:
-            # Score = 50% pondéré par top5 hits + 50% par top1
             top1_rate = s["hits_top1"] / s["total"]
             top5_rate = s["hits_top5"] / s["total"]
             score = round((top1_rate * 60 + top5_rate * 40) * 100, 1)
@@ -186,7 +184,6 @@ async def learning_metrics():
             "top5_rate": round(s["hits_top5"] / s["total"], 3) if s["total"] > 0 else None,
         }
 
-    # Moyennes globales
     if evaluated > 0:
         avg_top1 = sum(s["hits_top1"] for s in LEARNING_STATS["agents"].values()) / (evaluated * len(LEARNING_STATS["agents"]))
         avg_top5 = sum(s["hits_top5"] for s in LEARNING_STATS["agents"].values()) / (evaluated * len(LEARNING_STATS["agents"]))
@@ -203,6 +200,15 @@ async def learning_metrics():
     }
 
 
+@app.post("/api/learning/reset")
+async def learning_reset():
+    COLLECTED_RESULTS.clear()
+    LEARNING_STATS["evaluated"] = 0
+    for name in LEARNING_STATS["agents"]:
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50}
+    return {"ok": True}
+
+
 @app.post("/api/agents/analyse")
 async def agents_analyse(payload: dict):
     if not AGENTS_MODULE_OK:
@@ -217,7 +223,6 @@ async def agents_analyse(payload: dict):
 # ============ MOTEUR D'APPRENTISSAGE ============
 
 def _parse_musique(musique_str: str) -> list:
-    """Convertit '1a 2a Da 3m' en liste ['1a','2a','Da','3m']."""
     if not musique_str:
         return []
     return [m.strip() for m in re.split(r"\s+", musique_str) if m.strip()]
@@ -273,7 +278,6 @@ def _score_risk(musique: list) -> float:
 
 
 def _predire_avec_agents(participants: list) -> dict:
-    """Simule la prédiction de chaque agent sur une liste de partants."""
     predictions = {
         "FormAgent": [],
         "DriverAgent": [],
@@ -300,21 +304,18 @@ def _predire_avec_agents(participants: list) -> dict:
         sc = _score_cote(cote)
         sg = _score_gains(gains)
         sr = _score_risk(musique)
-
-        # Score final combiné
         forecast = sf * 0.35 + sd * 0.25 + sc * 0.20 + sg * 0.15 + sr * 0.05
 
         scored.append({
             "num": num,
             "form": sf,
             "driver": sd,
-            "cote": sc,
+            "market": sc,
             "class": sg,
             "risk": sr,
             "forecast": forecast,
         })
 
-    # Trier par score décroissant pour chaque agent
     for agent in predictions:
         key = agent.replace("Agent", "").lower()
         if key == "forecast":
@@ -326,7 +327,6 @@ def _predire_avec_agents(participants: list) -> dict:
 
 
 def _evaluer_arrivee(participants: list, arrivee_reelle: list) -> dict:
-    """Compare les prédictions des agents avec l'arrivée réelle."""
     if not participants or not arrivee_reelle:
         return {}
 
@@ -339,7 +339,6 @@ def _evaluer_arrivee(participants: list, arrivee_reelle: list) -> dict:
         hit_top1 = 1 if pred and pred[0] == vrai_top1 else 0
         hit_top5 = len(set(pred) & vrai_top5) if pred else 0
 
-        # Mise à jour des stats globales
         s = LEARNING_STATS["agents"][agent_name]
         s["total"] += 1
         s["hits_top1"] += hit_top1
@@ -433,17 +432,14 @@ async def agent_collect(offset: int = 0):
             if any(x.get("key") == key for x in COLLECTED_RESULTS):
                 continue
 
-            # Récupérer les partants (avec cotes, musiques, drivers)
             participants = await _get_participants(date_str, nr, num_course)
             if not participants:
                 continue
 
-            # Extraire l'arrivée
             arrivee = await _get_arrivee_participants(participants)
             if not arrivee:
                 continue
 
-            # Évaluer les agents
             eval_result = _evaluer_arrivee(participants, arrivee)
             if eval_result:
                 evaluees += 1
