@@ -20,7 +20,7 @@ try:
 except ImportError:
     AGENTS_MODULE_OK = False
 
-app = FastAPI(title="Hippique AI", version="0.9.0")
+app = FastAPI(title="Hippique AI", version="1.0.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -28,8 +28,6 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 HORSES = {
     "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
     "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]},
-    "Mistral de Noir": {"age": 6, "form": 71, "surface": "gazon", "distance": "2400m", "speed": 78, "stamina": 90, "traction": 74, "last_runs": ["3e", "2e", "4e"]},
-    "Luna de la Mer": {"age": 3, "form": 88, "surface": "gazon", "distance": "1800m", "speed": 91, "stamina": 82, "traction": 79, "last_runs": ["1er", "1er", "2e"]},
 }
 
 AGENTS = {
@@ -73,15 +71,7 @@ def analysis(name: str):
     return {
         "horse": {"name": name, **h},
         "summary": f"{name} présente une forme de {h['form']}/100 et préfère {h['surface']} sur {h['distance']}.",
-        "agents": [
-            {
-                "name": n,
-                "specialty": d,
-                "score": h["form"] if n in ("HorseAgent", "ForecastAgent") else 80,
-                "insight": f"{n} a analysé {name}.",
-            }
-            for n, d in AGENTS.items()
-        ],
+        "agents": [{"name": n, "specialty": d, "score": h["form"] if n in ("HorseAgent", "ForecastAgent") else 80, "insight": f"{n} a analysé {name}."} for n, d in AGENTS.items()],
     }
 
 
@@ -95,6 +85,11 @@ async def root(request: Request):
 @app.get("/pronostics", response_class=HTMLResponse)
 async def pronostics_page(request: Request):
     return templates.TemplateResponse(request, "pronostics.html")
+
+
+@app.get("/learning", response_class=HTMLResponse)
+async def learning_page(request: Request):
+    return templates.TemplateResponse(request, "learning.html")
 
 
 # ============ API ============
