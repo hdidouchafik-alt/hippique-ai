@@ -222,12 +222,10 @@ function loadMetrics() {
       $('kpiStatus').textContent = status;
       $('kpiStatus').className = 'kpi-value ' + scls;
 
-      // Progression
       var pct = Math.min(100, (preds / 50) * 100);
       $('progressBar').style.width = pct + '%';
       $('progressLabel').textContent = preds + ' / 50';
 
-      // Classement des agents
       var agents = m.agents || {};
       var arr = [];
       for (var name in agents) {
@@ -239,13 +237,15 @@ function loadMetrics() {
       for (var i = 0; i < arr.length; i++) {
         var a = arr[i];
         var meta = AGENTS_META[a.name] || {icon:'⚙️', color:'#64748b', desc:''};
-        var score = a.data.score || 50;
+        var score = Math.min(100, a.data.score || 50);
         var c = cls(score);
         var rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : '';
         var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
         var t1 = a.data.top1 || 0;
         var t5 = a.data.top5 || 0;
         var tot = a.data.total || 0;
+        // Top5 max possible = total * 5
+        var t5max = tot * 5;
 
         html += '<div class="agent-row ' + rankClass + '">';
         html += '<div class="agent-head">';
@@ -260,14 +260,13 @@ function loadMetrics() {
         html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
         html += '<div class="agent-stats">';
         html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
-        html += '<span>📊 Top5 : <b>' + t5 + '/' + tot + '</b></span>';
+        html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
         html += '</div>';
         html += '</div>';
       }
       $('agentsList').innerHTML = html;
       $('agentsCount').textContent = arr.length + ' agents';
 
-      // Points à corriger
       var actions = [];
       if (preds < 10) {
         actions.push({t:'Continuer la collecte', i:['Objectif : 50 courses évaluées','Plus les données sont nombreuses, plus les scores sont fiables','Laissez le cron tourner']});
@@ -275,9 +274,8 @@ function loadMetrics() {
       if (preds >= 10 && preds < 50) {
         actions.push({t:'Enrichir le dataset', i:[preds + ' courses évaluées sur 50','Encore ' + (50 - preds) + ' à collecter']});
       }
-      // Détecter les agents faibles
       for (var j = 0; j < arr.length; j++) {
-        var score2 = arr[j].data.score || 50;
+        var score2 = Math.min(100, arr[j].data.score || 50);
         if (arr[j].data.total >= 5 && score2 < 30) {
           actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + score2.toFixed(0) + '/100) sur ' + arr[j].data.total + ' courses','Réduire son poids dans la décision finale','Analyser ses critères']});
         }
@@ -325,7 +323,6 @@ function loadResults() {
         html += '<div class="arrivee">' + esc(arr2) + '</div>';
         html += '</div>';
 
-        // Détails par agent
         var hasEval = false;
         var evalHtml = '';
         for (var agentName in eval2) {
