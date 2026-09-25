@@ -31,19 +31,19 @@ BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
-MISE_UNITAIRE = 10  # 10€ simulés par pari
+MISE_UNITAIRE = 10
 
 COLLECTED_RESULTS = []
 LEARNING_STATS = {
     "evaluated": 0,
     "agents": {
-        "FormAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "DriverAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "MarketAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "ClassAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "RiskAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "TrackAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
-        "ForecastAgent": {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "FormAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "DriverAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "MarketAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "ClassAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "RiskAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "TrackAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0},
+        "ForecastAgent": {"hits_top1": 0, "hits_top5": 0, "total": 0},
     }
 }
 
@@ -59,7 +59,7 @@ if DB_OK:
         if ev:
             LEARNING_STATS["evaluated"] = int(ev)
     except Exception as e:
-        print(f"DB load error: {e}")
+        print("DB load error: " + str(e))
 
 data_agent = RacingDataAgent()
 prediction_store = PredictionStore()
@@ -72,12 +72,10 @@ class ChatMessage(BaseModel):
 
 class PredictionRequest(BaseModel):
     race_key: str = Field(min_length=1, max_length=150)
-    race_name: str = Field(default="Course importée", max_length=200)
+    race_name: str = Field(default="Course importee", max_length=200)
     race_date: str | None = None
     text: str = Field(min_length=20, max_length=100000)
 
-
-# ============ PAGES ============
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -93,8 +91,6 @@ async def pronostics_page(request: Request):
 async def learning_page(request: Request):
     return templates.TemplateResponse(request, "learning.html")
 
-
-# ============ API ============
 
 @app.get("/api/health")
 async def health():
@@ -120,7 +116,7 @@ async def races():
 
 @app.post("/api/chat")
 async def chat(payload: ChatMessage):
-    return {"reply": "Chat côté navigateur."}
+    return {"reply": "Chat cote navigateur."}
 
 
 @app.post("/api/predictions")
@@ -135,11 +131,10 @@ async def prediction_history(limit: int = 20):
     return {"predictions": prediction_store.history(limit)}
 
 
-def _compute_roi_from_results():
-    """Recalcule le ROI de chaque agent à partir des courses en base."""
+def _compute_roi():
     roi = {}
     for name in LEARNING_STATS["agents"].keys():
-        roi[name] = {"mise": 0, "gain": 0, "pari": 0, "gagne": 0}
+        roi[name] = {"mise": 0.0, "gain": 0.0, "pari": 0, "gagne": 0}
     for course in COLLECTED_RESULTS:
         ev = course.get("evaluations") or {}
         for agent_name, data in ev.items():
@@ -153,7 +148,6 @@ def _compute_roi_from_results():
             if data.get("top1") == 1:
                 roi[agent_name]["gain"] += MISE_UNITAIRE * float(cote)
                 roi[agent_name]["gagne"] += 1
-    # Calcul du ROI %
     for name in roi:
         mise = roi[name]["mise"]
         gain = roi[name]["gain"]
@@ -167,7 +161,7 @@ def _compute_roi_from_results():
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     evaluated = LEARNING_STATS["evaluated"]
-    roi = _compute_roi_from_results()
+    roi = _compute_roi()
     agents_scores = {}
     for name, s in LEARNING_STATS["agents"].items():
         if s["total"] > 0:
@@ -197,7 +191,8 @@ async def learning_metrics():
         avg1 = t1 / (evaluated * nb)
         avg5 = t5 / (evaluated * nb * 5)
     else:
-        avg1 = avg5 = 0
+        avg1 = 0
+        avg5 = 0
     return {
         "evaluated_predictions": evaluated,
         "top1_hit_rate": round(avg1, 3),
@@ -213,26 +208,24 @@ async def learning_reset():
     COLLECTED_RESULTS.clear()
     LEARNING_STATS["evaluated"] = 0
     for name in LEARNING_STATS["agents"]:
-        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0}
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0}
     if DB_OK:
         db.reset_all()
-    return {"ok": True, "message": "Reset effectué"}
+    return {"ok": True, "message": "Reset effectue"}
 
 
 @app.get("/api/admin/purge")
 async def admin_purge(confirm: str = ""):
     if confirm != "yes":
-        return {"error": "Ajoute ?confirm=yes à l'URL"}
+        return {"error": "Ajoute ?confirm=yes"}
     COLLECTED_RESULTS.clear()
     LEARNING_STATS["evaluated"] = 0
     for name in LEARNING_STATS["agents"]:
-        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0}
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0}
     if DB_OK:
         db.reset_all()
-    return {"ok": True, "message": "Base purgée"}
+    return {"ok": True, "message": "Base purge"}
 
-
-# ============ MOTEUR ============
 
 def _parse_musique(s):
     return [m.strip() for m in re.split(r"\s+", s or "") if m.strip()]
@@ -281,7 +274,9 @@ def _score_risk(musique):
 
 
 def _predire(participants):
-    preds = {k: [] for k in LEARNING_STATS["agents"].keys()}
+    preds = {}
+    for k in LEARNING_STATS["agents"].keys():
+        preds[k] = []
     scored = []
     for p in participants:
         if not isinstance(p, dict):
@@ -298,7 +293,6 @@ def _predire(participants):
         sc = _score_cote(cote)
         sg = _score_gains(gains)
         sr = _score_risk(musique)
-        # NOUVELLE FORMULE : MarketAgent 45%, Form 15%, Driver 15%, Class 15%, Risk 10%
         forecast = sf*0.15 + sd*0.15 + sc*0.45 + sg*0.15 + sr*0.10
         scored.append({"num": num, "form": sf, "driver": sd, "market": sc,
                        "class": sg, "risk": sr, "forecast": forecast})
@@ -317,8 +311,6 @@ def _evaluer(participants, arrivee):
     preds = _predire(participants)
     v1 = arrivee[0] if arrivee else None
     v5 = set(arrivee[:5])
-
-    # Map num → cote
     cotes = {}
     for p in participants:
         if not isinstance(p, dict):
@@ -330,7 +322,6 @@ def _evaluer(participants, arrivee):
                 cotes[int(num)] = float(cote)
             except (ValueError, TypeError):
                 pass
-
     res = {}
     for name, pred in preds.items():
         h1 = 1 if pred and pred[0] == v1 else 0
@@ -340,10 +331,6 @@ def _evaluer(participants, arrivee):
         s["total"] += 1
         s["hits_top1"] += h1
         s["hits_top5"] += h5
-        if cote_top1:
-            s["roi_mise"] += MISE_UNITAIRE
-            if h1 == 1:
-                s["roi_gain"] += MISE_UNITAIRE * cote_top1
         if DB_OK:
             db.save_agent(name, s["hits_top1"], s["hits_top5"], s["total"])
         res[name] = {
@@ -358,41 +345,41 @@ def _evaluer(participants, arrivee):
     return res
 
 
-# ============ FILTRE ============
-
 BLACKLIST = [
     "CHILI", "CHILE", "VALPARAISO",
     "SAN ISIDRO", "PALERMO", "LA PLATA", "ARGENTINE",
     "SUEDE", "SWEDEN", "SOLVALLA",
     "URUGUAY", "MONTEVIDEO",
     "BRESIL", "BRAZIL", "SAO PAULO",
-    "USA", "UNITED STATES", "NEW YORK", "LOS ANGELES",
-    "AUSTRALIA", "AUSTRALIE", "SYDNEY", "MELBOURNE",
+    "USA", "UNITED STATES",
+    "AUSTRALIA", "AUSTRALIE",
     "JAPON", "JAPAN", "TOKYO",
     "HONG KONG",
     "SINGAPOUR", "SINGAPORE",
-    "INDE", "INDIA", "MUMBAI",
+    "INDE", "INDIA",
     "MAURICE",
     "AFRIQUE DU SUD",
-    "PEROU", "PERU", "LIMA",
+    "PEROU", "PERU",
     "MEXIQUE", "MEXICO",
     "CANADA", "TORONTO",
     "NORVEGE", "OSLO",
-    "DANEMARK", "COPENHAGUE",
-    "FINLANDE", "HELSINKI",
+    "DANEMARK",
+    "FINLANDE",
     "RUSSIE", "MOSCOU",
     "TURQUIE", "ISTANBUL",
     "EMIRATS", "DUBAI",
     "QATAR", "ARABIE",
     "COREE", "SEOUL",
     "CHINE", "SHANGHAI",
-    "THAILANDE", "BANGKOK",
-    "MALAISIE", "INDONESIE",
+    "THAILANDE",
+    "MALAISIE",
+    "INDONESIE",
     "NOUVELLE-ZELANDE", "NEW ZEALAND",
-    "VENEZUELA", "CARACAS",
-    "COLOMBIE", "BOGOTA",
-    "EQUATEUR", "BOLIVIE",
-    "PARAGUAY", "ASUNCION",
+    "VENEZUELA",
+    "COLOMBIE",
+    "EQUATEUR",
+    "BOLIVIE",
+    "PARAGUAY",
 ]
 
 
@@ -413,9 +400,7 @@ def _hippodrome_ok(hippodrome_obj, nom_hippo):
     return True
 
 
-# ============ COLLECTE ============
-
-PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
+PM##U_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 
@@ -428,15 +413,19 @@ async def _pmu_get(url):
     try:
         async with httpx.AsyncClient(timeout=20.0, headers=HEADERS) as c:
             r = await c.get(url)
-            return r.json() if r.status_code == 200 else None
+            if r.status_code == 200:
+                return r.json()
+            return None
     except Exception:
         return None
 
 
 async def _get_participants(ds, r, c):
-    url = f"{PMU_BASE}/programme/{ds}/R{r}/C{c}/participants"
+    url = PMU_BASE + "/programme/" + ds + "/R" + str(r) + "/C" + str(c) + "/participants"
     data = await _pmu_get(url)
-    return data.get("participants", []) if data else []
+    if data:
+        return data.get("participants", [])
+    return []
 
 
 async def _get_arrivee(parts):
@@ -459,7 +448,7 @@ async def _get_arrivee(parts):
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
     ds = _date_str(offset)
-    prog = await _pmu_get(f"{PMU_BASE}/programme/{ds}")
+    prog = await _pmu_get(PMU_BASE + "/programme/" + ds)
     if not prog:
         return {"ok": False, "nouvelles": 0, "evaluees": 0, "total": len(COLLECTED_RESULTS)}
     reunions = (prog.get("programme") or {}).get("reunions") or []
@@ -482,7 +471,7 @@ async def agent_collect(offset: int = 0):
             if "FIN" not in st and "ARRIVE" not in st:
                 continue
             nc = c.get("numOrdre")
-            key = f"{ds}-R{nr}C{nc}"
+            key = ds + "-R" + str(nr) + "C" + str(nc)
             if any(x.get("key") == key for x in COLLECTED_RESULTS):
                 continue
             parts = await _get_participants(ds, nr, nc)
@@ -508,11 +497,13 @@ async def agent_collect(offset: int = 0):
 
 
 @app.get("/api/results")
-async else def list_results(limit: int = 50 {"):
-error    return {"count": len(COLLECTED":_RESULTS), "results": COLLECTED_RESULTS "[-limit:]}
+async def list_results(limit: int = 50):
+    return {"count": len(COLLECTED_RESULTS), "results": COLLECTED_RESULTS[-limit:]}
 
 
-@app.get("/api/pmu/proxy/{path:PMpath}")
+@app.get("/api/pmu/proxy/{path:path}")
 async def proxy_pmu(path: str):
-    data = await _pmu_get(f"{PMU_BASE}/{path}")
-    return data if dataU indisponible"}
+    data = await _pmu_get(PMU_BASE + "/" + path)
+    if data:
+        return data
+    return {"error": "PMU indisponible"}
