@@ -14,18 +14,13 @@ from prediction_engine import PredictionEngine
 from prediction_store import PredictionStore
 from racing_data_agent import RacingDataAgent
 
-# Import API Racing (remplace PMU)
 try:
-    from pmu_client import (
-        programme as pmu_programme,
-        partants as pmu_partants,
-        arrivee as pmu_arrivee,
-    )
-    PMU_AVAILABLE = True
+    from agents import analyse_course
+    AGENTS_MODULE_OK = True
 except ImportError:
-    PMU_AVAILABLE = False
+    AGENTS_MODULE_OK = False
 
-app = FastAPI(title="Hippique AI", version="0.8.0")
+app = FastAPI(title="Hippique AI", version="0.9.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -110,7 +105,7 @@ async def health():
         "status": "ok",
         "service": "Hippique AI",
         "version": app.version,
-        "pmu_available": PMU_AVAILABLE,
+        "agents_module": AGENTS_MODULE_OK,
         "learning": prediction_store.metrics(),
     }
 
@@ -147,7 +142,6 @@ async def multitask(payload: MultiTaskRequest):
 
 @app.post("/api/chat")
 async def chat(payload: ChatMessage):
-    # Le chat est géré côté navigateur par Puter.js
     return {"reply": "Le chat est géré côté navigateur par Puter.js."}
 
 
@@ -177,34 +171,14 @@ async def learning_metrics():
     return prediction_store.metrics()
 
 
-# ============ API RACING (The Racing API) ============
+# ============ API AGENTS ACTIFS ============
 
-@app.get("/api/pmu/programme")
-async def get_programme(day: int = 0):
-    """Programme du jour (0), hier (-1), avant-hier (-2)."""
-    if not PMU_AVAILABLE:
-        return {"error": "Module API non disponible", "courses": []}
+@app.post("/api/agents/analyse")
+async def agents_analyse(payload: dict):
+    if not AGENTS_MODULE_OK:
+        return {"error": "Module agents non disponible", "resultats": []}
+    runners = payload.get("runners", [])
     try:
-        courses = await pmu_programme(day)
-        return {"day": day, "count": len(courses), "courses": courses}
+        return {"resultats": analyse_course(runners)}
     except Exception as e:
-        return {"error": str(e), "courses": []}
-
-
-@app.get("/api/pmu/course/{date_str}/R{reunion}/C{course}")
-async def get_course_detail(date_str: str, reunion: int, course: int):
-    """Détail d'une course : partants + arrivée."""
-    if not PMU_AVAILABLE:
-        return {"error": "Module API non disponible", "partants": [], "arrivee": []}
-    try:
-        runners = await pmu_partants(date_str, reunion, course)
-        arrivee_data = await pmu_arrivee(date_str, reunion, course)
-        return {
-            "date": date_str,
-            "reunion": reunion,
-            "course": course,
-            "partants": runners,
-            "arrivee": arrivee_data,
-        }
-    except Exception as e:
-        return {"error": str(e), "partants": [], "arrivee": []}
+        return {"error": str(e), "resultats": []}
