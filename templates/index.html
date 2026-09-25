@@ -101,9 +101,6 @@ input,textarea{font-family:inherit}
 @keyframes bubbleIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .bubble.bot{background:var(--bg-3);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
 .bubble.user{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
-.bubble.pending{background:var(--bg-3);color:var(--text-3);font-style:italic;align-self:flex-start}
-.bubble.pending::after{content:'';display:inline-block;width:4px;height:4px;background:var(--teal);border-radius:50%;margin-left:6px;animation:dots 1.2s infinite}
-@keyframes dots{0%,60%,100%{opacity:.3}30%{opacity:1}}
 .chat-input-area{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg)}
 .chat-input-area input{flex:1;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
 .chat-input-area input:focus{border-color:var(--teal)}
@@ -113,8 +110,6 @@ input,textarea{font-family:inherit}
 .nav-item.active{color:var(--teal)}
 .nav-item-icon{font-size:20px}
 .empty{text-align:center;padding:50px 20px;color:var(--text-3);font-size:14px}
-.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(20,184,166,.3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:720px){.header-inner{padding:12px 16px}.container{padding:0 16px}.tabs{padding:14px 16px 6px}.hero{padding:24px 0 20px}.runner{grid-template-columns:38px 1fr auto;gap:10px;padding:10px}.runner-rank{width:34px;height:34px;font-size:12px}.chat-container{height:480px}.agents-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -161,7 +156,7 @@ input,textarea{font-family:inherit}
       </div>
       <div class="agents-grid">
         <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(20,184,166,.15);color:#14b8a6">🎯</div><div class="agent-name">CourseAgent</div><div class="agent-desc">Rythme et distance</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="251,191,36,.15);color:#fbbf24">🐎</div><div class="agent-name">HorseAgent</div><div class="agent-desc">Forme du cheval</div></div>
+        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(251,191,36,.15);color:#fbbf24">🐎</div><div class="agent-name">HorseAgent</div><div class="agent-desc">Forme du cheval</div></div>
         <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">🏇</div><div class="agent-name">JockeyAgent</div><div class="agent-desc">Stratégie driver</div></div>
         <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(59,130,246,.15);color:#3b82f6">🏛️</div><div class="agent-name">TrainerAgent</div><div class="agent-desc">Préparation écurie</div></div>
         <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(34,197,94,.15);color:#22c55e">🌤️</div><div class="agent-name">TrackAgent</div><div class="agent-desc">Piste et météo</div></div>
@@ -175,9 +170,7 @@ input,textarea{font-family:inherit}
         <h2>Prochaines courses</h2>
         <span class="count" id="countToday">—</span>
       </div>
-      <div class="races-list" id="racesToday">
-        <div class="empty"><span class="loader"></span>Chargement…</div>
-      </div>
+      <div class="races-list" id="racesToday"></div>
     </div>
   </section>
 
@@ -193,9 +186,7 @@ input,textarea{font-family:inherit}
       <button class="tab" data-day="-2">Avant-hier</button>
     </div>
 
-    <div id="racesProgram">
-      <div class="empty"><span class="loader"></span>Chargement…</div>
-    </div>
+    <div id="racesProgram"></div>
   </section>
 
   <section class="view" id="view-analyse">
@@ -251,12 +242,10 @@ input,textarea{font-family:inherit}
   <button class="nav-item" data-view="chat"><span class="nav-item-icon">💬</span><span>Assistant</span></button>
 </nav>
 
-<script src="https://js.puter.com/v2/"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-// ============ DATA DEMO ============
 const DEMO_RACES = {
   0: [
     {id:'d1', time:'14:30', hippodrome:'Ascot', nom:'Prix Royal', discipline:'Plat', distance:2400, partants:12, statut:'À venir'},
@@ -329,210 +318,157 @@ const DEMO_RUNNERS = {
   ]
 };
 
-// ============ NAVIGATION ============
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('[data-view]').forEach(t => t.classList.remove('active'));
-  $('view-' + name)?.classList.add('active');
-  document.querySelectorAll(`.tab[data-view="${name}"]`).forEach(t => t.classList.add('active'));
-  document.querySelectorAll(`.nav-item[data-view="${name}"]`).forEach(t => t.classList.add('active'));
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('view-' + name).classList.add('active');
+  document.querySelectorAll('[data-view="' + name + '"]').forEach(t => t.classList.add('active'));
+  window.scrollTo(0, 0);
 }
-document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => showView(el.dataset.view)));
 
-// ============ RACE CARD ============
+document.querySelectorAll('[data-view]').forEach(el => {
+  el.addEventListener('click', function() { showView(this.dataset.view); });
+});
+
 function raceCard(course) {
-  const isTrot = (course.discipline || '').toLowerCase().includes('trot');
-  const isFinished = (course.statut || '').toUpperCase().includes('FIN') || (course.statut || '').toUpperCase().includes('TERMIN');
-  return `
-    <div class="race-card" onclick="openRace('${course.id}')">
-      <div class="race-time">${esc(course.time)}<small>${esc((course.discipline || '?').substring(0,4))}</small></div>
-      <div class="race-info">
-        <h3>${esc(course.nom)}</h3>
-        <p>
-          <span class="race-tag ${isTrot ? '' : 'plat'}">${esc(course.discipline)}</span>
-          ${isFinished ? '<span class="race-tag finished">Terminée</span>' : ''}
-          <span>${esc(course.hippodrome)}</span>
-          <span>·</span>
-          <span>${course.distance}m</span>
-          <span>·</span>
-          <span>${course.partants} partants</span>
-        </p>
-      </div>
-      <div class="race-arrow">›</div>
-    </div>
-  `;
+  const isTrot = (course.discipline || '').toLowerCase().indexOf('trot') >= 0;
+  const isFinished = (course.statut || '').toUpperCase().indexOf('FIN') >= 0 || (course.statut || '').toUpperCase().indexOf('TERMIN') >= 0;
+  return '<div class="race-card" onclick="openRace(\'' + course.id + '\')">' +
+    '<div class="race-time">' + esc(course.time) + '<small>' + esc((course.discipline || '?').substring(0,4)) + '</small></div>' +
+    '<div class="race-info">' +
+      '<h3>' + esc(course.nom) + '</h3>' +
+      '<p>' +
+        '<span class="race-tag ' + (isTrot ? '' : 'plat') + '">' + esc(course.discipline) + '</span>' +
+        (isFinished ? '<span class="race-tag finished">Terminée</span>' : '') +
+        '<span>' + esc(course.hippodrome) + '</span>' +
+        '<span>·</span>' +
+        '<span>' + course.distance + 'm</span>' +
+        '<span>·</span>' +
+        '<span>' + course.partants + ' partants</span>' +
+      '</p>' +
+    '</div>' +
+    '<div class="race-arrow">›</div>' +
+  '</div>';
 }
 
-// ============ PROGRAMME ============
 function loadProgram(day) {
-  document.querySelectorAll('.tab[data-day]').forEach(t => {
+  document.querySelectorAll('[data-day]').forEach(function(t) {
     t.classList.toggle('active', t.dataset.day === String(day));
   });
   const courses = DEMO_RACES[day] || DEMO_RACES[0];
-  $('racesProgram').innerHTML = `<div class="races-list">${courses.map(raceCard).join('')}</div>`;
+  document.getElementById('racesProgram').innerHTML = '<div class="races-list">' + courses.map(raceCard).join('') + '</div>';
 }
 
-// ============ DETAIL COURSE ============
 function openRace(raceId) {
-  let race = null;
-  for (const d in DEMO_RACES) {
-    race = DEMO_RACES[d].find(r => r.id === raceId);
-    if (race) break;
+  var race = null;
+  for (var d in DEMO_RACES) {
+    var found = DEMO_RACES[d].find(function(r) { return r.id === raceId; });
+    if (found) { race = found; break; }
   }
   if (!race) return;
 
-  const runners = DEMO_RUNNERS[raceId] || [];
-
-  $('racesProgram').innerHTML = `
-    <button onclick="loadProgram(0)" style="margin-bottom:16px;color:var(--teal);font-size:13px;font-weight:600;">← Retour</button>
-    <div class="race-detail">
-      <div class="race-detail-header">
-        <h2>${esc(race.nom)}</h2>
-        <div class="race-meta">
-          <span>🏇 ${esc(race.hippodrome)}</span>
-          <span>🕐 ${esc(race.time)}</span>
-          <span>📏 ${race.distance}m</span>
-          <span>🐎 ${runners.length} partants</span>
-          <span>🏷️ ${esc(race.discipline)}</span>
-        </div>
-      </div>
-      <div class="runners-list">
-        ${runners.map((r, i) => {
-          const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-          return `
-            <div class="runner">
-              <div class="runner-rank ${cls}">${r.num}</div>
-              <div>
-                <div class="runner-name">${esc(r.nom)}</div>
-                <div class="runner-info">
-                  <span>${esc(r.driver)}</span>
-                  ${r.musique && r.musique.length ? `<span class="runner-musique">${esc(r.musique.join(' '))}</span>` : ''}
-                  ${r.gains ? `<span>${r.gains.toLocaleString('fr-FR')} €</span>` : ''}
-                </div>
-              </div>
-              <div class="runner-conf">${r.cote ? r.cote : '—'}<small>Cote</small></div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-  `;
+  var runners = DEMO_RUNNERS[raceId] || [];
+  var html = '<button onclick="loadProgram(0)" style="margin-bottom:16px;color:var(--teal);font-size:13px;font-weight:600;background:none;border:none;">← Retour</button>';
+  html += '<div class="race-detail">';
+  html += '<div class="race-detail-header"><h2>' + esc(race.nom) + '</h2><div class="race-meta">' +
+    '<span>🏇 ' + esc(race.hippodrome) + '</span>' +
+    '<span>🕐 ' + esc(race.time) + '</span>' +
+    '<span>📏 ' + race.distance + 'm</span>' +
+    '<span>🐎 ' + runners.length + ' partants</span>' +
+    '<span>🏷️ ' + esc(race.discipline) + '</span>' +
+  '</div></div>';
+  html += '<div class="runners-list">';
+  runners.forEach(function(r, i) {
+    var cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+    html += '<div class="runner">' +
+      '<div class="runner-rank ' + cls + '">' + r.num + '</div>' +
+      '<div>' +
+        '<div class="runner-name">' + esc(r.nom) + '</div>' +
+        '<div class="runner-info">' +
+          '<span>' + esc(r.driver) + '</span>' +
+          (r.musique && r.musique.length ? '<span class="runner-musique">' + esc(r.musique.join(' ')) + '</span>' : '') +
+          (r.gains ? '<span>' + r.gains.toLocaleString('fr-FR') + ' €</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="runner-conf">' + (r.cote || '—') + '<small>Cote</small></div>' +
+    '</div>';
+  });
+  html += '</div></div>';
+  document.getElementById('racesProgram').innerHTML = html;
 }
 
-// ============ HOME ============
 function loadHome() {
   const courses = DEMO_RACES[0];
-  $('countToday').textContent = courses.length + ' courses';
-  $('kpiCourses').textContent = courses.length;
-  const finished = Object.values(DEMO_RACES).flat().filter(c => (c.statut||'').toUpperCase().includes('TERMIN'));
-  $('kpiFinished').textContent = finished.length;
-  $('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
+  document.getElementById('countToday').textContent = courses.length + ' courses';
+  document.getElementById('kpiCourses').textContent = courses.length;
+  document.getElementById('kpiFinished').textContent = '5';
+  document.getElementById('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
 }
 
-// ============ ANALYSE ============
-$('analyseForm').addEventListener('submit', async (e) => {
+document.querySelectorAll('[data-day]').forEach(function(t) {
+  t.addEventListener('click', function() { loadProgram(parseInt(this.dataset.day)); });
+});
+
+document.getElementById('analyseForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const btn = $('btnAnalyse');
+  var btn = document.getElementById('btnAnalyse');
   btn.disabled = true;
-  btn.innerHTML = '<span class="loader"></span>Analyse…';
+  btn.textContent = 'Analyse en cours...';
   try {
-    const r = await fetch('/api/predictions', {
+    var r = await fetch('/api/predictions', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         race_key: 'race-' + Date.now(),
-        race_name: $('raceName').value.trim(),
-        race_date: new Date().toISOStringdiv().split('T')[0],
-        text: $('>';
-raceText').value.trim ()
+        race_name: document.getElementById('raceName').value.trim(),
+        race_date: new Date().toISOString().split('T')[0],
+        text: document.getElementById('raceText').value.trim()
       })
     });
-    const } data = await finally r.json();
-    const runners = data.ranking {
- || data.recommendations || [];
-       if (!runners.length) {
-      $('analyse btnResults').innerHTML = '<div class="empty">Aucun.dis classement généré.</div>';
-     abled return;
+    var data = await r.json();
+    var runners = data.ranking || data.recommendations || [];
+    if (!runners.length) {
+      document.getElementById('analyseResults').innerHTML = '<div class="empty">Aucun classement généré.</div>';
+      return;
     }
-    = $('analyseResults').innerHTML = `
-      <div class="race-detail">
-        <div class="race-detail-header">
-          <h2>Classement proposé</h2>
-          <div class="race-meta"><span>🎯 ${runners.length} partants</span></div>
-        </div>
-        <div class="runners-list">
-          ${runners.map((r, i) => {
-            const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-            return `
-              <div class="runner">
-                <div class="runner-rank ${cls}">${i+1}</div>
-                <div>
-                  <div class="runner-name"><span class="runner-num">N°${esc(r.num)}</span>${esc(r.nom)}</div>
-                  <div class="runner-info">
-                    <span>${esc(r.driver || '—')}</span>
-                    ${r.musique && r.musique.length ? `<span class="runner-musique">${esc(r.musique.join(' '))}</span>` : ''}
-                  </div>
-                </div>
-                <div class="runner-conf">${((r.p_calibree || 0) * 100).toFixed(1)}%<small>Confiance</small></div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
+    var html = '<div class="race-detail"><div class="race-detail-header"><h2>Classement proposé</h2><div class="race-meta"><span>🎯 ' + runners.length + ' partants</span></div></div><div class="runners-list">';
+    runners.forEach(function(r, i) {
+      var cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      html += '<div class="runner"><div class="runner-rank ' + cls + '">' + (i+1) + '</div>' +
+        '<div><div class="runner-name"><span class="runner-num">N°' + esc(r.num) + '</span>' + esc(r.nom) + '</div>' +
+        '<div class="runner-info"><span>' + esc(r.driver || '—') + '</span>' +
+        (r.musique && r.musique.length ? '<span class="runner-musique">' + esc(r.musique.join(' ')) + '</span>' : '') +
+        '</div></div>' +
+        '<div class="runner-conf">' + ((r.p_calibree || 0) * 100).toFixed(1) + '%<small>Confiance</small></div></div>';
+    });
+    html += '</div></div>';
+    document.getElementById('analyseResults').innerHTML = html;
   } catch (err) {
-    $('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</ false;
-    btn.innerHTML = "Lancer l'analyse →";
+    document.getElementById('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Lancer l'analyse →";
   }
 });
 
-// ============ CHAT ============
-$('chatForm').addEventListener('submit', async (e) => {
+document.getElementById('chatForm').addEventListener('submit', async function(e) {
   e.preventDefault();
-  const input = $('chatInput');
-  const text = input.value.trim();
+  var input = document.getElementById('chatInput');
+  var text = input.value.trim();
   if (!text) return;
-  const messages = $('chatMessages');
-  const userMsg = document.createElement('div');
+  var messages = document.getElementById('chatMessages');
+  var userMsg = document.createElement('div');
   userMsg.className = 'bubble user';
   userMsg.textContent = text;
   messages.appendChild(userMsg);
   input.value = '';
-  const pending = document.createElement('div');
-  pending.className = 'bubble pending';
-  pending.textContent = 'Réflexion';
+  var pending = document.createElement('div');
+  pending.className = 'bubble bot';
+  pending.textContent = 'Le chat IA sera disponible prochainement.';
   messages.appendChild(pending);
   messages.scrollTop = messages.scrollHeight;
-  try {
-    if (typeof puter === 'undefined' || !puter.ai) {
-      pending.className = 'bubble bot';
-      pending.textContent = 'IA non chargée. Rechargez la page.';
-      return;
-    }
-    const response = await puter.ai.chat(text, {model: 'gpt-5-nano'});
-    let reply = '';
-    if (typeof response === 'string') reply = response;
-    else if (response?.message?.content) {
-      const c = response.message.content;
-      reply = Array.isArray(c) ? c.map(x => x.text || '').join('') : String(c);
-    } else if (response?.text) reply = response.text;
-    else reply = 'Réponse indisponible.';
-    pending.className = 'bubble bot';
-    pending.textContent = reply;
-  } catch (err) {
-    pending.className = 'bubble bot';
-    pending.textContent = 'Erreur : ' + (err?.message || 'connexion');
-  }
-  messages.scrollTop = messages.scrollHeight;
 });
 
-// ============ TABS DAY ============
-document.querySelectorAll('.tab[data-day]').forEach(t => {
-  t.addEventListener('click', () => loadProgram(parseInt(t.dataset.day)));
-});
-
-// ============ BOOT ============
 loadHome();
 loadProgram(0);
 </script>
