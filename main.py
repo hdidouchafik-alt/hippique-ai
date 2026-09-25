@@ -20,10 +20,15 @@ try:
 except ImportError:
     AGENTS_MODULE_OK = False
 
-app = FastAPI(title="Hippique AI", version="1.0.0")
+import httpx
+from datetime import datetime, timedelta
+
+app = FastAPI(title="Hippique AI", version="1.2.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+COLLECTED_RESULTS = []
 
 HORSES = {
     "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
@@ -70,12 +75,12 @@ def analysis(name: str):
     h = HORSES.get(name, {"form": 0, "surface": "inconnue", "distance": "inconnue", "last_runs": []})
     return {
         "horse": {"name": name, **h},
-        "summary": f"{name} présente une forme de {h['form']}/100 et préfère {h['surface']} sur {h['distance']}.",
-        "agents": [{"name": n, "specialty": d, "score": h["form"] if n in ("HorseAgent", "ForecastAgent") else 80, "insight": f"{n} a analysé {name}."} for n, d in AGENTS.items()],
+        "summary": f"{name} présente une forme de {h['form']}/100.",
+        "agents": [{"name": n, "specialty": d, "score": 80} for n, d in AGENTS.items()],
     }
 
 
-# ============ PAGES HTML ============
+# ============ PAGES ============
 
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
@@ -101,18 +106,13 @@ async def health():
         "service": "Hippique AI",
         "version": app.version,
         "agents_module": AGENTS_MODULE_OK,
-        "learning": prediction_store.metrics(),
+        "results_collected": len(COLLECTED_RESULTS),
     }
 
 
 @app.get("/api/agents")
 async def agents():
     return {"agents": AGENTS, "multitask": MultiTaskAgent.catalog()}
-
-
-@app.get("/api/capabilities")
-async def capabilities():
-    return MultiTaskAgent(HORSES, AGENTS).health()
 
 
 @app.get("/api/tracks")
@@ -130,14 +130,9 @@ async def get_analysis(horse: str = "Asteria du Clos"):
     return analysis(horse)
 
 
-@app.post("/api/multitask")
-async def multitask(payload: MultiTaskRequest):
-    return await MultiTaskAgent(HORSES, AGENTS).run(payload.task, payload.horse, payload.sources)
-
-
 @app.post("/api/chat")
 async def chat(payload: ChatMessage):
-    return {"reply": "Le chat est géré côté navigateur."}
+    return {"reply": "Chat côté navigateur."}
 
 
 @app.post("/api/predictions")
@@ -146,14 +141,6 @@ async def create_prediction(payload: PredictionRequest):
     result = prediction_engine.rank(runners, payload.race_key, payload.race_name, payload.race_date)
     result["runners_count"] = len(runners)
     return result
-
-
-@app.post("/api/predictions/{prediction_id}/outcome")
-async def record_outcome(prediction_id: int, payload: OutcomeRequest):
-    try:
-        return prediction_store.save_outcome(prediction_id, payload.arrival)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @app.get("/api/predictions")
@@ -177,21 +164,99 @@ async def agents_analyse(payload: dict):
         return {"error": str(e), "resultats": []}
 
 
+# ============ AGENT COLLECTE ARRIVÉES ============
+
+PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
+HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HippiqueAI/1.0)"}
+
+
+def _date_str(offset: int = 0) -> str:
+    d = datetime.now() + timedelta(days=offset)
+    return d.strftime("%d%m%Y")
+
+
+async def _pmu_get(url: str):
+    try:
+        async with httpx.AsyncClient(timeout=20.0, headers=HEADERS) as client:
+            r = await client.get(url)
+            if r.status_code != 200:
+                return None
+            return r.json()
+    except Exception:
+        return None
+
+
+@app.post("/api/agent/collect")
+async def agent_collect(offset: int = 0):
+    """Agent qui récupère automatiquement les arrivées des courses terminées."""
+    date_str = _date_str(offset)
+    programme = await _pmu_get(f"{PMU_BASE}/programme/{date_str}")
+    if not programme:
+        return {"error": "PMU indisponible", "nouvelles_arrivees": 0}
+
+    reunions = (programme.get("programme") or {}).get("reunions") or []
+    nouvelles = 0
+
+    for r in reunions:
+        nr = r.get("numOfficiel")
+        hippo = (r.get("hippodrome") or {}).get("libelleLong", "?")
+        for c in (r.get("courses") or []):
+            statut = (c.get("statut") or "").upper()
+            if "FIN" not in statut and "ARRIVE" not in statut:
+                continue
+
+            num_course = c.get("numOrdre")
+            key = f"{date_str}-R{nr}C{num_course}"
+            if any(x.get("key") == key for x in COLLECTED_RESULTS):
+                continue
+
+            url = f"{PMU_BASE}/programme/{date_str}/R{nr}/C{num_course}/rapports-definitifs"
+            rapports = await _pmu_get(url)
+            arrivee = []
+            if rapports:
+                for rap in (rapports.get("rapports") or []):
+                    if rap.get("typePari") in ("E_SIMPLE_GAGNANT", "SIMPLE_GAGNANT"):
+                        for comb in (rap.get("combinaisons") or []):
+                            nums = comb.get("combinaison") or []
+                            if nums:
+                                arrivee = [int(n) for n in nums]
+                                break
+                    if arrivee:
+                        break
+
+            if arrivee:
+                COLLECTED_RESULTS.append({
+                    "key": key,
+                    "date": date_str,
+                    "reunion": nr,
+                    "num_course": num_course,
+                    "course": c.get("libelle", "Course"),
+                    "hippodrome": hippo,
+                    "discipline": c.get("discipline", "?"),
+                    "distance": c.get("distance", 0),
+                    "partants": c.get("nombreDeclaresPartants", 0),
+                    "arrivee": arrivee[:5],
+                })
+                nouvelles += 1
+
+    return {
+        "date": date_str,
+        "nouvelles_arrivees": nouvelles,
+        "total_collecte": len(COLLECTED_RESULTS),
+    }
+
+
+@app.get("/api/results")
+async def list_results(limit: int = 50):
+    return {"count": len(COLLECTED_RESULTS), "results": COLLECTED_RESULTS[-limit:]}
+
+
 # ============ PROXY PMU ============
-
-import httpx
-
-PMU_BASE_URL = "https://online.turfinfo.api.pmu.fr/rest/client/61"
-
 
 @app.get("/api/pmu/proxy/{path:path}")
 async def proxy_pmu(path: str):
-    url = f"{PMU_BASE_URL}/{path}"
-    try:
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            r = await client.get(url)
-            if r.status_code != 200:
-                return {"error": f"PMU HTTP {r.status_code}", "path": path}
-            return r.json()
-    except Exception as e:
-        return {"error": str(e), "path": path}
+    url = f"{PMU_BASE}/{path}"
+    data = await _pmu_get(url)
+    if data is None:
+        return {"error": "PMU indisponible", "path": path}
+    return data
