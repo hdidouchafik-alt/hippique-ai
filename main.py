@@ -14,7 +14,18 @@ from prediction_engine import PredictionEngine
 from prediction_store import PredictionStore
 from racing_data_agent import RacingDataAgent
 
-app = FastAPI(title="Hippique AI", version="0.7.0")
+# Import API Racing (remplace PMU)
+try:
+    from pmu_client import (
+        programme as pmu_programme,
+        partants as pmu_partants,
+        arrivee as pmu_arrivee,
+    )
+    PMU_AVAILABLE = True
+except ImportError:
+    PMU_AVAILABLE = False
+
+app = FastAPI(title="Hippique AI", version="0.8.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -84,12 +95,14 @@ def analysis(name: str):
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
+
+
 @app.get("/pronostics", response_class=HTMLResponse)
 async def pronostics_page(request: Request):
     return templates.TemplateResponse(request, "pronostics.html")
 
 
-# ============ API ============
+# ============ API HIPPIQUE ============
 
 @app.get("/api/health")
 async def health():
@@ -97,6 +110,7 @@ async def health():
         "status": "ok",
         "service": "Hippique AI",
         "version": app.version,
+        "pmu_available": PMU_AVAILABLE,
         "learning": prediction_store.metrics(),
     }
 
@@ -133,7 +147,8 @@ async def multitask(payload: MultiTaskRequest):
 
 @app.post("/api/chat")
 async def chat(payload: ChatMessage):
-    return {"reply": analysis(next((n for n in HORSES if n.lower() in payload.message.lower()), "Asteria du Clos"))["summary"]}
+    # Le chat est géré côté navigateur par Puter.js
+    return {"reply": "Le chat est géré côté navigateur par Puter.js."}
 
 
 @app.post("/api/predictions")
@@ -160,3 +175,36 @@ async def prediction_history(limit: int = 20):
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     return prediction_store.metrics()
+
+
+# ============ API RACING (The Racing API) ============
+
+@app.get("/api/pmu/programme")
+async def get_programme(day: int = 0):
+    """Programme du jour (0), hier (-1), avant-hier (-2)."""
+    if not PMU_AVAILABLE:
+        return {"error": "Module API non disponible", "courses": []}
+    try:
+        courses = await pmu_programme(day)
+        return {"day": day, "count": len(courses), "courses": courses}
+    except Exception as e:
+        return {"error": str(e), "courses": []}
+
+
+@app.get("/api/pmu/course/{date_str}/R{reunion}/C{course}")
+async def get_course_detail(date_str: str, reunion: int, course: int):
+    """Détail d'une course : partants + arrivée."""
+    if not PMU_AVAILABLE:
+        return {"error": "Module API non disponible", "partants": [], "arrivee": []}
+    try:
+        runners = await pmu_partants(date_str, reunion, course)
+        arrivee_data = await pmu_arrivee(date_str, reunion, course)
+        return {
+            "date": date_str,
+            "reunion": reunion,
+            "course": course,
+            "partants": runners,
+            "arrivee": arrivee_data,
+        }
+    except Exception as e:
+        return {"error": str(e), "partants": [], "arrivee": []}
