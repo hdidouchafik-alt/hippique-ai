@@ -23,7 +23,7 @@ except ImportError:
 import httpx
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="1.4.0")
+app = FastAPI(title="Hippique AI", version="1.5.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -31,7 +31,7 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 COLLECTED_RESULTS = []
 
 HORSES = {
-    "Asteria du Clos": {"age": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
+    "Asteria du Clos": {"age": 5, "form": 82, "surface": "gazon", "distance": "2000m", "speed": 88, "stamina": 84, "traction": 80, "last_runs": ["1er", "2e", "1er"]},
     "Vortex d'Or": {"age": 4, "form": 76, "surface": "piste lourde", "distance": "1600m", "speed": 84, "stamina": 79, "traction": 86, "last_runs": ["2e", "3e", "1er"]},
 }
 
@@ -164,7 +164,7 @@ async def agents_analyse(payload: dict):
         return {"error": str(e), "resultats": []}
 
 
-# ============ AGENT COLLECTE ARRIVÉES (méthode participants) ============
+# ============ AGENT COLLECTE ARRIVÉES ============
 
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; HippiqueAI/1.0)"}
@@ -187,7 +187,6 @@ async def _pmu_get(url: str):
 
 
 async def _get_arrivee_participants(date_str: str, reunion: int, course: int) -> list:
-    """Récupère l'arrivée depuis les participants (champ 'place')."""
     url = f"{PMU_BASE}/programme/{date_str}/R{reunion}/C{course}/participants"
     data = await _pmu_get(url)
     if not data or not isinstance(data, dict):
@@ -199,7 +198,6 @@ async def _get_arrivee_participants(date_str: str, reunion: int, course: int) ->
     for p in participants:
         if not isinstance(p, dict):
             continue
-        # Le champ 'place' contient le classement final
         place = p.get("place") or p.get("ordreArrivee") or p.get("position")
         num = p.get("numPmu")
         if place and num:
@@ -208,25 +206,23 @@ async def _get_arrivee_participants(date_str: str, reunion: int, course: int) ->
             except (ValueError, TypeError):
                 continue
 
-    # Trier par place croissante
     classes.sort(key=lambda x: x[0])
     return [num for _, num in classes[:5]]
 
 
+@app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
-    """Agent qui récupère automatiquement les arrivées des courses terminées."""
     date_str = _date_str(offset)
     programme = await _pmu_get(f"{PMU_BASE}/programme/{date_str}")
     if not programme:
-        return {"error": "PMU indisponible", "nouvelles_arrivees": 0, "total_collecte": len(COLLECTED_RESULTS)}
+        return {"ok": False, "nouvelles": 0, "total": len(COLLECTED_RESULTS)}
 
     reunions = []
     if isinstance(programme, dict):
         reunions = (programme.get("programme") or {}).get("reunions") or []
 
     nouvelles = 0
-    courses_scan = 0
 
     for r in reunions:
         if not isinstance(r, dict):
@@ -240,13 +236,11 @@ async def agent_collect(offset: int = 0):
             if "FIN" not in statut and "ARRIVE" not in statut:
                 continue
 
-            courses_scan += 1
             num_course = c.get("numOrdre")
             key = f"{date_str}-R{nr}C{num_course}"
             if any(x.get("key") == key for x in COLLECTED_RESULTS):
                 continue
 
-            # Utiliser les participants au lieu des rapports
             arrivee = await _get_arrivee_participants(date_str, nr, num_course)
 
             if arrivee:
@@ -264,12 +258,7 @@ async def agent_collect(offset: int = 0):
                 })
                 nouvelles += 1
 
-    return {
-        "date": date_str,
-        "courses_scan": courses_scan,
-        "nouvelles_arrivees": nouvelles,
-        "total_collecte": len(COLLECTED_RESULTS),
-    }
+    return {"ok": True, "nouvelles": nouvelles, "total": len(COLLECTED_RESULTS)}
 
 
 @app.get("/api/results")
