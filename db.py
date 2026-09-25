@@ -146,4 +146,4 @@ def reset_all():
                 cur.execute("DELETE FROM meta")
                 conn.commit()
     except Exception as e:
-        print("=== reset_all FAIL: " + str(e) + " ===")
+        print("=== reset_all FAIL: " + str(e) + " ===") 
