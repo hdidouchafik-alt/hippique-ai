@@ -26,22 +26,24 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="3.5.0")
+app = FastAPI(title="Hippique AI", version="4.0.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+
+MISE_UNITAIRE = 10  # 10€ simulés par pari
 
 COLLECTED_RESULTS = []
 LEARNING_STATS = {
     "evaluated": 0,
     "agents": {
-        "FormAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "DriverAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "MarketAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "ClassAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "RiskAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "TrackAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
-        "ForecastAgent": {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50},
+        "FormAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "DriverAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "MarketAgent":   {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "ClassAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "RiskAgent":     {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "TrackAgent":    {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
+        "ForecastAgent": {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0},
     }
 }
 
@@ -75,6 +77,8 @@ class PredictionRequest(BaseModel):
     text: str = Field(min_length=20, max_length=100000)
 
 
+# ============ PAGES ============
+
 @app.get("/", response_class=HTMLResponse)
 async def root(request: Request):
     return templates.TemplateResponse(request, "index.html")
@@ -89,6 +93,8 @@ async def pronostics_page(request: Request):
 async def learning_page(request: Request):
     return templates.TemplateResponse(request, "learning.html")
 
+
+# ============ API ============
 
 @app.get("/api/health")
 async def health():
@@ -129,9 +135,39 @@ async def prediction_history(limit: int = 20):
     return {"predictions": prediction_store.history(limit)}
 
 
+def _compute_roi_from_results():
+    """Recalcule le ROI de chaque agent à partir des courses en base."""
+    roi = {}
+    for name in LEARNING_STATS["agents"].keys():
+        roi[name] = {"mise": 0, "gain": 0, "pari": 0, "gagne": 0}
+    for course in COLLECTED_RESULTS:
+        ev = course.get("evaluations") or {}
+        for agent_name, data in ev.items():
+            if agent_name not in roi:
+                continue
+            cote = data.get("cote_top1")
+            if not cote:
+                continue
+            roi[agent_name]["mise"] += MISE_UNITAIRE
+            roi[agent_name]["pari"] += 1
+            if data.get("top1") == 1:
+                roi[agent_name]["gain"] += MISE_UNITAIRE * float(cote)
+                roi[agent_name]["gagne"] += 1
+    # Calcul du ROI %
+    for name in roi:
+        mise = roi[name]["mise"]
+        gain = roi[name]["gain"]
+        roi[name]["pnl"] = round(gain - mise, 2)
+        roi[name]["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
+        roi[name]["mise"] = round(mise, 2)
+        roi[name]["gain"] = round(gain, 2)
+    return roi
+
+
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     evaluated = LEARNING_STATS["evaluated"]
+    roi = _compute_roi_from_results()
     agents_scores = {}
     for name, s in LEARNING_STATS["agents"].items():
         if s["total"] > 0:
@@ -141,9 +177,18 @@ async def learning_metrics():
             score = min(100.0, max(0.0, score))
         else:
             score = 50.0
+        r = roi.get(name, {})
         agents_scores[name] = {
-            "score": score, "total": s["total"],
-            "top1": s["hits_top1"], "top5": s["hits_top5"],
+            "score": score,
+            "total": s["total"],
+            "top1": s["hits_top1"],
+            "top5": s["hits_top5"],
+            "roi_pct": r.get("roi_pct", 0),
+            "roi_pnl": r.get("pnl", 0),
+            "roi_mise": r.get("mise", 0),
+            "roi_gain": r.get("gain", 0),
+            "roi_pari": r.get("pari", 0),
+            "roi_gagne": r.get("gagne", 0),
         }
     if evaluated > 0:
         nb = len(LEARNING_STATS["agents"])
@@ -168,7 +213,7 @@ async def learning_reset():
     COLLECTED_RESULTS.clear()
     LEARNING_STATS["evaluated"] = 0
     for name in LEARNING_STATS["agents"]:
-        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50}
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0}
     if DB_OK:
         db.reset_all()
     return {"ok": True, "message": "Reset effectué"}
@@ -181,20 +226,10 @@ async def admin_purge(confirm: str = ""):
     COLLECTED_RESULTS.clear()
     LEARNING_STATS["evaluated"] = 0
     for name in LEARNING_STATS["agents"]:
-        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "score": 50}
+        LEARNING_STATS["agents"][name] = {"hits_top1": 0, "hits_top5": 0, "total": 0, "roi_mise": 0, "roi_gain": 0}
     if DB_OK:
         db.reset_all()
-    return {"ok": True, "message": "Base purgée complètement"}
-
-
-@app.post("/api/agents/analyse")
-async def agents_analyse(payload: dict):
-    if not AGENTS_MODULE_OK:
-        return {"error": "Non dispo", "resultats": []}
-    try:
-        return {"resultats": analyse_course(payload.get("runners", []))}
-    except Exception as e:
-        return {"error": str(e), "resultats": []}
+    return {"ok": True, "message": "Base purgée"}
 
 
 # ============ MOTEUR ============
@@ -263,7 +298,8 @@ def _predire(participants):
         sc = _score_cote(cote)
         sg = _score_gains(gains)
         sr = _score_risk(musique)
-        forecast = sf*0.35 + sd*0.25 + sc*0.20 + sg*0.15 + sr*0.05
+        # NOUVELLE FORMULE : MarketAgent 45%, Form 15%, Driver 15%, Class 15%, Risk 10%
+        forecast = sf*0.15 + sd*0.15 + sc*0.45 + sg*0.15 + sr*0.10
         scored.append({"num": num, "form": sf, "driver": sd, "market": sc,
                        "class": sg, "risk": sr, "forecast": forecast})
     for agent in preds:
@@ -281,24 +317,48 @@ def _evaluer(participants, arrivee):
     preds = _predire(participants)
     v1 = arrivee[0] if arrivee else None
     v5 = set(arrivee[:5])
+
+    # Map num → cote
+    cotes = {}
+    for p in participants:
+        if not isinstance(p, dict):
+            continue
+        num = p.get("numPmu")
+        cote = (p.get("dernierRapportDirect") or {}).get("rapport")
+        if num and cote:
+            try:
+                cotes[int(num)] = float(cote)
+            except (ValueError, TypeError):
+                pass
+
     res = {}
     for name, pred in preds.items():
         h1 = 1 if pred and pred[0] == v1 else 0
         h5 = len(set(pred) & v5) if pred else 0
+        cote_top1 = cotes.get(pred[0]) if pred else None
         s = LEARNING_STATS["agents"][name]
         s["total"] += 1
         s["hits_top1"] += h1
         s["hits_top5"] += h5
+        if cote_top1:
+            s["roi_mise"] += MISE_UNITAIRE
+            if h1 == 1:
+                s["roi_gain"] += MISE_UNITAIRE * cote_top1
         if DB_OK:
             db.save_agent(name, s["hits_top1"], s["hits_top5"], s["total"])
-        res[name] = {"top1": h1, "top5": h5, "prediction": pred}
+        res[name] = {
+            "top1": h1,
+            "top5": h5,
+            "prediction": pred,
+            "cote_top1": cote_top1,
+        }
     LEARNING_STATS["evaluated"] += 1
     if DB_OK:
         db.save_meta("evaluated", str(LEARNING_STATS["evaluated"]))
     return res
 
 
-# ============ FILTRE BLACKLIST ============
+# ============ FILTRE ============
 
 BLACKLIST = [
     "CHILI", "CHILE", "VALPARAISO",
@@ -323,18 +383,15 @@ BLACKLIST = [
     "RUSSIE", "MOSCOU",
     "TURQUIE", "ISTANBUL",
     "EMIRATS", "DUBAI",
-    "QATAR",
-    "ARABIE",
+    "QATAR", "ARABIE",
     "COREE", "SEOUL",
     "CHINE", "SHANGHAI",
     "THAILANDE", "BANGKOK",
-    "MALAISIE",
-    "INDONESIE",
+    "MALAISIE", "INDONESIE",
     "NOUVELLE-ZELANDE", "NEW ZEALAND",
     "VENEZUELA", "CARACAS",
     "COLOMBIE", "BOGOTA",
-    "EQUATEUR",
-    "BOLIVIE",
+    "EQUATEUR", "BOLIVIE",
     "PARAGUAY", "ASUNCION",
 ]
 
@@ -451,11 +508,11 @@ async def agent_collect(offset: int = 0):
 
 
 @app.get("/api/results")
-async def list_results(limit: int = 50):
-    return {"count": len(COLLECTED_RESULTS), "results": COLLECTED_RESULTS[-limit:]}
+async else def list_results(limit: int = 50 {"):
+error    return {"count": len(COLLECTED":_RESULTS), "results": COLLECTED_RESULTS "[-limit:]}
 
 
-@app.get("/api/pmu/proxy/{path:path}")
+@app.get("/api/pmu/proxy/{path:PMpath}")
 async def proxy_pmu(path: str):
     data = await _pmu_get(f"{PMU_BASE}/{path}")
-    return data if data else {"error": "PMU indisponible"}
+    return data if dataU indisponible"}
