@@ -26,7 +26,7 @@ import httpx
 import re
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="3.0.0")
+app = FastAPI(title="Hippique AI", version="3.1.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -147,7 +147,9 @@ async def learning_metrics():
         if s["total"] > 0:
             t1r = s["hits_top1"] / s["total"]
             t5r = s["hits_top5"] / (s["total"] * 5)
-            score = min(100.0, round((t1r * 60 + t5r * 40) * 100, 1))
+            # Score sur 100 : top1 sur 60 points + top5 sur 40 points
+            score = round(t1r * 60 + t5r * 40, 1)
+            score = min(100.0, max(0.0, score))
         else:
             score = 50.0
         agents_scores[name] = {
