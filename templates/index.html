@@ -3,1180 +3,195 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#081813">
+<meta name="theme-color" content="#071b16">
 <link rel="stylesheet" href="/static/styles.css?v=luxe-club-3">
-<title>Hippique AI — Analyses & Pronostics hippiques</title>
-<style>
-/* ============ RESET ============ */
-* { margin: 0; padding: 0; box-sizing: border-box; }
-body {
-  font-family: Georgia, 'Times New Roman', serif;
-  background: linear-gradient(135deg, #f8f4ec 0%, #eee7da 100%);
-  color: #17221d;
-  min-height: 100vh;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-}
-a { text-decoration: none; color: inherit; }
-button { font-family: inherit; cursor: pointer; }
-
-/* ============ HEADER ============ */
-.site-header {
-  background: rgba(8, 24, 19, 0.98);
-  backdrop-filter: blur(16px);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid rgba(229, 201, 141, 0.15);
-}
-.header-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  gap: 32px;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #f3eee5;
-  font-size: 20px;
-  letter-spacing: 0.09em;
-}
-.brand-mark {
-  color: #e5c98d;
-  font-size: 26px;
-}
-.brand b { font-weight: 700; }
-.brand em { color: #e5c98d; font-style: normal; }
-
-.main-nav {
-  display: flex;
-  gap: 4px;
-  margin-left: 24px;
-  align-items: center;
-}
-.nav-item {
-  position: relative;
-}
-.nav-item > a {
-  display: block;
-  padding: 10px 16px;
-  color: #c8d4cc;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-.nav-item > a:hover,
-.nav-item.active > a {
-  color: #e5c98d;
-  background: rgba(229, 201, 141, 0.06);
-}
-.submenu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: #0a2119;
-  border: 1px solid rgba(229, 201, 141, 0.2);
-  border-radius: 4px;
-  min-width: 220px;
-  padding: 8px 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(6px);
-  transition: all 0.2s;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
-}
-.nav-item:hover .submenu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-.submenu a {
-  display: block;
-  padding: 10px 20px;
-  color: #b6c4bc;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-}
-.submenu a:hover {
-  color: #e5c98d;
-  background: rgba(229, 201, 141, 0.06);
-}
-
-.header-actions {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.live-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 12px;
-  background: rgba(74, 222, 128, 0.1);
-  border: 1px solid rgba(74, 222, 128, 0.3);
-  border-radius: 100px;
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  color: #4ade80;
-  text-transform: uppercase;
-}
-.live-pill::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  background: #4ade80;
-  border-radius: 50%;
-  animation: pulse 1.6s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-/* ============ HERO ============ */
-.hero {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 80px 24px 60px;
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
-  gap: 80px;
-  align-items: center;
-}
-.hero-copy .eyebrow {
-  color: #b28a4b;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 20px;
-}
-.hero h1 {
-  font-family: Georgia, serif;
-  font-size: 58px;
-  font-weight: 400;
-  letter-spacing: -0.05em;
-  line-height: 1.05;
-  color: #081813;
-  margin-bottom: 24px;
-}
-.hero h1 em {
-  font-style: italic;
-  color: #b28a4b;
-}
-.hero-text {
-  font-family: Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #6d786f;
-  max-width: 520px;
-  margin-bottom: 32px;
-}
-.hero-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-}
-.btn-primary {
-  padding: 14px 28px;
-  background: #081813;
-  color: #e5c98d;
-  border: none;
-  border-radius: 2px;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  font-weight: 600;
-  transition: all 0.25s;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-.btn-primary:hover {
-  background: #10281f;
-  box-shadow: 0 12px 28px rgba(8, 24, 19, 0.25);
-  transform: translateY(-1px);
-}
-.btn-ghost {
-  color: #17221d;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  padding: 14px 8px;
-  border-bottom: 1px solid #17221d;
-}
-
-.hero-card {
-  background: radial-gradient(circle at 78% 18%, #24543d 0%, #10281f 38%, #081813 100%);
-  border: 1px solid rgba(229, 201, 141, 0.4);
-  border-radius: 2px;
-  padding: 36px;
-  position: relative;
-  box-shadow: 0 30px 70px rgba(8, 24, 19, 0.25);
-  color: #f3eee5;
-}
-.hero-card::before {
-  content: '';
-  position: absolute;
-  inset: 14px;
-  border: 1px solid rgba(229, 201, 141, 0.18);
-  pointer-events: none;
-}
-.hero-card .top {
-  display: flex;
-  justify-content: space-between;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #c8d4cc;
-  margin-bottom: 30px;
-  position: relative;
-  z-index: 2;
-}
-.badge {
-  background: #e5c98d;
-  color: #081813;
-  padding: 4px 10px;
-  border-radius: 2px;
-  font-weight: 700;
-}
-.hero-card .icon {
-  font-size: 100px;
-  text-align: center;
-  color: rgba(229, 201, 141, 0.14);
-  margin: 20px 0;
-  position: relative;
-  z-index: 2;
-}
-.hero-card .body {
-  position: relative;
-  z-index: 2;
-}
-.hero-card .muted {
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #8fa79b;
-}
-.hero-card h2 {
-  font-family: Georgia, serif;
-  font-size: 28px;
-  font-weight: 400;
-  margin: 8px 0 24px;
-  color: #f3eee5;
-}
-.bar-label {
-  display: flex;
-  justify-content: space-between;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  color: #c8d4cc;
-  margin-bottom: 8px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.bar-label strong {
-  color: #e5c98d;
-  font-size: 20px;
-}
-.bar {
-  height: 4px;
-  background: rgba(229, 201, 141, 0.15);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.bar i {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #e5c98d, #b28a4b);
-}
-
-/* ============ SECTIONS ============ */
-.section {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 60px 24px;
-}
-.section-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 32px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e6dece;
-}
-.section-head .eyebrow {
-  color: #b28a4b;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.section-head h2 {
-  font-family: Georgia, serif;
-  font-size: 34px;
-  font-weight: 400;
-  letter-spacing: -0.04em;
-  color: #081813;
-}
-.section-head .note {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #7d857d;
-}
-
-/* ============ STATS ============ */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-.stat-card {
-  background: #fffdf9;
-  border: 1px solid #e6dece;
-  border-radius: 2px;
-  padding: 28px;
-  box-shadow: 0 24px 60px rgba(22, 39, 31, 0.08);
-  transition: transform 0.25s;
-}
-.stat-card:hover { transform: translateY(-3px); }
-.stat-card .icon {
-  color: #b28a4b;
-  font-size: 24px;
-  margin-bottom: 16px;
-  display: block;
-}
-.stat-card small {
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  color: #7d857d;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.stat-card strong {
-  display: block;
-  font-family: Georgia, serif;
-  font-size: 40px;
-  color: #081813;
-  margin: 10px 0 6px;
-  letter-spacing: -0.03em;
-}
-.stat-card .sub {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #7d857d;
-}
-
-/* ============ TABS ============ */
-.tabs {
-  display: flex;
-  gap: 4px;
-  border-bottom: 1px solid #e6dece;
-  margin-bottom: 24px;
-}
-.tab {
-  padding: 14px 24px;
-  background: none;
-  border: none;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #7d857d;
-  border-bottom: 2px solid transparent;
-  transition: all 0.2s;
-}
-.tab.active {
-  color: #081813;
-  border-bottom-color: #b28a4b;
-}
-.tab:hover { color: #081813; }
-
-/* ============ CARDS COURSES ============ */
-.courses-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 20px;
-}
-.course-card {
-  background: #fffdf9;
-  border: 1px solid #e6dece;
-  border-radius: 2px;
-  padding: 24px;
-  box-shadow: 0 24px 60px rgba(22, 39, 31, 0.06);
-  cursor: pointer;
-  transition: all 0.25s;
-}
-.course-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 28px 65px rgba(18, 40, 31, 0.12);
-}
-.course-card .head {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.course-card .disc {
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  background: #081813;
-  color: #e5c98d;
-  padding: 4px 10px;
-  border-radius: 2px;
-}
-.course-card .time {
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  color: #7d857d;
-}
-.course-card h3 {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  font-weight: 400;
-  color: #081813;
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-}
-.course-card .meta {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #7d857d;
-  margin-bottom: 16px;
-}
-.course-card .footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 16px;
-  border-top: 1px solid #f0e8d8;
-}
-.course-card .badge-count {
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  color: #b28a4b;
-  letter-spacing: 0.08em;
-}
-.course-card .arrow {
-  color: #b28a4b;
-  font-size: 16px;
-}
-
-/* ============ FORMULAIRE ============ */
-.form-panel {
-  background: radial-gradient(circle at 90% 0%, #23523c 0%, #10281f 38%, #081813 100%);
-  border: 1px solid rgba(229, 201, 141, 0.35);
-  border-radius: 2px;
-  padding: 40px;
-  position: relative;
-  overflow: hidden;
-  color: #f3eee5;
-}
-.form-panel::before {
-  content: '';
-  position: absolute;
-  inset: 13px;
-  border: 1px solid rgba(229, 201, 141, 0.14);
-  pointer-events: none;
-}
-.form-panel > * { position: relative; z-index: 2; }
-.form-panel h3 {
-  font-family: Georgia, serif;
-  font-size: 24px;
-  font-weight: 400;
-  color: #f3eee5;
-  margin-bottom: 8px;
-}
-.form-panel .hint {
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  color: #8fa79b;
-  margin-bottom: 24px;
-}
-.field { margin-bottom: 18px; }
-.field label {
-  display: block;
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: #e5c98d;
-  margin-bottom: 8px;
-}
-.field input, .field textarea, .field select {
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(8, 24, 19, 0.6);
-  border: 1px solid rgba(229, 201, 141, 0.25);
-  border-radius: 1px;
-  color: #f3eee5;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  outline: none;
-}
-.field input:focus, .field textarea:focus { border-color: #e5c98d; }
-.field textarea {
-  min-height: 140px;
-  resize: vertical;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  line-height: 1.6;
-}
-.field-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-.btn-gold {
-  width: 100%;
-  padding: 16px 24px;
-  background: linear-gradient(135deg, #b28a4b 0%, #e5c98d 100%);
-  color: #081813;
-  border: none;
-  border-radius: 1px;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-weight: 700;
-  transition: all 0.25s;
-}
-.btn-gold:hover {
-  box-shadow: 0 12px 28px rgba(178, 138, 75, 0.35);
-  transform: translateY(-1px);
-}
-.btn-gold:disabled { opacity: 0.5; cursor: not-allowed; }
-
-/* ============ RESULTATS ============ */
-.results {
-  margin-top: 32px;
-}
-.result-row {
-  background: #fffdf9;
-  border: 1px solid #e6dece;
-  border-radius: 2px;
-  padding: 20px 24px;
-  margin-bottom: 12px;
-  display: grid;
-  grid-template-columns: 60px 1fr auto auto;
-  gap: 24px;
-  align-items: center;
-  transition: all 0.2s;
-}
-.result-row:hover {
-  border-color: #b28a4b;
-  box-shadow: 0 12px 30px rgba(178, 138, 75, 0.08);
-}
-.result-row.top {
-  border-color: #b28a4b;
-  background: linear-gradient(90deg, rgba(178, 138, 75, 0.05), transparent 40%);
-}
-.rank-badge {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #081813;
-  color: #e5c98d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: Georgia, serif;
-  font-size: 20px;
-  font-weight: 700;
-}
-.result-row.top .rank-badge {
-  background: #b28a4b;
-  color: #081813;
-}
-.result-info h4 {
-  font-family: Georgia, serif;
-  font-size: 18px;
-  font-weight: 400;
-  color: #081813;
-  margin-bottom: 4px;
-}
-.result-info h4 .num {
-  color: #b28a4b;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  margin-right: 8px;
-  font-weight: 700;
-}
-.result-info .sub {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #7d857d;
-}
-.result-stat {
-  text-align: right;
-}
-.result-stat small {
-  display: block;
-  font-family: Arial, sans-serif;
-  font-size: 10px;
-  color: #7d857d;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.result-stat b {
-  display: block;
-  font-family: Georgia, serif;
-  font-size: 20px;
-  color: #081813;
-  margin-top: 4px;
-}
-.result-stat b.gold { color: #b28a4b; }
-
-/* ============ CHAT ============ */
-.chat-panel {
-  background: linear-gradient(120deg, #10281f, #0b2018);
-  border: 1px solid rgba(229, 201, 141, 0.3);
-  border-radius: 2px;
-  padding: 40px;
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
-  gap: 40px;
-  color: #f3eee5;
-}
-.chat-intro h2 {
-  font-family: Georgia, serif;
-  font-size: 34px;
-  font-weight: 400;
-  line-height: 1.15;
-  letter-spacing: -0.04em;
-  margin: 12px 0 16px;
-}
-.chat-intro h2 em { color: #e5c98d; font-style: italic; }
-.chat-intro p {
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  color: #8fa79b;
-  line-height: 1.7;
-}
-.chat-intro .avatar {
-  font-size: 48px;
-  color: #e5c98d;
-  display: block;
-  margin-bottom: 16px;
-}
-.chat-box {
-  background: rgba(8, 24, 19, 0.5);
-  border: 1px solid rgba(229, 201, 141, 0.15);
-  border-radius: 2px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-}
-.messages {
-  flex: 1;
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 16px;
-  padding-right: 8px;
-}
-.msg {
-  padding: 10px 14px;
-  border-radius: 2px;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  margin-bottom: 10px;
-  max-width: 85%;
-  line-height: 1.5;
-}
-.msg.bot {
-  background: rgba(229, 201, 141, 0.1);
-  border: 1px solid rgba(229, 201, 141, 0.2);
-  color: #f3eee5;
-}
-.msg.user {
-  background: #b28a4b;
-  color: #081813;
-  margin-left: auto;
-  text-align: right;
-}
-.chat-form {
-  display: flex;
-  gap: 8px;
-}
-.chat-form input {
-  flex: 1;
-  padding: 12px 16px;
-  background: rgba(8, 24, 19, 0.6);
-  border: 1px solid rgba(229, 201, 141, 0.2);
-  border-radius: 2px;
-  color: #f3eee5;
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  outline: none;
-}
-.chat-form input:focus { border-color: #e5c98d; }
-.chat-form button {
-  width: 48px;
-  background: #b28a4b;
-  color: #081813;
-  border: none;
-  border-radius: 2px;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-/* ============ FOOTER ============ */
-.site-footer {
-  background: #081813;
-  color: #8fa79b;
-  padding: 40px 24px;
-  margin-top: 60px;
-  border-top: 1px solid rgba(229, 201, 141, 0.2);
-}
-.footer-inner {
-  max-width: 1280px;
-  margin: 0 auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  justify-content: space-between;
-  align-items: center;
-}
-.footer-brand {
-  color: #e5c98d;
-  font-family: Georgia, serif;
-  font-size: 18px;
-}
-.footer-brand em { color: #f3eee5; font-style: normal; }
-.footer-inner span {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-}
-
-/* ============ UTILS ============ */
-.empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #7d857d;
-  font-family: Arial, sans-serif;
-  font-size: 14px;
-  background: #fffdf9;
-  border: 1px solid #e6dece;
-}
-.loader {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(178, 138, 75, 0.3);
-  border-top-color: #b28a4b;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  vertical-align: middle;
-  margin-right: 8px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ============ MOBILE ============ */
-@media (max-width: 900px) {
-  .hero { grid-template-columns: 1fr; padding: 50px 24px 40px; gap: 40px; }
-  .hero h1 { font-size: 38px; }
-  .main-nav { display: none; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
-  .chat-panel { grid-template-columns: 1fr; padding: 28px; }
-  .result-row { grid-template-columns: 1fr; gap: 12px; }
-  .result-stat { text-align: left; }
-}
-</style>
+<title>Hippique AI</title>
 </head>
 <body>
-
 <header class="site-header">
   <div class="header-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark">♞</span>
-      <span><b>Hippique</b><em>AI</em></span>
-    </a>
+    <a class="brand" href="/"><span class="brand-mark">♞</span><span><b>Hippique</b><em>AI</em></span></a>
     <nav class="main-nav">
-      <div class="nav-item active">
-        <a href="/">Accueil</a>
-      </div>
-      <div class="nav-item">
-        <a href="/pronostics">Pronostics</a>
-        <div class="submenu">
-          <a href="/pronostics">Analyse du jour</a>
-          <a href="/pronostics">Classement complet</a>
-          <a href="/pronostics">Historique</a>
-        </div>
-      </div>
-      <div class="nav-item">
-        <a href="#courses">Courses</a>
-        <div class="submenu">
-          <a href="#courses">Courses du jour</a>
-          <a href="#courses">Trot attelé</a>
-          <a href="#courses">Plat</a>
-        </div>
-      </div>
-      <div class="nav-item">
-        <a href="#analyse">Analyser</a>
-      </div>
-      <div class="nav-item">
-        <a href="#chat">Assistant</a>
-      </div>
+      <a class="active" href="/">Accueil</a>
+      <a href="/pronostics">Pronostics</a>
+      <a href="#analyse">Analyser</a>
+      <a href="#chat">Assistant</a>
     </nav>
     <div class="header-actions">
-      <span class="live-pill">Service actif</span>
+      <span class="live-dot"></span>
+      <span class="live-label">Service en ligne</span>
     </div>
   </div>
 </header>
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-copy">
-    <p class="eyebrow">Intelligence hippique</p>
-    <h1>Chaque course a<br>son <em>histoire</em>.</h1>
-    <p class="hero-text">
-      Nos agents analysent la forme, la musique, les drivers et les conditions de course
-      pour vous livrer un classement argumenté. Pas de pronostics miracles, juste des
-      données structurées et une lecture claire.
-    </p>
-    <div class="hero-actions">
-      <a href="#analyse" class="btn-primary">Analyser une course →</a>
-      <a href="#courses" class="btn-ghost">Voir les courses</a>
-    </div>
-  </div>
-  <div class="hero-card">
-    <div class="top">
-      <span class="badge">À LA UNE</span>
-      <span id="today">—</span>
-    </div>
-    <div class="icon">♞</div>
-    <div class="body">
-      <span class="muted">Indice de confiance global</span>
-      <h2>Hippique AI</h2>
-      <div class="bar-label">
-        <span>Modèle actif</span>
-        <strong id="heroConf">82<span style="font-size:14px;color:#8fa79b;">/100</span></strong>
-      </div>
-      <div class="bar"><i style="width: 82%"></i></div>
-    </div>
-  </div>
-</section>
-
-<!-- STATS -->
-<section class="section" id="stats">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Tableau de bord</p>
-      <h2>Les chiffres du moment</h2>
-    </div>
-    <span class="note">Mis à jour en direct</span>
-  </div>
-  <div class="stats-grid">
-    <div class="stat-card">
-      <span class="icon">♞</span>
-      <small>Agents actifs</small>
-      <strong id="kpiAgents">—</strong>
-      <span class="sub">Expertises complémentaires</span>
-    </div>
-    <div class="stat-card">
-      <span class="icon">▣</span>
-      <small>Réunions suivies</small>
-      <strong id="kpiTracks">—</strong>
-      <span class="sub">Dans notre catalogue</span>
-    </div>
-    <div class="stat-card">
-      <span class="icon">✦</span>
-      <small>Pronostics générés</small>
-      <strong id="kpiPreds">—</strong>
-      <span class="sub">Depuis le lancement</span>
-    </div>
-    <div class="stat-card">
-      <span class="icon">◈</span>
-      <small>Fiabilité modèle</small>
-      <strong id="kpiAcc">—</strong>
-      <span class="sub">Sur les analyses passées</span>
-    </div>
-  </div>
-</section>
-
-<!-- COURSES -->
-<section class="section" id="courses">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Réunions</p>
-      <h2>Courses suivies</h2>
-    </div>
-    <span class="note" id="coursesCount">—</span>
-  </div>
-  <div class="courses-grid" id="coursesGrid">
-    <div class="empty"><span class="loader"></span>Chargement…</div>
-  </div>
-</section>
-
-<!-- ANALYSE -->
-<section class="section" id="analyse">
-  <div class="section-head">
-    <div>
-      <p class="eyebrow">Analyse</p>
-      <h2>Analyser une course</h2>
-    </div>
-    <span class="note">Collez la liste des partants</span>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="text">Saisie texte</button>
-    <button class="tab" data-tab="manual">Saisie manuelle</button>
-  </div>
-
-  <form class="form-panel" id="analyseForm">
-    <h3>Lancer une analyse</h3>
-    <p class="hint">Collez le texte de la course (une ligne par cheval avec cote, driver, musique).</p>
-
-    <div class="field-row">
-      <div class="field">
-        <label>Nom de la course</label>
-        <input id="raceName" placeholder="Ex : R4C4 Laval - Prix Transgourmet" value="Course du jour" required>
-      </div>
-      <div class="field">
-        <label>Discipline</label>
-        <select id="discipline">
-          <option value="Trot">Trot attelé</option>
-          <option value="Plat">Plat</option>
-        </select>
+<main>
+  <section class="hero container">
+    <div class="hero-copy">
+      <p class="eyebrow">L'IA au service de votre passion</p>
+      <h1>Chaque course a<br><span>son histoire.</span></h1>
+      <p class="hero-text">Analysez les chevaux, les drivers et les courses avec notre intelligence artificielle.</p>
+      <div class="hero-actions">
+        <a class="button button-primary" href="#analyse">Analyser une course →</a>
+        <a class="text-link" href="/pronostics">Voir les pronostics</a>
       </div>
     </div>
-
-    <div class="field">
-      <label>Liste des partants</label>
-      <textarea id="raceText" required>1. KAISER - cote 24 - driver F. Nivard - gains 210230 - musique 6a 3a 2a 1a 7a
-2. JOLYDOLE - cote 19 - driver M. Abrivard - gains 229120 - musique 1a Dm 2a 7m 3a
-3. KOUREAS D'ELA - cote 1.9 - driver B. Rochard - gains 231385 - musique 1a 1a 1a 2a 1a
-4. EVERY TIME WINNER - cote 8.2 - driver E. Raffin - gains 214838 - musique 6a 2a 4a 8a 4a
-5. KING DE L'OUEST - cote 3.5 - driver A. Barrier - gains 217500 - musique 4a 2a 1a 7a 5a</textarea>
-    </div>
-
-    <button type="submit" class="btn-gold" id="btnAnalyse">Lancer l'analyse →</button>
-  </form>
-
-  <div class="results" id="results"></div>
-</section>
-
-<!-- CHAT -->
-<section class="section" id="chat">
-  <div class="chat-panel">
-    <div class="chat-intro">
-      <span class="avatar">♞</span>
-      <p class="eyebrow" style="color:#e5c98d;font-family:Arial;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;">Assistant hippique</p>
-      <h2>Une question ?<br><em>Parlons courses.</em></h2>
-      <p>Posez vos questions sur les chevaux, les drivers, les hippodromes ou les stratégies d'analyse.</p>
-    </div>
-    <div class="chat-box">
-      <div class="messages" id="messages">
-        <div class="msg bot">Bonjour ! Je peux vous aider à analyser un cheval, comparer des profils ou expliquer une course. 🏇</div>
+    <div class="hero-card">
+      <div class="hero-card-top"><span class="race-badge">À LA UNE</span><span id="today">—</span></div>
+      <div class="silhouette">♞</div>
+      <div class="hero-card-content">
+        <span class="muted-label">Assistant actif</span>
+        <h2>Hippique AI</h2>
+        <div class="confidence"><span>Indice de confiance</span><strong>82<span>/100</span></strong></div>
+        <div class="confidence-bar"><i style="width:82%"></i></div>
       </div>
-      <form class="chat-form" id="chatForm">
-        <input id="chatInput" type="text" placeholder="Écrivez votre question…" autocomplete="off">
-        <button type="submit" aria-label="Envoyer">→</button>
-      </form>
     </div>
-  </div>
-</section>
+  </section>
 
-<!-- FOOTER -->
+  <section class="container section" id="analyse">
+    <div class="section-heading">
+      <div><p class="eyebrow">Analyse</p><h2>Analyser une course</h2></div>
+      <span class="section-note">Collez la liste des partants</span>
+    </div>
+    <form class="task-panel" id="analyseForm" style="max-width:800px;margin:0 auto;">
+      <div style="margin-bottom:16px;">
+        <label style="display:block;color:#e5c98d;font-family:Arial;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px;">Nom de la course</label>
+        <input id="raceName" value="Course du jour" style="width:100%;padding:12px;background:#0a1f1a;border:1px solid rgba(229,201,141,0.3);border-radius:4px;color:#f3eee5;font-size:14px;">
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;color:#e5c98d;font-family:Arial;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;margin-bottom:8px;">Liste des partants</label>
+        <textarea id="raceText" rows="10" style="width:100%;padding:12px;background:#0a1f1a;border:1px solid rgba(229,201,141,0.3);border-radius:4px;color:#f3eee5;font-family:monospace;font-size:13px;">1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a 1a 7a
+2. JOLYDOLE - cote 19 - driver M. Abrivard - musique 1a Dm 2a 7m 3a
+3. KOUREAS D'ELA - cote 1.9 - driver B. Rochard - musique 1a 1a 1a 2a 1a
+4. EVERY TIME WINNER - cote 8.2 - driver E. Raffin - musique 6a 2a 4a 8a 4a
+5. KING DE L'OUEST - cote 3.5 - driver A. Barrier - musique 4a 2a 1a 7a 5a</textarea>
+      </div>
+      <button type="submit" class="button button-primary" id="btnAnalyse" style="width:100%;">Lancer l'analyse →</button>
+    </form>
+    <div id="results" style="margin-top:32px;"></div>
+  </section>
+
+  <section class="container section" id="chat">
+    <div class="chat-panel panel">
+      <div class="chat-intro">
+        <span class="assistant-avatar">♞</span>
+        <p class="eyebrow">Hippique AI répond</p>
+        <h2>Une question ?<br><span>Parlons courses.</span></h2>
+        <p>Notre assistant vous aide à comprendre les chevaux, les courses et les stratégies.</p>
+      </div>
+      <div class="chat-box">
+        <div id="messages" class="messages">
+          <div class="message bot">Bonjour ! Posez-moi une question sur les courses hippiques. 🏇</div>
+        </div>
+        <form id="chatForm" class="chat-form">
+          <input id="message" type="text" placeholder="Ex : Explique-moi la musique d'un cheval" autocomplete="off">
+          <button type="submit">→</button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
 <footer class="site-footer">
-  <div class="footer-inner">
-    <span class="footer-brand">♞ Hippique <em>AI</em></span>
-    <span>Données indicatives · Les pronostics ne garantissent aucun résultat.</span>
-    <span id="healthFooter">Service en ligne</span>
+  <div class="container">
+    <span class="brand-footer">♞ Hippique <em>AI</em></span>
+    <span>Données indicatives · Jouez responsable.</span>
   </div>
 </footer>
 
+<script src="https://js.puter.com/v2/"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-async function api(url, opts = {}) {
-  const r = await fetch(url, opts);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
-}
-
-// ============ DATE ============
-$('today').textContent = new Intl.DateTimeFormat('fr-FR', {day:'numeric', month:'long', year:'numeric'}).format(new Date());
-
-// ============ STATS ============
-async function loadStats() {
-  try {
-    const agents = await api('/api/agents');
-    $('kpiAgents').textContent = Object.keys(agents.agents || {}).length;
-
-    const tracks = await api('/api/tracks');
-    $('kpiTracks').textContent = (tracks.tracks || []).length;
-
-    const metrics = await api('/api/learning/metrics');
-    $('kpiPreds').textContent = metrics.total_predictions ?? 0;
-    $('kpiAcc').textContent = (metrics.accuracy ?? 0) + '%';
-  } catch (e) {
-    console.warn('Stats error', e);
-  }
-}
-
-// ============ COURSES ============
-async function loadCourses() {
-  const grid = $('coursesGrid');
-  try {
-    const data = await api('/api/races');
-    const races = data.races || [];
-    $('coursesCount').textContent = races.length + ' course(s)';
-
-    if (!races.length) {
-      grid.innerHTML = '<div class="empty">Aucune course disponible pour le moment.</div>';
-      return;
-    }
-
-    grid.innerHTML = races.slice(0, 6).map(r => `
-      <div class="course-card">
-        <div class="head">
-          <span class="disc">${esc(r.discipline || 'Trot')}</span>
-          <span class="time">${esc(r.time || r.heure || '—')}</span>
-        </div>
-        <h3>${esc(r.name || r.nom || 'Course')}</h3>
-        <p class="meta">${esc(r.hippodrome || '')} · ${esc(r.distance || '')}m · ${esc(r.participants || r.partants || '?')} partants</p>
-        <div class="footer">
-          <span class="badge-count">${esc(r.surface || 'Piste standard')}</span>
-          <span class="arrow">→</span>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {
-    console.warn('Courses error', e);
-    grid.innerHTML = '<div class="empty">Les courses seront bientôt disponibles.</div>';
-  }
-}
+$('today').textContent = new Intl.DateTimeFormat('fr-FR', {day:'numeric', month:'long'}).format(new Date());
 
 // ============ ANALYSE ============
 $('analyseForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = $('btnAnalyse');
   btn.disabled = true;
-  btn.innerHTML = '<span class="loader"></span>Analyse en cours…';
+  btn.textContent = 'Analyse en cours…';
 
   try {
-    const body = {
-      race_key: 'race-' + Date.now(),
-      race_name: $('raceName').value.trim(),
-      race_date: new Date().toISOString().split('T')[0],
-      text: $('raceText').value.trim()
-    };
-
-    const data = await api('/api/predictions', {
+    const r = await fetch('/api/predictions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        race_key: 'race-' + Date.now(),
+        race_name: $('raceName').value.trim(),
+        race_date: new Date().toISOString().split('T')[0],
+        text: $('raceText').value.trim()
+      })
     });
-
-    afficherResultats(data);
+    const data = await r.json();
+    const runners = data.ranking || data.recommendations || [];
+    if (!runners.length) {
+      $('results').innerHTML = '<div style="text-align:center;padding:40px;color:#7d857d;">Aucun classement.</div>';
+      return;
+    }
+    $('results').innerHTML = `
+      <h3 style="font-family:Georgia;font-size:28px;font-weight:400;color:#081813;margin-bottom:20px;border-bottom:1px solid #e6dece;padding-bottom:12px;">Classement proposé</h3>
+      ${runners.map((r, i) => `
+        <div style="background:#fffdf9;border:1px solid ${i===0?'#b28a4b':'#e6dece'};padding:18px 22px;margin-bottom:10px;display:grid;grid-template-columns:50px 1fr auto auto;gap:20px;align-items:center;border-radius:2px;">
+          <div style="width:44px;height:44px;border-radius:50%;background:${i===0?'#b28a4b':'#081813'};color:${i===0?'#081813':'#e5c98d'};display:flex;align-items:center;justify-content:center;font-family:Georgia;font-size:19px;font-weight:700;">${i+1}</div>
+          <div>
+            <div style="font-family:Georgia;font-size:18px;color:#081813;">N°${esc(r.num)} ${esc(r.nom)}</div>
+            <div style="font-family:Arial;font-size:12px;color:#7d857d;margin-top:3px;">${esc(r.driver || '—')} · ${esc((r.musique||[]).join(' · '))}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:Arial;font-size:10px;color:#7d857d;text-transform:uppercase;">Cote</div>
+            <div style="font-family:Georgia;font-size:18px;color:#081813;">${r.cote || '—'}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:Arial;font-size:10px;color:#7d857d;text-transform:uppercase;">Confiance</div>
+            <div style="font-family:Georgia;font-size:18px;color:#b28a4b;">${((r.p_calibree || 0) * 100).toFixed(0)}%</div>
+          </div>
+        </div>
+      `).join('')}
+    `;
   } catch (err) {
-    $('results').innerHTML = `<div class="empty" style="color:#c0392b">Erreur : ${esc(err.message)}</div>`;
+    $('results').innerHTML = '<div style="text-align:center;padding:40px;color:#c0392b;">Erreur : ' + esc(err.message) + '</div>';
   } finally {
     btn.disabled = false;
-    btn.innerHTML = "Lancer l'analyse →";
+    btn.textContent = 'Lancer l\'analyse →';
   }
 });
 
-function afficherResultats(data) {
-  const runners = data.ranking || data.recommendations || data.ranked || data.runners || [];
-  const div = $('results');
-
-  if (!runners.length) {
-    div.innerHTML = '<div class="empty">Aucun classement généré. Vérifiez le format de la liste.</div>';
-    return;
-  }
-
-  div.innerHTML = `
-    <div class="section-head" style="margin-top:40px;">
-      <div>
-        <p class="eyebrow">Résultat</p>
-        <h2>Classement proposé</h2>
-      </div>
-      <span class="note">${runners.length} partants analysés</span>
-    </div>
-    ${runners.slice(0, 10).map((r, i) => {
-      const conf = ((r.proba ?? r.p_calibree ?? r.confidence ?? 0) * 100).toFixed(0);
-      const num = r.num ?? r.number ?? '?';
-      const nom = r.nom ?? r.name ?? '—';
-      const driver = r.driver ?? r.jockey ?? '—';
-      const cote = r.cote ?? r.odds ?? '—';
-      const musique = (r.musique || []).slice(0, 5).join(' · ') || '—';
-      return `
-        <div class="result-row ${i === 0 ? 'top' : ''}">
-          <div class="rank-badge">${i + 1}</div>
-          <div class="result-info">
-            <h4><span class="num">N°${esc(num)}</span>${esc(nom)}</h4>
-            <p class="sub">${esc(driver)} · ${esc(musique)}</p>
-          </div>
-          <div class="result-stat">
-            <small>Cote</small>
-            <b>${esc(cote)}</b>
-          </div>
-          <div class="result-stat">
-            <small>Confiance</small>
-            <b class="gold">${conf}%</b>
-          </div>
-        </div>
-      `;
-    }).join('')}
-  `;
-}
-
-// ============ CHAT ============
+// ============ CHAT PUTER.JS ============
 $('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const input = $('chatInput');
+  const input = $('message');
   const text = input.value.trim();
   if (!text) return;
 
-  $('messages').insertAdjacentHTML('beforeend', `<div class="msg user">${esc(text)}</div>`);
+  $('messages').insertAdjacentHTML('beforeend', `<div class="message user">${esc(text)}</div>`);
   input.value = '';
 
   const pending = document.createElement('div');
-  pending.className = 'msg bot';
-  pending.textContent = 'Analyse en cours…';
+  pending.className = 'message bot';
+  pending.textContent = 'Réflexion…';
   $('messages').appendChild(pending);
   $('messages').scrollTop = $('messages').scrollHeight;
 
   try {
-    const data = await api('/api/chat', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: text })
-    });
-    pending.textContent = data.reply || 'Je n\'ai pas compris votre question.';
-  } catch {
-    pending.textContent = 'Le service est momentanément indisponible.';
+    if (typeof puter === 'undefined' || !puter.ai) {
+      pending.textContent = 'Puter.js pas chargé. Recharge la page (Ctrl+R).';
+      return;
+    }
+    const response = await puter.ai.chat(text, { model: 'gpt-5-nano' });
+    let reply = '';
+    if (typeof response === 'string') reply = response;
+    else if (response?.message?.content) {
+      const c = response.message.content;
+      reply = Array.isArray(c) ? c.map(x => x.text || '').join('') : String(c);
+    } else if (response?.text) reply = response.text;
+    else reply = JSON.stringify(response);
+    pending.textContent = reply;
+  } catch (err) {
+    pending.textContent = 'Erreur : ' + (err.message || err);
   }
   $('messages').scrollTop = $('messages').scrollHeight;
 });
-
-// ============ TABS ============
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    tab.classList.add('active');
-  });
-});
-
-// ============ INIT ============
-loadStats();
-loadCourses();
 </script>
 </body>
 </html>
