@@ -11,7 +11,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{text-decoration:none;color:inherit}
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
-input,textarea{font-family:inherit}
+input,textarea,select{font-family:inherit}
 .header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.85);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--border)}
 .header-inner{max-width:1200px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}
 .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;letter-spacing:-.02em}
@@ -49,6 +49,7 @@ input,textarea{font-family:inherit}
 .agents-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
 .agent{padding:14px;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;position:relative;transition:all .3s}
 .agent:hover{border-color:var(--teal);transform:translateY(-3px)}
+.agent.active{border-color:var(--teal);background:linear-gradient(135deg,rgba(20,184,166,.08),transparent)}
 .agent-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px}
 .agent-name{font-size:12px;font-weight:700;margin-bottom:3px}
 .agent-desc{font-size:10px;color:var(--text-3);line-height:1.4}
@@ -90,6 +91,11 @@ input,textarea{font-family:inherit}
 .btn-primary{width:100%;padding:14px;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-radius:12px;font-size:14px;font-weight:700;letter-spacing:.02em;transition:all .2s;box-shadow:0 4px 16px rgba(20,184,166,.4)}
 .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(20,184,166,.4)}
 .btn-primary:disabled{opacity:.6;cursor:wait;transform:none}
+.btn-secondary{padding:12px 18px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;color:var(--text-2);font-size:13px;font-weight:600}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal)}
+.history-item{padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;margin-bottom:8px}
+.history-item h4{font-size:14px;font-weight:700;margin-bottom:4px}
+.history-item p{font-size:11px;color:var(--text-3)}
 .chat-container{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;height:580px}
 .chat-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--bg-3) 0%,var(--bg-2) 100%)}
 .chat-avatar{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 4px 12px rgba(20,184,166,.4)}
@@ -97,10 +103,10 @@ input,textarea{font-family:inherit}
 .chat-header-info p{font-size:11px;color:var(--green);display:flex;align-items:center;gap:5px}
 .chat-header-info p::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;box-shadow:0 0 6px var(--green)}
 .chat-messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px}
-.bubble{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word;animation:bubbleIn .25s}
-@keyframes bubbleIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.bubble{max-width:82%;padding:11px 15px;border-radius:14px;font-size:14px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
 .bubble.bot{background:var(--bg-3);color:var(--text);border-bottom-left-radius:4px;align-self:flex-start}
 .bubble.user{background:linear-gradient(135deg,var(--teal) 0%,var(--teal-2) 100%);color:#fff;border-bottom-right-radius:4px;align-self:flex-end}
+.bubble.pending{background:var(--bg-3);color:var(--text-3);font-style:italic;align-self:flex-start}
 .chat-input-area{padding:12px 14px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--bg)}
 .chat-input-area input{flex:1;padding:12px 14px;background:var(--bg-2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;outline:none}
 .chat-input-area input:focus{border-color:var(--teal)}
@@ -110,6 +116,8 @@ input,textarea{font-family:inherit}
 .nav-item.active{color:var(--teal)}
 .nav-item-icon{font-size:20px}
 .empty{text-align:center;padding:50px 20px;color:var(--text-3);font-size:14px}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(20,184,166,.3);border-top-color:var(--teal);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:8px}
+@keyframes spin{to{transform:rotate(360deg)}}
 @media(max-width:720px){.header-inner{padding:12px 16px}.container{padding:0 16px}.tabs{padding:14px 16px 6px}.hero{padding:24px 0 20px}.runner{grid-template-columns:38px 1fr auto;gap:10px;padding:10px}.runner-rank{width:34px;height:34px;font-size:12px}.chat-container{height:480px}.agents-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
@@ -117,10 +125,7 @@ input,textarea{font-family:inherit}
 
 <header class="header">
   <div class="header-inner">
-    <div class="logo">
-      <span class="logo-icon">♞</span>
-      <span>Hippique <em>AI</em></span>
-    </div>
+    <div class="logo"><span class="logo-icon">♞</span><span>Hippique <em>AI</em></span></div>
     <div class="live">EN LIGNE</div>
   </div>
 </header>
@@ -130,6 +135,7 @@ input,textarea{font-family:inherit}
     <button class="tab active" data-view="home">🏠 Accueil</button>
     <button class="tab" data-view="courses">📅 Courses</button>
     <button class="tab" data-view="analyse">🔍 Analyser</button>
+    <button class="tab" data-view="historique">📜 Historique</button>
     <button class="tab" data-view="chat">💬 Assistant</button>
   </div>
 </div>
@@ -141,64 +147,38 @@ input,textarea{font-family:inherit}
       <h1>L'intelligence au service<br>des <span>courses hippiques.</span></h1>
       <p>Programmes, analyses assistées par IA, résultats officiels.</p>
     </div>
-
     <div class="kpis">
-      <div class="kpi"><div class="kpi-icon">♞</div><div class="kpi-label">Agents actifs</div><div class="kpi-value teal">7</div></div>
+      <div class="kpi"><div class="kpi-icon">♞</div><div class="kpi-label">Agents actifs</div><div class="kpi-value teal" id="kpiAgents">7</div></div>
       <div class="kpi"><div class="kpi-icon">📅</div><div class="kpi-label">Courses aujourd'hui</div><div class="kpi-value" id="kpiCourses">—</div></div>
-      <div class="kpi"><div class="kpi-icon">🏁</div><div class="kpi-label">Terminées</div><div class="kpi-value gold" id="kpiFinished">—</div></div>
-      <div class="kpi"><div class="kpi-icon">⚡</div><div class="kpi-label">Source</div><div class="kpi-value teal" style="font-size:16px;">Démo</div></div>
+      <div class="kpi"><div class="kpi-icon">🏁</div><div class="kpi-label">Historique</div><div class="kpi-value gold" id="kpiHistory">—</div></div>
+      <div class="kpi"><div class="kpi-icon">⚡</div><div class="kpi-label">Source</div><div class="kpi-value teal" style="font-size:14px" id="kpiSource">PMU</div></div>
     </div>
-
     <div class="section">
-      <div class="section-title">
-        <h2>Agents spécialisés</h2>
-        <span class="count">7 actifs</span>
-      </div>
-      <div class="agents-grid">
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(20,184,166,.15);color:#14b8a6">🎯</div><div class="agent-name">CourseAgent</div><div class="agent-desc">Rythme et distance</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(251,191,36,.15);color:#fbbf24">🐎</div><div class="agent-name">HorseAgent</div><div class="agent-desc">Forme du cheval</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(139,92,246,.15);color:#8b5cf6">🏇</div><div class="agent-name">JockeyAgent</div><div class="agent-desc">Stratégie driver</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(59,130,246,.15);color:#3b82f6">🏛️</div><div class="agent-name">TrainerAgent</div><div class="agent-desc">Préparation écurie</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(34,197,94,.15);color:#22c55e">🌤️</div><div class="agent-name">TrackAgent</div><div class="agent-desc">Piste et météo</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(239,68,68,.15);color:#ef4444">📅</div><div class="agent-name">CalendarAgent</div><div class="agent-desc">Échéances</div></div>
-        <div class="agent"><div class="agent-status"></div><div class="agent-icon" style="background:rgba(168,85,247,.15);color:#a855f7">📊</div><div class="agent-name">ForecastAgent</div><div class="agent-desc">Consolidation</div></div>
-      </div>
+      <div class="section-title"><h2>Agents spécialisés</h2><span class="count">7 actifs</span></div>
+      <div class="agents-grid" id="agentsGrid"></div>
     </div>
-
     <div class="section">
-      <div class="section-title">
-        <h2>Prochaines courses</h2>
-        <span class="count" id="countToday">—</span>
-      </div>
+      <div class="section-title"><h2>Prochaines courses</h2><span class="count" id="countToday">—</span></div>
       <div class="races-list" id="racesToday"></div>
     </div>
   </section>
 
   <section class="view" id="view-courses">
-    <div class="hero">
-      <h1>Programmes <span>hippiques</span></h1>
-      <p>Courses du jour, de la veille et de l'avant-veille avec partants et arrivées.</p>
-    </div>
-
+    <div class="hero"><h1>Programmes <span>hippiques</span></h1><p>Courses du jour, hier et avant-hier.</p></div>
     <div class="tabs" style="padding:0 0 14px">
       <button class="tab active" data-day="0">Aujourd'hui</button>
       <button class="tab" data-day="-1">Hier</button>
       <button class="tab" data-day="-2">Avant-hier</button>
     </div>
-
-    <div id="racesProgram"></div>
+    <div id="racesProgram"><div class="empty"><span class="loader"></span>Chargement…</div></div>
   </section>
 
   <section class="view" id="view-analyse">
-    <div class="hero">
-      <h1>Analyser une <span>course</span></h1>
-      <p>Collez la liste des partants. L'IA analyse musique, gains et drivers.</p>
-    </div>
-
+    <div class="hero"><h1>Analyser une <span>course</span></h1><p>Collez la liste des partants.</p></div>
     <form class="analyse-form" id="analyseForm">
       <label for="raceName">Nom de la course</label>
       <input id="raceName" value="Course du jour">
-      <label for="raceText">Partants</label>
+      <label for="raceText">Partants (une ligne par cheval)</label>
       <textarea id="raceText">1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a 1a 7a
 2. JOLYDOLE - cote 19 - driver M. Abrivard - musique 1a Dm 2a 7m 3a
 3. KOUREAS D'ELA - cote 1.9 - driver B. Rochard - musique 1a 1a 1a 2a 1a
@@ -206,25 +186,23 @@ input,textarea{font-family:inherit}
 5. KING DE L'OUEST - cote 3.5 - driver A. Barrier - musique 4a 2a 1a 7a 5a</textarea>
       <button type="submit" class="btn-primary" id="btnAnalyse">Lancer l'analyse →</button>
     </form>
-
     <div id="analyseResults" style="margin-top:24px"></div>
   </section>
 
+  <section class="view" id="view-historique">
+    <div class="hero"><h1>Votre <span>historique</span></h1><p>Retrouvez toutes vos analyses passées.</p></div>
+    <div id="historyList"></div>
+  </section>
+
   <section class="view" id="view-chat">
-    <div class="hero">
-      <h1>Assistant <span>hippique</span></h1>
-      <p>Posez vos questions sur les chevaux, drivers, hippodromes et stratégies.</p>
-    </div>
+    <div class="hero"><h1>Assistant <span>hippique</span></h1><p>Posez vos questions sur les chevaux, drivers et courses.</p></div>
     <div class="chat-container">
       <div class="chat-header">
         <div class="chat-avatar">♞</div>
-        <div class="chat-header-info">
-          <h3>Hippique AI</h3>
-          <p>Disponible 24/7</p>
-        </div>
+        <div class="chat-header-info"><h3>Hippique AI</h3><p>Disponible 24/7</p></div>
       </div>
       <div class="chat-messages" id="chatMessages">
-        <div class="bubble bot">Bonjour ! Posez-moi une question sur les courses, les chevaux ou les drivers. 🏇</div>
+        <div class="bubble bot">Bonjour ! Posez-moi une question sur les courses hippiques. 🏇</div>
       </div>
       <form class="chat-input-area" id="chatForm">
         <input id="chatInput" type="text" placeholder="Votre question…" autocomplete="off">
@@ -239,6 +217,7 @@ input,textarea{font-family:inherit}
   <button class="nav-item active" data-view="home"><span class="nav-item-icon">🏠</span><span>Accueil</span></button>
   <button class="nav-item" data-view="courses"><span class="nav-item-icon">📅</span><span>Courses</span></button>
   <button class="nav-item" data-view="analyse"><span class="nav-item-icon">🔍</span><span>Analyser</span></button>
+  <button class="nav-item" data-view="historique"><span class="nav-item-icon">📜</span><span>Historique</span></button>
   <button class="nav-item" data-view="chat"><span class="nav-item-icon">💬</span><span>Assistant</span></button>
 </nav>
 
@@ -246,231 +225,339 @@ input,textarea{font-family:inherit}
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 
-const DEMO_RACES = {
-  0: [
-    {id:'d1', time:'14:30', hippodrome:'Ascot', nom:'Prix Royal', discipline:'Plat', distance:2400, partants:12, statut:'À venir'},
-    {id:'d2', time:'15:05', hippodrome:'Ascot', nom:'Champions Stakes', discipline:'Plat', distance:1600, partants:10, statut:'À venir'},
-    {id:'d3', time:'16:20', hippodrome:'Cheltenham', nom:'Prix d\'Automne', discipline:'Obstacle', distance:3200, partants:8, statut:'À venir'},
-    {id:'d4', time:'17:40', hippodrome:'Cheltenham', nom:'Gold Cup', discipline:'Obstacle', distance:5200, partants:14, statut:'À venir'},
-  ],
-  '-1': [
-    {id:'h1', time:'14:15', hippodrome:'Ascot', nom:'Prix du Roi', discipline:'Plat', distance:2000, partants:14, statut:'Terminée'},
-    {id:'h2', time:'15:30', hippodrome:'Ascot', nom:'Queen Stakes', discipline:'Plat', distance:1800, partants:11, statut:'Terminée'},
-    {id:'h3', time:'16:45', hippodrome:'Newmarket', nom:'Autumn Cup', discipline:'Plat', distance:2200, partants:13, statut:'Terminée'},
-  ],
-  '-2': [
-    {id:'b1', time:'13:50', hippodrome:'Newmarket', nom:'Prix d\'Octobre', discipline:'Plat', distance:2200, partants:13, statut:'Terminée'},
-    {id:'b2', time:'15:10', hippodrome:'Newmarket', nom:'Autumn Stakes', discipline:'Plat', distance:1600, partants:9, statut:'Terminée'},
-  ]
-};
-
-const DEMO_RUNNERS = {
-  d1: [
-    {num:1, nom:'ROYAL THUNDER', driver:'R. Moore', musique:['1a','2a','1a','3a','1a'], gains:450000, cote:3.5},
-    {num:2, nom:'GOLDEN ARROW', driver:'F. Dettori', musique:['2a','1a','2a','1a','3a'], gains:380000, cote:4.2},
-    {num:3, nom:'SILVER STAR', driver:'W. Buick', musique:['3a','1a','4a','2a','1a'], gains:290000, cote:6.0},
-    {num:4, nom:'MIDNIGHT RIDER', driver:'J. Doyle', musique:['1a','3a','2a','5a','1a'], gains:320000, cote:5.5},
-    {num:5, nom:'DESERT WIND', driver:'T. Marquand', musique:['4a','2a','3a','1a','2a'], gains:250000, cote:8.0},
-  ],
-  d2: [
-    {num:1, nom:'FAST LANE', driver:'R. Moore', musique:['1a','1a','2a','1a'], gains:380000, cote:2.8},
-    {num:2, nom:'STORM CLOUD', driver:'F. Dettori', musique:['2a','3a','1a','2a'], gains:290000, cote:4.5},
-    {num:3, nom:'THUNDER BAY', driver:'W. Buick', musique:['3a','2a','4a','1a'], gains:270000, cote:5.2},
-    {num:4, nom:'RACING HEART', driver:'J. Doyle', musique:['1a','4a','2a','3a'], gains:230000, cote:6.8},
-  ],
-  d3: [
-    {num:1, nom:'MOUNTAIN KING', driver:'N. de Boinville', musique:['1a','2a','1a'], gains:420000, cote:2.5},
-    {num:2, nom:'JUMPING JACK', driver:'H. Skelton', musique:['2a','1a','3a'], gains:350000, cote:3.8},
-    {num:3, nom:'HILL RUNNER', driver:'R. Johnson', musique:['3a','1a','2a'], gains:280000, cote:5.5},
-    {num:4, nom:'STEEPLE CHASE', driver:'P. Townend', musique:['1a','3a','1a'], gains:310000, cote:4.2},
-  ],
-  d4: [
-    {num:1, nom:'GOLD CUP HERO', driver:'P. Townend', musique:['1a','1a','2a','1a'], gains:850000, cote:2.2},
-    {num:2, nom:'CHAMPION RUN', driver:'R. Johnson', musique:['2a','1a','1a','2a'], gains:720000, cote:3.5},
-    {num:3, nom:'VALLEY KING', driver:'H. Skelton', musique:['1a','2a','3a','1a'], gains:680000, cote:4.8},
-    {num:4, nom:'MOUNTAIN EAGLE', driver:'N. de Boinville', musique:['3a','2a','1a','2a'], gains:590000, cote:5.5},
-    {num:5, nom:'SILVER CUP', driver:'B. Powell', musique:['2a','4a','2a','3a'], gains:480000, cote:8.0},
-  ],
-  h1: [
-    {num:1, nom:'KING OF HEARTS', driver:'R. Moore', musique:['1a','2a','1a','3a'], gains:520000, cote:3.2},
-    {num:2, nom:'QUEEN OF SPEED', driver:'F. Dettori', musique:['2a','1a','3a','1a'], gains:480000, cote:4.0},
-    {num:3, nom:'ROYAL GIFT', driver:'W. Buick', musique:['1a','3a','2a','4a'], gains:410000, cote:5.5},
-    {num:4, nom:'CROWN JEWEL', driver:'J. Doyle', musique:['3a','1a','4a','2a'], gains:380000, cote:6.5},
-  ],
-  h2: [
-    {num:1, nom:'LADY GRACE', driver:'R. Moore', musique:['1a','1a','2a','1a'], gains:450000, cote:2.9},
-    {num:2, nom:'ROYAL PRINCESS', driver:'F. Dettori', musique:['2a','1a','1a','3a'], gains:400000, cote:3.8},
-    {num:3, nom:'ELEGANT STAR', driver:'W. Buick', musique:['3a','2a','1a','2a'], gains:350000, cote:5.0},
-  ],
-  h3: [
-    {num:1, nom:'AUTUMN GOLD', driver:'R. Moore', musique:['1a','2a','1a','1a'], gains:620000, cote:2.5},
-    {num:2, nom:'OCTOBER FIRE', driver:'F. Dettori', musique:['2a','1a','3a','1a'], gains:540000, cote:3.6},
-    {num:3, nom:'FALLEN LEAF', driver:'W. Buick', musique:['1a','3a','2a','2a'], gains:480000, cote:5.0},
-  ],
-  b1: [
-    {num:1, nom:'AUTUMN GOLD', driver:'R. Moore', musique:['1a','2a','1a','1a'], gains:620000, cote:2.5},
-    {num:2, nom:'OCTOBER FIRE', driver:'F. Dettori', musique:['2a','1a','3a','1a'], gains:540000, cote:3.6},
-    {num:3, nom:'FALLEN LEAF', driver:'W. Buick', musique:['1a','3a','2a','2a'], gains:480000, cote:5.0},
-  ],
-  b2: [
-    {num:1, nom:'AUTUMN BREEZE', driver:'R. Moore', musique:['1a','1a','3a','1a'], gains:390000, cote:3.0},
-    {num:2, nom:'HARVEST MOON', driver:'F. Dettori', musique:['2a','2a','1a','2a'], gains:340000, cote:4.2},
-  ]
-};
-
+// ================== NAVIGATION ==================
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('[data-view]').forEach(t => t.classList.remove('active'));
-  document.getElementById('view-' + name).classList.add('active');
+  $('view-' + name).classList.add('active');
   document.querySelectorAll('[data-view="' + name + '"]').forEach(t => t.classList.add('active'));
+  if (name === 'historique') loadHistory();
   window.scrollTo(0, 0);
 }
+document.querySelectorAll('[data-view]').forEach(el => el.addEventListener('click', () => showView(el.dataset.view)));
 
-document.querySelectorAll('[data-view]').forEach(el => {
-  el.addEventListener('click', function() { showView(this.dataset.view); });
-});
+// ================== AGENTS ==================
+const AGENTS = [
+  {id:'form',   icon:'🐎', color:'#fbbf24', name:'FormAgent',    desc:'Analyse musique'},
+  {id:'driver', icon:'🏇', color:'#8b5cf6', name:'DriverAgent',  desc:'Stats drivers'},
+  {id:'market', icon:'📊', color:'#14b8a6', name:'MarketAgent',  desc:'Cotes et value'},
+  {id:'track',  icon:'🌤️', color:'#22c55e', name:'TrackAgent',   desc:'Piste et météo'},
+  {id:'class',  icon:'🏛️', color:'#3b82f6', name:'ClassAgent',   desc:'Gains et niveau'},
+  {id:'risk',   icon:'🛡️', color:'#ef4444', name:'RiskAgent',    desc:'Gestion risque'},
+  {id:'forecast',icon:'🔮', color:'#a855f7', name:'ForecastAgent',desc:'Synthèse finale'}
+];
+
+function renderAgents() {
+  $('agentsGrid').innerHTML = AGENTS.map(a => `
+    <div class="agent" data-agent="${a.id}">
+      <div class="agent-status"></div>
+      <div class="agent-icon" style="background:${a.color}22;color:${a.color}">${a.icon}</div>
+      <div class="agent-name">${a.name}</div>
+      <div class="agent-desc">${a.desc}</div>
+    </div>
+  `).join('');
+}
+
+// ================== HISTORIQUE (localStorage) ==================
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('hippique_history') || '[]'); }
+  catch { return []; }
+}
+function saveHistory(entry) {
+  const h = getHistory();
+  h.unshift(entry);
+  localStorage.setItem('hippique_history', JSON.stringify(h.slice(0, 50)));
+}
+function loadHistory() {
+  const h = getHistory();
+  $('kpiHistory').textContent = h.length;
+  if (!h.length) {
+    $('historyList').innerHTML = '<div class="empty">Aucune analyse enregistrée.</div>';
+    return;
+  }
+  $('historyList').innerHTML = h.map(e => `
+    <div class="history-item">
+      <h4>${esc(e.race_name)}</h4>
+      <p>${esc(e.date)} · ${e.nb} partants · Top: ${esc(e.top)}</p>
+    </div>
+  `).join('');
+}
+
+// ================== API PMU via proxy CORS ==================
+async function fetchPMU(path) {
+  const url = 'https://online.turfinfo.api.pmu.fr/rest/client/61' + path;
+  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+  const r = await fetch(proxy);
+  if (!r.ok) throw new Error('Erreur réseau');
+  return r.json();
+}
+
+function dateStr(offset) {
+  const d = new Date();
+  d.setDate(d.getDate() + offset);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const yy = d.getFullYear();
+  return dd + mm + yy;
+}
+
+function heureStr(ts) {
+  if (!ts) return '--:--';
+  const d = new Date(ts);
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+async function loadProgram(day) {
+  document.querySelectorAll('[data-day]').forEach(t => t.classList.toggle('active', t.dataset.day === String(day)));
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement depuis le PMU…</div>';
+
+  try {
+    const data = await fetchPMU('/programme/' + dateStr(day));
+    const reunions = data?.programme?.reunions || [];
+    const courses = [];
+    for (const r of reunions) {
+      const hippo = r.hippodrome?.libelleLong || '?';
+      const nr = r.numOfficiel;
+      for (const c of (r.courses || [])) {
+        courses.push({
+          id: dateStr(day) + '-R' + nr + 'C' + c.numOrdre,
+          dateStr: dateStr(day),
+          reunion: nr,
+          course: c.numOrdre,
+          hippodrome: hippo,
+          nom: c.libelle || 'Course',
+          discipline: c.discipline || '?',
+          distance: c.distance || '?',
+          partants: c.nombreDeclaresPartants || 0,
+          time: heureStr(c.heureDepart),
+          statut: c.statut || ''
+        });
+      }
+    }
+
+    if (!courses.length) {
+      $('racesProgram').innerHTML = '<div class="empty">Aucune course pour cette journée.</div>';
+      return;
+    }
+    $('racesProgram').innerHTML = '<div class="races-list">' + courses.map(raceCard).join('') + '</div>';
+  } catch (e) {
+    $('racesProgram').innerHTML = '<div class="empty">Erreur : ' + esc(e.message) + '<br><br><button class="btn-secondary" onclick="loadProgram(' + day + ')">Réessayer</button></div>';
+  }
+}
 
 function raceCard(course) {
-  const isTrot = (course.discipline || '').toLowerCase().indexOf('trot') >= 0;
-  const isFinished = (course.statut || '').toUpperCase().indexOf('FIN') >= 0 || (course.statut || '').toUpperCase().indexOf('TERMIN') >= 0;
-  return '<div class="race-card" onclick="openRace(\'' + course.id + '\')">' +
-    '<div class="race-time">' + esc(course.time) + '<small>' + esc((course.discipline || '?').substring(0,4)) + '</small></div>' +
-    '<div class="race-info">' +
-      '<h3>' + esc(course.nom) + '</h3>' +
-      '<p>' +
-        '<span class="race-tag ' + (isTrot ? '' : 'plat') + '">' + esc(course.discipline) + '</span>' +
-        (isFinished ? '<span class="race-tag finished">Terminée</span>' : '') +
-        '<span>' + esc(course.hippodrome) + '</span>' +
-        '<span>·</span>' +
-        '<span>' + course.distance + 'm</span>' +
-        '<span>·</span>' +
-        '<span>' + course.partants + ' partants</span>' +
-      '</p>' +
-    '</div>' +
-    '<div class="race-arrow">›</div>' +
-  '</div>';
+  const isTrot = (course.discipline || '').toLowerCase().includes('trot');
+  const isFinished = (course.statut || '').toUpperCase().includes('FIN');
+  return `
+    <div class="race-card" onclick="openRace('${course.dateStr}', ${course.reunion}, ${course.course})">
+      <div class="race-time">${esc(course.time)}<small>${esc((course.discipline||'?').substring(0,4))}</small></div>
+      <div class="race-info">
+        <h3>${esc(course.nom)}</h3>
+        <p>
+          <span class="race-tag ${isTrot ? '' : 'plat'}">${esc(course.discipline)}</span>
+          ${isFinished ? '<span class="race-tag finished">Terminée</span>' : ''}
+          <span>${esc(course.hippodrome)}</span><span>·</span>
+          <span>${course.distance}m</span><span>·</span>
+          <span>${course.partants} partants</span>
+        </p>
+      </div>
+      <div class="race-arrow">›</div>
+    </div>
+  `;
 }
 
-function loadProgram(day) {
-  document.querySelectorAll('[data-day]').forEach(function(t) {
-    t.classList.toggle('active', t.dataset.day === String(day));
-  });
-  const courses = DEMO_RACES[day] || DEMO_RACES[0];
-  document.getElementById('racesProgram').innerHTML = '<div class="races-list">' + courses.map(raceCard).join('') + '</div>';
-}
-
-function openRace(raceId) {
-  var race = null;
-  for (var d in DEMO_RACES) {
-    var found = DEMO_RACES[d].find(function(r) { return r.id === raceId; });
-    if (found) { race = found; break; }
-  }
-  if (!race) return;
-
-  var runners = DEMO_RUNNERS[raceId] || [];
-  var html = '<button onclick="loadProgram(0)" style="margin-bottom:16px;color:var(--teal);font-size:13px;font-weight:600;background:none;border:none;">← Retour</button>';
-  html += '<div class="race-detail">';
-  html += '<div class="race-detail-header"><h2>' + esc(race.nom) + '</h2><div class="race-meta">' +
-    '<span>🏇 ' + esc(race.hippodrome) + '</span>' +
-    '<span>🕐 ' + esc(race.time) + '</span>' +
-    '<span>📏 ' + race.distance + 'm</span>' +
-    '<span>🐎 ' + runners.length + ' partants</span>' +
-    '<span>🏷️ ' + esc(race.discipline) + '</span>' +
-  '</div></div>';
-  html += '<div class="runners-list">';
-  runners.forEach(function(r, i) {
-    var cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-    html += '<div class="runner">' +
-      '<div class="runner-rank ' + cls + '">' + r.num + '</div>' +
-      '<div>' +
-        '<div class="runner-name">' + esc(r.nom) + '</div>' +
-        '<div class="runner-info">' +
-          '<span>' + esc(r.driver) + '</span>' +
-          (r.musique && r.musique.length ? '<span class="runner-musique">' + esc(r.musique.join(' ')) + '</span>' : '') +
-          (r.gains ? '<span>' + r.gains.toLocaleString('fr-FR') + ' €</span>' : '') +
-        '</div>' +
-      '</div>' +
-      '<div class="runner-conf">' + (r.cote || '—') + '<small>Cote</small></div>' +
-    '</div>';
-  });
-  html += '</div></div>';
-  document.getElementById('racesProgram').innerHTML = html;
-}
-
-function loadHome() {
-  const courses = DEMO_RACES[0];
-  document.getElementById('countToday').textContent = courses.length + ' courses';
-  document.getElementById('kpiCourses').textContent = courses.length;
-  document.getElementById('kpiFinished').textContent = '5';
-  document.getElementById('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
-}
-
-document.querySelectorAll('[data-day]').forEach(function(t) {
-  t.addEventListener('click', function() { loadProgram(parseInt(this.dataset.day)); });
-});
-
-document.getElementById('analyseForm').addEventListener('submit', async function(e) {
-  e.preventDefault();
-  var btn = document.getElementById('btnAnalyse');
-  btn.disabled = true;
-  btn.textContent = 'Analyse en cours...';
+async function openRace(dateS, reunion, course) {
+  $('racesProgram').innerHTML = '<div class="empty"><span class="loader"></span>Chargement du détail…</div>';
   try {
-    var r = await fetch('/api/predictions', {
+    const data = await fetchPMU('/programme/' + dateS + '/R' + reunion + '/C' + course + '/participants');
+    const participants = data?.participants || [];
+
+    if (!participants.length) {
+      $('racesProgram').innerHTML = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button><div class="empty">Aucun partant disponible.</div>';
+      return;
+    }
+
+    let html = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button>';
+    html += '<div class="race-detail"><div class="race-detail-header">';
+    html += '<h2>R' + reunion + 'C' + course + '</h2>';
+    html += '<div class="race-meta"><span>🐎 ' + participants.length + ' partants</span></div></div>';
+    html += '<div class="runners-list">';
+
+    participants.forEach((p, i) => {
+      const musique = (p.musique || '').split(' ').filter(x => x).slice(0,5).join(' ');
+      const driver = p.driver || p.jockey || '—';
+      const cote = p.dernierRapportDirect?.rapport || '—';
+      const gains = p.gainsParticipant?.gainsCarriere || 0;
+      html += '<div class="runner">';
+      html += '<div class="runner-rank">' + (p.numPmu || i+1) + '</div>';
+      html += '<div><div class="runner-name">' + esc(p.nom || '?') + '</div>';
+      html += '<div class="runner-info"><span>' + esc(driver) + '</span>';
+      if (musique) html += '<span class="runner-musique">' + esc(musique) + '</span>';
+      if (gains) html += '<span>' + gains.toLocaleString('fr-FR') + ' €</span>';
+      html += '</div></div>';
+      html += '<div class="runner-conf">' + esc(cote) + '<small>Cote</small></div>';
+      html += '</div>';
+    });
+
+    html += '</div></div>';
+    $('racesProgram').innerHTML = html;
+  } catch (e) {
+    $('racesProgram').innerHTML = '<button class="btn-secondary" onclick="loadProgram(0)" style="margin-bottom:16px">← Retour</button><div class="empty">Erreur : ' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadHome() {
+  try {
+    const data = await fetchPMU('/programme/' + dateStr(0));
+    const reunions = data?.programme?.reunions || [];
+    const courses = [];
+    for (const r of reunions) {
+      for (const c of (r.courses || [])) {
+        courses.push({
+          id: dateStr(0) + '-R' + r.numOfficiel + 'C' + c.numOrdre,
+          dateStr: dateStr(0), reunion: r.numOfficiel, course: c.numOrdre,
+          hippodrome: r.hippodrome?.libelleLong || '?',
+          nom: c.libelle || 'Course', discipline: c.discipline || '?',
+          distance: c.distance || '?', partants: c.nombreDeclaresPartants || 0,
+          time: heureStr(c.heureDepart), statut: c.statut || ''
+        });
+      }
+    }
+    $('kpiCourses').textContent = courses.length;
+    $('countToday').textContent = courses.length + ' courses';
+    $('kpiSource').textContent = 'PMU';
+    if (!courses.length) {
+      $('racesToday').innerHTML = '<div class="empty">Aucune course aujourd\'hui.</div>';
+      return;
+    }
+    $('racesToday').innerHTML = courses.slice(0, 5).map(raceCard).join('');
+  } catch (e) {
+    $('kpiCourses').textContent = '0';
+    $('countToday').textContent = '0 courses';
+    $('kpiSource').textContent = 'Hors ligne';
+    $('racesToday').innerHTML = '<div class="empty">PMU indisponible. <button class="btn-secondary" onclick="loadHome()">Réessayer</button></div>';
+  }
+}
+
+// ================== ANALYSE + HISTORIQUE ==================
+$('analyseForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('btnAnalyse');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loader"></span>Analyse…';
+  try {
+    const r = await fetch('/api/predictions', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
         race_key: 'race-' + Date.now(),
-        race_name: document.getElementById('raceName').value.trim(),
+        race_name: $('raceName').value.trim(),
         race_date: new Date().toISOString().split('T')[0],
-        text: document.getElementById('raceText').value.trim()
+        text: $('raceText').value.trim()
       })
     });
-    var data = await r.json();
-    var runners = data.ranking || data.recommendations || [];
+    const data = await r.json();
+    const runners = data.ranking || data.recommendations || [];
     if (!runners.length) {
-      document.getElementById('analyseResults').innerHTML = '<div class="empty">Aucun classement généré.</div>';
+      $('analyseResults').innerHTML = '<div class="empty">Aucun classement généré.</div>';
       return;
     }
-    var html = '<div class="race-detail"><div class="race-detail-header"><h2>Classement proposé</h2><div class="race-meta"><span>🎯 ' + runners.length + ' partants</span></div></div><div class="runners-list">';
-    runners.forEach(function(r, i) {
-      var cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-      html += '<div class="runner"><div class="runner-rank ' + cls + '">' + (i+1) + '</div>' +
-        '<div><div class="runner-name"><span class="runner-num">N°' + esc(r.num) + '</span>' + esc(r.nom) + '</div>' +
-        '<div class="runner-info"><span>' + esc(r.driver || '—') + '</span>' +
-        (r.musique && r.musique.length ? '<span class="runner-musique">' + esc(r.musique.join(' ')) + '</span>' : '') +
-        '</div></div>' +
-        '<div class="runner-conf">' + ((r.p_calibree || 0) * 100).toFixed(1) + '%<small>Confiance</small></div></div>';
+
+    // Sauvegarde historique
+    saveHistory({
+      race_name: $('raceName').value.trim(),
+      date: new Date().toLocaleString('fr-FR'),
+      nb: runners.length,
+      top: runners.slice(0, 3).map(x => x.nom).join(' - ')
+    });
+
+    let html = '<div class="race-detail"><div class="race-detail-header"><h2>Classement proposé</h2><div class="race-meta"><span>🎯 ' + runners.length + ' partants</span></div></div><div class="runners-list">';
+    runners.forEach((rr, i) => {
+      const cls = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+      const conf = ((rr.p_calibree || 0) * 100).toFixed(1);
+      const mus = (rr.musique || []).join(' ');
+      html += '<div class="runner"><div class="runner-rank ' + cls + '">' + (i+1) + '</div>';
+      html += '<div><div class="runner-name"><span class="runner-num">N°' + esc(rr.num) + '</span>' + esc(rr.nom) + '</div>';
+      html += '<div class="runner-info"><span>' + esc(rr.driver || '—') + '</span>';
+      if (mus) html += '<span class="runner-musique">' + esc(mus) + '</span>';
+      html += '</div></div>';
+      html += '<div class="runner-conf">' + conf + '%<small>Confiance</small></div>';
+      html += '</div>';
     });
     html += '</div></div>';
-    document.getElementById('analyseResults').innerHTML = html;
+    $('analyseResults').innerHTML = html;
+    $('kpiHistory').textContent = getHistory().length;
   } catch (err) {
-    document.getElementById('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</div>';
+    $('analyseResults').innerHTML = '<div class="empty">Erreur : ' + esc(err.message) + '</div>';
   } finally {
     btn.disabled = false;
     btn.textContent = "Lancer l'analyse →";
   }
 });
 
-document.getElementById('chatForm').addEventListener('submit', async function(e) {
+// ================== CHAT (Puter.js async) ==================
+let puterReady = false;
+
+function initPuter() {
+  if (window.puter) { puterReady = true; return; }
+  const s = document.createElement('script');
+  s.src = 'https://js.puter.com/v2/';
+  s.async = true;
+  s.onload = () => { puterReady = true; };
+  document.head.appendChild(s);
+}
+
+$('chatForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  var input = document.getElementById('chatInput');
-  var text = input.value.trim();
+  const input = $('chatInput');
+  const text = input.value.trim();
   if (!text) return;
-  var messages = document.getElementById('chatMessages');
-  var userMsg = document.createElement('div');
+
+  const messages = $('chatMessages');
+  const userMsg = document.createElement('div');
   userMsg.className = 'bubble user';
   userMsg.textContent = text;
   messages.appendChild(userMsg);
   input.value = '';
-  var pending = document.createElement('div');
-  pending.className = 'bubble bot';
-  pending.textContent = 'Le chat IA sera disponible prochainement.';
+
+  const pending = document.createElement('div');
+  pending.className = 'bubble pending';
+  pending.textContent = 'Réflexion';
   messages.appendChild(pending);
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    if (!puterReady) {
+      pending.className = 'bubble bot';
+      pending.textContent = 'L\'assistant IA se charge, réessayez dans 5 secondes.';
+      return;
+    }
+    const response = await puter.ai.chat(text, {model: 'gpt-5-nano'});
+    let reply = '';
+    if (typeof response === 'string') reply = response;
+    else if (response?.message?.content) {
+      const c = response.message.content;
+      reply = Array.isArray(c) ? c.map(x => x.text || '').join('') : String(c);
+    } else if (response?.text) reply = response.text;
+    else reply = 'Réponse indisponible.';
+    pending.className = 'bubble bot';
+    pending.textContent = reply;
+  } catch (err) {
+    pending.className = 'bubble bot';
+    pending.textContent = 'Erreur : ' + (err?.message || 'connexion');
+  }
   messages.scrollTop = messages.scrollHeight;
 });
 
+// ================== TABS ==================
+document.querySelectorAll('[data-day]').forEach(t => t.addEventListener('click', () => loadProgram(parseInt(t.dataset.day))));
+
+// ================== BOOT ==================
+renderAgents();
 loadHome();
 loadProgram(0);
+loadHistory();
+initPuter();
 </script>
 </body>
 </html>
