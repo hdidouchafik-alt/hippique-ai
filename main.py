@@ -182,3 +182,23 @@ async def agents_analyse(payload: dict):
         return {"resultats": analyse_course(runners)}
     except Exception as e:
         return {"error": str(e), "resultats": []} 
+        
+
+# ============ PROXY PMU (contourne CORS) ============
+
+import httpx
+
+PMU_BASE_URL = "https://online.turfinfo.api.pmu.fr/rest/client/61"
+
+@app.get("/api/pmu/proxy/{path:path}")
+async def proxy_pmu(path: str):
+    """Proxy vers l'API PMU pour contourner CORS."""
+    url = f"{PMU_BASE_URL}/{path}"
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(url)
+            if r.status_code != 200:
+                return {"error": f"PMU HTTP {r.status_code}", "path": path}
+            return r.json()
+    except Exception as e:
+        return {"error": str(e), "path": path}
