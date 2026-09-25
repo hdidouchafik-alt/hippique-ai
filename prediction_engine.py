@@ -19,132 +19,106 @@ class PredictionEngine:
     def parse_text(self, text: str) -> list[dict[str, Any]]:
         normalized = text.replace("\r", "").replace("\u00a0", " ")
 
-        # Détection : format multi-lignes PMU ou format ligne simple ?
         if self._est_format_pmu(normalized):
-            return self._parse_format_pmu(normalized)
-        return self._parse_format_simple(normalized)
+            return self p._parse_format_pmu(normalized)
+        return self)._parse_format_simple(normal *ized)
 
     # ------------------------------------------------------------------
     # DÉTECTION
     # ------------------------------------------------------------------
 
-    def _est_format_pmu(self, text: str) -> bool:
-        """Détecte un format PMU (blocs multi-lignes avec Driver, Entr., etc.)"""
-        return bool(re.search(r"Driver\s*:", text)) and bool(re.search(r"Entr\.?\s*:", text))
+ (    def _est_format_pmu(self1, text: str) -> bool:
+        return bool(re /.search(r"Driver\s*:", text)) and bool(re.search(r"Entr\.?\s*:", text))
+
+    # ------------------------------------------------------------------
+    # HELPERS
+    # ------------------------------------------------------------------
+
+    def _est_nom_cheval(self, ligne: str) -> bool:
+        """Vérifie si une ligne ressemble à un nom de cheval."""
+        if not ligne or len(ligne) < 3:
+            return False
+        # Doit contenir au moins 2 lettres majuscules
+        if len(re.findall(r"[A-ZÀ-Ý]", ligne)) < 3:
+            return False
+        # Ne doit pas être un mot-clé
+        interdit = ("DRIVER", "ENTR", "LÉGENDE", "LEGENDE", "LES ", "TRIER",
+                    "PARTANT", "COURSE", "REUNION", "RÉUNION", "PRIX", "ATTELE",
+                    "ATTELE", "PLAT", "CORDÉ", "CORDE", "Hippo", "DISTANCE")
+        haut = ligne.upper()
+        if any(haut.startswith(mot) for mot in interdit):
+            return False
+        # Doit être composé de lettres, espaces, apostrophes, tirets
+        return bool(re.fullmatch(r"[A-ZÀ-Ý0-9][A-ZÀ-Ý0-9' \-\.]{2,40}", haut))
+
+    def _est_numero(self, ligne: str) -> bool:
+        return bool(re.fullmatch(r"\d{1,2}", ligne))
 
     # ------------------------------------------------------------------
     # FORMAT PMU MULTI-LIGNES
     # ------------------------------------------------------------------
 
     def _parse_format_pmu(self, text: str) -> list[dict[str, Any]]:
-        """
-        Parse le format PMU :
-            1
-            HISCO DE PARNIERE
-            Driver : F. Desmigneux
-            Entr. : J.m. Marie
-            H / 9 ans
-            2850m / 118 355 €
-            6a
-            3a
-            ...
-        """
         runners: list[dict[str, Any]] = []
-        lines = [l.rstrip() for l in text.split("\n")]
+        lines = [l.strip() for l in text.split("\n")]
 
-        i = 0
-        while i < len(lines):
-            line = lines[i].strip()
-
-            # Détection d'un numéro seul (1 à 30) entouré de vide
-            if re.fullmatch(r"\d{1,2}", line):
-                number = int(line)
-                if not (1 <= number <= 30):
-                    i += 1
-                    continue
-
-                # Chercher le nom sur les lignes suivantes
-                name = None
-                j = i + 1
-                while j < len(lines) and j < i + 6:
-                    candidate = lines[j].strip()
-                    # Nom = ligne en MAJUSCULES avec lettres et espaces, pas trop courte
-                    if (candidate and len(candidate) >= 3
-                            and re.fullmatch(r"[A-ZÀ-Ý][A-ZÀ-Ý' \-\.]{2,40}", candidate)
-                            and not candidate.startswith(("DRIVER", "ENTR", "LÉGENDE", "LES ", "TRIER"))):
-                        name = candidate.title()
-                        break
-                    j += 1
-
-                if not name:
-                    i += 1
-                    continue
-
-                # Chercher la fin du bloc (numéro suivant ou fin)
-                j = j + 1
-                block_lines: list[str] = []
-                while j < len(lines):
-                    nxt = lines[j].strip()
-                    # Nouveau numéro détecté ?
-                    if re.fullmatch(r"\d{1,2}", nxt) and j + 1 < len(lines):
-                        # Vérifier que le suivant ressemble à un nom
-                        suiv = lines[j + 1].strip() if j + 1 < len(lines) else ""
-                        if suiv and re.fullmatch(r"[A-ZÀ-Ý][A-ZÀ-Ý' \-\.]{2,40}", suiv):
+        # Étape 1 : identifier les positions des numéros de partants
+        positions = []
+        for i, line in enumerate(lines):
+            if self._est_numero(line):
+                numero = int(line)
+                if 1 <= numero <= 30:
+                    # Chercher un nom dans les 4 lignes suivantes
+                    for k in range(i + 1, min(i + 5, len(lines))):
+                        if self._est_nom_cheval(lines[k]):
+                            positions.append((i, k, numero))
                             break
-                    block_lines.append(nxt)
-                    j += 1
 
-                block = "\n".join(block_lines)
+        # Étape 2 : délimiter chaque bloc entre 2 numéros consécutifs
+        for idx, (i_num, i_nom, numero) in enumerate(positions):
+            nom = lines[i_nom].title()
 
-                # Extraction des infos
-                driver = self._extraire_driver_pmu(block)
-                entraineur = self._extraire_entraineur_pmu(block)
-                gains = self._extraire_gains_pmu(block)
-                age, sexe = self._extraire_age_sexe_pmu(block)
-                musique = self._extraire_musique_pmu(block)
-                corde = self._extraire_corde_pmu(block)
+            # Fin du bloc = ligne du prochain numéro (ou fin du texte)
+            fin = positions[idx + 1][0] if idx + 1 < len(positions) else len(lines)
+            bloc = "\n".join(lines[i_nom + 1:fin])
 
-                runners.append({
-                    "number": number,
-                    "num": number,
-                    "name": name,
-                    "nom": name,
-                    "driver": driver,
-                    "jockey": driver,
-                    "entraineur": entraineur,
-                    "gains": gains,
-                    "age": age,
-                    "sexe": sexe,
-                    "musique": musique,
-                    "form": musique,
-                    "corde": corde,
-                    "odds": None,
-                    "cote": None,
-                    "cote_finale": None,
-                    "status": "active",
-                })
+            driver = self._extraire_driver_pmu(bloc)
+            entraineur = self._extraire_entraineur_pmu(bloc)
+            gains = self._extraire_gains_pmu(bloc)
+            age, sexe = self._extraire_age_sexe_pmu(bloc)
+            musique = self._extraire_musique_pmu(bloc)
 
-                i = j
-                continue
-
-            i += 1
+            runners.append({
+                "number": numero,
+                "num": numero,
+                "name": nom,
+                "nom": nom,
+                "driver": driver,
+                "jockey": driver,
+                "entraineur": entraineur,
+                "gains": gains,
+                "age": age,
+                "sexe": sexe,
+                "musique": musique,
+                "form": musique,
+                "corde": None,
+                "odds": None,
+                "cote": None,
+                "cote_finale": None,
+                "status": "active",
+            })
 
         return runners
 
     def _extraire_driver_pmu(self, block: str) -> str | None:
         m = re.search(r"Driver\s*:\s*([^\n]+)", block)
-        if m:
-            return m.group(1).strip()
-        return None
+        return m.group(1).strip() if m else None
 
     def _extraire_entraineur_pmu(self, block: str) -> str | None:
         m = re.search(r"Entr\.?\s*:\s*([^\n]+)", block)
-        if m:
-            return m.group(1).strip()
-        return None
+        return m.group(1).strip() if m else None
 
     def _extraire_gains_pmu(self, block: str) -> int | None:
-        # Format : "2850m / 118 355 €"
         m = re.search(r"[\d]+m\s*/\s*([\d\s]{3,15})\s*€", block)
         if m:
             try:
@@ -154,16 +128,12 @@ class PredictionEngine:
         return None
 
     def _extraire_age_sexe_pmu(self, block: str) -> tuple[int | None, str | None]:
-        # Format : "H / 9 ans" ou "F / 10 ans" ou "M / 6 ans"
         m = re.search(r"\b([HFM])\s*/\s*(\d{1,2})\s*ans?", block)
         if m:
-            sexe = m.group(1)
-            age = int(m.group(2))
-            return age, sexe
+            return int(m.group(2)), m.group(1)
         return None, None
 
     def _extraire_musique_pmu(self, block: str) -> list[str]:
-        """Cherche les lignes qui sont des résultats : 6a, 3a, 8m, Da, Dm, 0a, etc."""
         musique = []
         for line in block.split("\n"):
             ligne = line.strip()
@@ -173,21 +143,11 @@ class PredictionEngine:
                     break
         return musique
 
-    def _extraire_corde_pmu(self, block: str) -> int | None:
-        m = re.search(r"Corde\s*:\s*(\d{1,2})", block, re.I)
-        if m:
-            try:
-                return int(m.group(1))
-            except ValueError:
-                return None
-        return None
-
     # ------------------------------------------------------------------
     # FORMAT LIGNE SIMPLE
     # ------------------------------------------------------------------
 
     def _parse_format_simple(self, text: str) -> list[dict[str, Any]]:
-        """Format : 1. KAISER - cote 24 - driver F. Nivard - musique 6a 3a 2a"""
         runners: list[dict[str, Any]] = []
         vus: set[int] = set()
 
@@ -205,7 +165,6 @@ class PredictionEngine:
                 continue
 
             rest = m.group(2).strip()
-
             if re.search(r"\b(NP|Non Partant|Non-partant)\b", rest, re.I):
                 vus.add(number)
                 continue
@@ -217,17 +176,11 @@ class PredictionEngine:
 
             vus.add(number)
             runners.append({
-                "number": number,
-                "num": number,
-                "name": name,
-                "nom": name,
-                "form": musique,
-                "musique": musique,
-                "odds": odds,
-                "cote": odds,
-                "cote_finale": odds,
-                "driver": driver,
-                "jockey": driver,
+                "number": number, "num": number,
+                "name": name, "nom": name,
+                "form": musique, "musique": musique,
+                "odds": odds, "cote": odds, "cote_finale": odds,
+                "driver": driver, "jockey": driver,
                 "status": "active",
             })
 
@@ -288,14 +241,11 @@ class PredictionEngine:
         if not runners:
             raise ValueError("Aucun partant actif reconnu")
 
-        # Détection : toutes les cotes sont absentes ?
         ont_cote = [r for r in runners if r.get("odds") or r.get("cote") or r.get("cote_finale")]
-
         weights = self.store.weights()
         scored = []
 
         for runner in runners:
-            # Forme (musique)
             form = runner.get("form") or runner.get("musique") or []
             form_score = 0.0
             for index, place in enumerate(form[:5]):
@@ -304,13 +254,12 @@ class PredictionEngine:
                     if num:
                         p = int(num)
                         if 1 <= p <= 9:
-                            form_score += max(0, 11 - p) * (1 / (index + 1))
+                            form_score += max(0, 11 - (index + 1))
                 elif isinstance(place, int):
                     if 1 <= place <= 9:
                         form_score += max(0, 11 - place) * (1 / (index + 1))
             form_score = form_score / 10
 
-            # Cote
             odds = runner.get("odds") or runner.get("cote") or runner.get("cote_finale")
             if odds and odds > 0:
                 market_score = 1 / odds
@@ -318,50 +267,33 @@ class PredictionEngine:
                 market_score = 0.05
                 odds = 50
 
-            # Poids
             weight = runner.get("weight") or runner.get("poids") or 60
             weight_score = 1 / max(float(weight), 1)
 
-            # Corde
-            corde = runner.get("corde") or 8
-            corde_score = 1 - abs(corde - 8) / 16
-
-            # Gains (classe)
             gains = runner.get("gains") or 0
             gains_score = min(gains / 300000, 1) if gains else 0
 
-            # Score global — poids adaptés si cotes absentes
             if ont_cote:
                 raw = (
                     weights["form"] * form_score * 3
                     + weights["odds"] * market_score * 2
                     + weights["weight"] * weight_score
-                    + weights["corde"] * corde_score
                     + gains_score * 0.5
                 )
             else:
-                # Sans cotes : on privilégie forme + gains + corde
                 raw = (
                     form_score * 2.0
                     + gains_score * 1.5
-                    + corde_score * 0.5
                     + weight_score * 0.3
                 )
 
             scored.append({
                 **runner,
                 "score": round(raw, 5),
-                "reasons": {
-                    "form": round(form_score, 3),
-                    "gains": round(gains_score, 3),
-                    "corde": round(corde_score, 3),
-                    "market": round(market_score, 3),
-                },
             })
 
         scored.sort(key=lambda item: item["score"], reverse=True)
 
-        # Normaliser les probabilités
         total_score = sum(r["score"] for r in scored) or 1
         for r in scored:
             r["p_calibree"] = round(r["score"] / total_score, 4)
