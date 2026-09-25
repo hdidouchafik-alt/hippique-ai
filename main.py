@@ -23,7 +23,7 @@ except ImportError:
 import httpx
 from datetime import datetime, timedelta
 
-app = FastAPI(title="Hippique AI", version="1.2.0")
+app = FastAPI(title="Hippique AI", version="1.3.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -186,21 +186,58 @@ async def _pmu_get(url: str):
         return None
 
 
+def _extract_arrivee(data) -> list:
+    """Extrait l'arrivée depuis n'importe quel format de réponse PMU."""
+    if not data:
+        return []
+
+    # Normaliser en liste
+    liste = []
+    if isinstance(data, list):
+        liste = data
+    elif isinstance(data, dict):
+        liste = data.get("rapports") or data.get("combinaisons") or []
+
+    for rap in liste:
+        if not isinstance(rap, dict):
+            continue
+        type_pari = (rap.get("typePari") or "").upper()
+        if "SIMPLE" in type_pari and "GAGNANT" in type_pari:
+            for comb in (rap.get("combinaisons") or []):
+                if not isinstance(comb, dict):
+                    continue
+                nums = comb.get("combinaison") or []
+                if nums:
+                    try:
+                        return [int(n) for n in nums]
+                    except (ValueError, TypeError):
+                        continue
+
+    return []
+
+
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
     """Agent qui récupère automatiquement les arrivées des courses terminées."""
     date_str = _date_str(offset)
     programme = await _pmu_get(f"{PMU_BASE}/programme/{date_str}")
     if not programme:
-        return {"error": "PMU indisponible", "nouvelles_arrivees": 0}
+        return {"error": "PMU indisponible", "nouvelles_arrivees": 0, "total_collecte": len(COLLECTED_RESULTS)}
 
-    reunions = (programme.get("programme") or {}).get("reunions") or []
+    reunions = []
+    if isinstance(programme, dict):
+        reunions = (programme.get("programme") or {}).get("reunions") or []
+
     nouvelles = 0
 
     for r in reunions:
+        if not isinstance(r, dict):
+            continue
         nr = r.get("numOfficiel")
         hippo = (r.get("hippodrome") or {}).get("libelleLong", "?")
         for c in (r.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
             statut = (c.get("statut") or "").upper()
             if "FIN" not in statut and "ARRIVE" not in statut:
                 continue
@@ -212,17 +249,7 @@ async def agent_collect(offset: int = 0):
 
             url = f"{PMU_BASE}/programme/{date_str}/R{nr}/C{num_course}/rapports-definitifs"
             rapports = await _pmu_get(url)
-            arrivee = []
-            if rapports:
-                for rap in (rapports.get("rapports") or []):
-                    if rap.get("typePari") in ("E_SIMPLE_GAGNANT", "SIMPLE_GAGNANT"):
-                        for comb in (rap.get("combinaisons") or []):
-                            nums = comb.get("combinaison") or []
-                            if nums:
-                                arrivee = [int(n) for n in nums]
-                                break
-                    if arrivee:
-                        break
+            arrivee = _extract_arrivee(rapports)
 
             if arrivee:
                 COLLECTED_RESULTS.append({
