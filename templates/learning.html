@@ -82,6 +82,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .btn-primary:disabled{opacity:.6;cursor:wait}
 .btn-danger{padding:12px 18px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;color:#f87171;font-size:13px;font-weight:600;cursor:pointer}
 .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:32px}
+.collect-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:24px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -122,7 +123,7 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 
   <div class="section">
     <div class="section-title"><h2>Dernières courses évaluées</h2><span class="count" id="resultsCount">0</span></div>
-    <div id="resultsList"><div class="empty">Aucune course évaluée. Cliquez sur "🤖 Lancer la collecte".</div></div>
+    <div id="resultsList"><div class="empty">Aucune course évaluée.</div></div>
   </div>
 
   <div class="section">
@@ -130,8 +131,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
     <div id="actionsList"></div>
   </div>
 
+  <div class="collect-row">
+    <button class="btn-primary" onclick="collecter(0, this)">📅 Aujourd'hui</button>
+    <button class="btn-primary" onclick="collecter(-1, this)">📆 Hier</button>
+    <button class="btn-primary" onclick="collecter(-2, this)">📅 Avant-hier</button>
+  </div>
+
   <div class="btns">
-    <button class="btn-primary" id="btnCollect" onclick="collecter()">🤖 Lancer la collecte</button>
     <button class="btn" onclick="loadAll()">↻ Rafraîchir</button>
     <button class="btn-danger" onclick="resetStats()">🗑️ Réinitialiser</button>
   </div>
@@ -152,23 +158,23 @@ function $(id) { return document.getElementById(id); }
 function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]; }); }
 function cls(s) { return s >= 70 ? 'good' : s >= 40 ? 'medium' : 'low'; }
 
-function collecter() {
-  var btn = $('btnCollect');
+function collecter(offset, btn) {
+  var original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = '⏳ Collecte en cours…';
+  btn.textContent = '⏳ ' + (offset === 0 ? "Aujourd'hui" : offset === -1 ? 'Hier' : 'Avant-hier') + '...';
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/api/agent/collect', true);
+  xhr.open('POST', '/api/agent/collect?offset=' + offset, true);
   xhr.setRequestHeader('Content-Type', 'application/json');
   xhr.onload = function() {
     btn.disabled = false;
-    btn.textContent = '🤖 Lancer la collecte';
+    btn.textContent = original;
     if (xhr.status === 200) {
       try {
         var data = JSON.parse(xhr.responseText);
         if (data.ok === false) {
           alert('PMU indisponible');
         } else {
-          alert('Collecte OK !\nNouvelles : ' + data.nouvelles + '\nEvaluees : ' + data.evaluees + '\nTotal : ' + data.total);
+          alert('✅ Collecte OK\n\nNouvelles : ' + data.nouvelles + '\nEvaluees : ' + data.evaluees + '\nTotal : ' + data.total);
           loadAll();
         }
       } catch (e) {
@@ -180,7 +186,7 @@ function collecter() {
   };
   xhr.onerror = function() {
     btn.disabled = false;
-    btn.textContent = '🤖 Lancer la collecte';
+    btn.textContent = original;
     alert('Erreur reseau');
   };
   xhr.send('{}');
@@ -228,9 +234,7 @@ function loadMetrics() {
 
       var agents = m.agents || {};
       var arr = [];
-      for (var name in agents) {
-        arr.push({name: name, data: agents[name]});
-      }
+      for (var name in agents) arr.push({name: name, data: agents[name]});
       arr.sort(function(a, b) { return (b.data.score || 0) - (a.data.score || 0); });
 
       var html = '';
@@ -244,40 +248,31 @@ function loadMetrics() {
         var t1 = a.data.top1 || 0;
         var t5 = a.data.top5 || 0;
         var tot = a.data.total || 0;
-        // Top5 max possible = total * 5
         var t5max = tot * 5;
 
         html += '<div class="agent-row ' + rankClass + '">';
-        html += '<div class="agent-head">';
-        html += '<div class="agent-id">';
+        html += '<div class="agent-head"><div class="agent-id">';
         html += '<div class="agent-icon" style="background:' + meta.color + '22;color:' + meta.color + '">';
         if (medal) html += '<span class="medal">' + medal + '</span>';
         html += meta.icon + '</div>';
         html += '<div><div class="agent-name">' + esc(a.name) + '</div><div class="agent-desc">' + esc(meta.desc) + '</div></div>';
-        html += '</div>';
-        html += '<div class="agent-score">' + score.toFixed(0) + '<small>/100</small></div>';
-        html += '</div>';
+        html += '</div><div class="agent-score">' + score.toFixed(0) + '<small>/100</small></div></div>';
         html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
         html += '<div class="agent-stats">';
         html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
         html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
-        html += '</div>';
-        html += '</div>';
+        html += '</div></div>';
       }
       $('agentsList').innerHTML = html;
       $('agentsCount').textContent = arr.length + ' agents';
 
       var actions = [];
-      if (preds < 10) {
-        actions.push({t:'Continuer la collecte', i:['Objectif : 50 courses évaluées','Plus les données sont nombreuses, plus les scores sont fiables','Laissez le cron tourner']});
-      }
-      if (preds >= 10 && preds < 50) {
-        actions.push({t:'Enrichir le dataset', i:[preds + ' courses évaluées sur 50','Encore ' + (50 - preds) + ' à collecter']});
-      }
+      if (preds < 10) actions.push({t:'Continuer la collecte', i:['Objectif : 50 courses évaluées','Utilisez les 3 boutons : Aujourd\'hui, Hier, Avant-hier']});
+      if (preds >= 10 && preds < 50) actions.push({t:'Enrichir le dataset', i:[preds + ' courses sur 50','Encore ' + (50 - preds) + ' à collecter']});
       for (var j = 0; j < arr.length; j++) {
-        var score2 = Math.min(100, arr[j].data.score || 50);
-        if (arr[j].data.total >= 5 && score2 < 30) {
-          actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + score2.toFixed(0) + '/100) sur ' + arr[j].data.total + ' courses','Réduire son poids dans la décision finale','Analyser ses critères']});
+        var s2 = Math.min(100, arr[j].data.score || 50);
+        if (arr[j].data.total >= 5 && s2 < 30) {
+          actions.push({t:'Améliorer ' + arr[j].name, i:['Score faible (' + s2.toFixed(0) + '/100)','Réduire son poids dans la décision finale']});
         }
       }
       actions.push({t:'Prochaines étapes', i:['Base SQLite pour persister','ROI théorique par agent','Alertes sur les agents faibles']});
@@ -287,9 +282,7 @@ function loadMetrics() {
       for (var k = 0; k < actions.length; k++) {
         var act = actions[k];
         ah += '<div class="actions"><h3>⚠ ' + esc(act.t) + '</h3><ul>';
-        for (var l = 0; l < act.i.length; l++) {
-          ah += '<li>' + esc(act.i[l]) + '</li>';
-        }
+        for (var l = 0; l < act.i.length; l++) ah += '<li>' + esc(act.i[l]) + '</li>';
         ah += '</ul></div>';
       }
       $('actionsList').innerHTML = ah;
@@ -316,26 +309,18 @@ function loadResults() {
         var x = results[i];
         var arr2 = (x.arrivee || []).join(' - ');
         var eval2 = x.evaluations || {};
-
-        html += '<div class="results-item">';
-        html += '<div class="top">';
+        html += '<div class="results-item"><div class="top">';
         html += '<div class="info"><strong>' + esc(x.course) + '</strong><small>' + esc(x.hippodrome) + ' · R' + x.reunion + 'C' + x.num_course + ' · ' + x.partants + ' partants</small></div>';
-        html += '<div class="arrivee">' + esc(arr2) + '</div>';
-        html += '</div>';
-
-        var hasEval = false;
+        html += '<div class="arrivee">' + esc(arr2) + '</div></div>';
         var evalHtml = '';
+        var hasEval = false;
         for (var agentName in eval2) {
           hasEval = true;
           var e = eval2[agentName];
           var hit = e.top1 === 1;
-          var cls2 = hit ? 'hit' : 'miss';
-          var txt = hit ? '✓ ' + agentName : '✗ ' + agentName;
-          evalHtml += '<span class="eval-badge ' + cls2 + '">' + txt + '</span>';
+          evalHtml += '<span class="eval-badge ' + (hit ? 'hit' : 'miss') + '">' + (hit ? '✓ ' : '✗ ') + agentName + '</span>';
         }
-        if (hasEval) {
-          html += '<div class="eval">' + evalHtml + '</div>';
-        }
+        if (hasEval) html += '<div class="eval">' + evalHtml + '</div>';
         html += '</div>';
       }
       $('resultsList').innerHTML = html;
