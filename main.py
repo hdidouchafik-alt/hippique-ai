@@ -3,7 +3,7 @@ import re
 import httpx
 from pathlib import Path
 from datetime import datetime, timedelta
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, BackgroundTasks
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -568,3 +568,14 @@ async def proxy_pmu(path: str):
     if data:
         return data
     return {"error": "PMU indisponible"}
+
+
+# ============================================================
+# NOUVELLE ROUTE POUR CRON-JOB.ORG (réponse immédiate)
+# ============================================================
+@app.get("/api/cron/run")
+async def cron_run(background_tasks: BackgroundTasks):
+    """Route légère pour cron-job.org : lance la collecte en arrière-plan
+    et répond immédiatement. Évite les timeouts et les réponses trop grosses."""
+    background_tasks.add_task(agent_collect, offset=0)
+    return {"ok": True, "queued": True}
