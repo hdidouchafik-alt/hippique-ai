@@ -195,6 +195,134 @@ async def learning_page(request: Request):
     return templates.TemplateResponse(request, "learning.html")
 
 
+@app.get("/reunions", response_class=HTMLResponse)
+async def reunions_page(request: Request, offset: int = 0):
+    try:
+        ds = date_str(offset)
+        prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+        reunions = []
+        if prog:
+            for r in ((prog.get("programme") or {}).get("reunions") or []):
+                if not isinstance(r, dict):
+                    continue
+                hippo_obj = r.get("hippodrome") or {}
+                hippo = hippo_obj.get("libelleLong", "?")
+                if not hippodrome_ok(hippo_obj, hippo):
+                    continue
+                nr = r.get("numOfficiel")
+                courses_list = []
+                for c in (r.get("courses") or []):
+                    if not isinstance(c, dict):
+                        continue
+                    nc = c.get("numOrdre")
+                    st = (c.get("statut") or "").upper()
+                    fini = "FIN" in st or "ARRIVE" in st
+                    key = ds + "-R" + str(nr) + "C" + str(nc)
+                    arrivee = None
+                    for col in COLLECTED:
+                        if col.get("key") == key:
+                            arrivee = col.get("arrivee")
+                            break
+                    courses_list.append({
+                        "key": key,
+                        "num_course": nc,
+                        "course": c.get("libelle", "Course"),
+                        "discipline": c.get("discipline", "?"),
+                        "distance": c.get("distance", 0),
+                        "partants": c.get("nombreDeclaresPartants", 0),
+                        "statut": "termine" if fini else "a_venir",
+                        "arrivee": arrivee,
+                        "est_quinte": detecter_quinte(c, r),
+                    })
+                if courses_list:
+                    reunions.append({
+                        "num": nr,
+                        "hippodrome": hippo,
+                        "pays": (hippo_obj.get("pays") or {}).get("libelle", ""),
+                        "nb_courses": len(courses_list),
+                        "courses": courses_list,
+                    })
+        return templates.TemplateResponse(request, "reunions.html", {
+            "reunions": reunions,
+            "date": ds,
+            "offset": offset,
+            "version": app.version,
+        })
+    except Exception as e:
+        return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
+
+
+@app.get("/reunion/{date}/{num}", response_class=HTMLResponse)
+async def reunion_detail(request: Request, date: str, num: int):
+    try:
+        prog = await pmu_get(PMU_BASE + "/programme/" + date)
+        if not prog:
+            return HTMLResponse("<h1>PMU indisponible</h1>", status_code=503)
+        reunion = None
+        for r in ((prog.get("programme") or {}).get("reunions") or []):
+            if isinstance(r, dict) and r.get("numOfficiel") == num:
+                reunion = r
+                break
+        if not reunion:
+            return HTMLResponse("<h1>Réunion introuvable</h1>", status_code=404)
+        hippo_obj = reunion.get("hippodrome") or {}
+        hippo = hippo_obj.get("libelleLong", "?")
+        courses_list = []
+        for c in (reunion.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
+            nc = c.get("numOrdre")
+            st = (c.get("statut") or "").upper()
+            fini = "FIN" in st or "ARRIVE" in st
+            key = date + "-R" + str(num) + "C" + str(nc)
+            arrivee = None
+            for col in COLLECTED:
+                if col.get("key") == key:
+                    arrivee = col.get("arrivee")
+                    break
+            heure = c.get("heureDepart") or ""
+            try:
+                h = datetime.fromtimestamp(int(heure) / 1000).strftime("%H:%M")
+            except Exception:
+                h = ""
+            courses_list.append({
+                "key": key,
+                "num_course": nc,
+                "course": c.get("libelle", "Course"),
+                "discipline": c.get("discipline", "?"),
+                "distance": c.get("distance", 0),
+                "partants": c.get("nombreDeclaresPartants", 0),
+                "statut": "termine" if fini else "a_venir",
+                "arrivee": arrivee,
+                "heure": h,
+                "est_quinte": detecter_quinte(c, reunion),
+            })
+        return templates.TemplateResponse(request, "reunion.html", {
+            "reunion": {
+                "num": num,
+                "hippodrome": hippo,
+                "pays": (hippo_obj.get("pays") or {}).get("libelle", ""),
+                "date": date,
+                "courses": courses_list,
+            },
+            "version": app.version,
+        })
+    except Exception as e:
+        return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
+
+
+@app.get("/course_detail/{key}", response_class=HTMLResponse)
+async def course_detail_page(request: Request, key: str):
+    try:
+        data = await course_detail(key)
+        if not data.get("ok"):
+            return HTMLResponse(f"<h1>Erreur</h1><pre>{data.get('error')}</pre>", status_code=404)
+        return templates.TemplateResponse(request, "course.html", {
+            "data": data,
+            "version": app.version,
+        })
+    except Exception as e:
+        return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
 @app.get("/paris", response_class=HTMLResponse)
 async def paris_page(request: Request):
     try:
