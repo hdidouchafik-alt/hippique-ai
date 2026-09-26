@@ -265,5 +265,52 @@ function loadMetrics() {
 function loadAll() { loadMetrics(); }
 loadAll();
 </script>
+<div class="section" style="margin-top: 30px; padding: 20px; background: #1e293b; border-radius: 10px; border: 1px solid #334155;">
+    <h2 style="color: #38bdf8; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid #334155;">💰 Règles PMU & Paris</h2>
+    <p style="color: #94a3b8; font-size: 13px; margin-bottom: 16px;">
+        Statistiques des paris basées sur les prédictions du ForecastAgent.
+        <a href="/paris" style="color: #38bdf8;">Voir la page dédiée →</a>
+    </p>
+    <div id="paris-mini-stats">
+        <div style="text-align:center; padding:20px; color:#64748b;">Chargement...</div>
+    </div>
+</div>
+
+<script>
+    (async function chargerParisMini() {
+        try {
+            const res = await fetch('/api/paris/stats');
+            const data = await res.json();
+            const s = data.stats || {};
+            const items = [
+                { nom: 'Simple Gagnant', key: 'simple_gagnant', euro: true },
+                { nom: 'Simple Placé', key: 'simple_place', euro: true },
+                { nom: 'Couplé Gagnant', key: 'couple_gagnant' },
+                { nom: 'Couplé Placé', key: 'couple_place' },
+                { nom: 'Trio', key: 'trio' },
+                { nom: 'Quinté+ Désordre', key: 'quinte_desordre' },
+                { nom: 'Top 5', key: 'top5' },
+            ];
+            let html = '<table style="width:100%; border-collapse:collapse; font-size:14px;">';
+            html += '<thead><tr style="color:#94a3b8; border-bottom:1px solid #334155;"><th style="text-align:left;padding:8px;">Pari</th><th style="text-align:left;padding:8px;">Réussis</th><th style="text-align:left;padding:8px;">Taux</th><th style="text-align:left;padding:8px;">ROI €</th></tr></thead><tbody>';
+            for (const it of items) {
+                const d = s[it.key] || {};
+                const taux = d.taux_reussite || 0;
+                const badge = taux > 0 ? 'color:#4ade80' : 'color:#f87171';
+                const roi = it.euro ? (d.roi_euros || 0) + ' €' : '—';
+                html += `<tr style="border-bottom:1px solid #1e293b;">
+                    <td style="padding:10px 8px;"><strong>${it.nom}</strong></td>
+                    <td style="padding:10px 8px;">${d.gagne || 0} / ${d.total || 0}</td>
+                    <td style="padding:10px 8px; ${badge}; font-weight:600;">${taux}%</td>
+                    <td style="padding:10px 8px;">${roi}</td>
+                </tr>`;
+            }
+            html += '</tbody></table>';
+            document.getElementById('paris-mini-stats').innerHTML = html;
+        } catch (e) {
+            document.getElementById('paris-mini-stats').innerHTML = '<p style="color:#f87171">Erreur de chargement</p>';
+        }
+    })();
+</script>
 </body>
 </html>
