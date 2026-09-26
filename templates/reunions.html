@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réunions PMU - Hippique AI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #38bdf8; margin-bottom: 8px; font-size: 28px; }
+        .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 14px; }
+        .nav { margin-bottom: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav a { color: #38bdf8; text-decoration: none; padding: 8px 16px;
+                 border: 1px solid #334155; border-radius: 6px; font-size: 14px; }
+        .nav a:hover { background: #1e293b; border-color: #38bdf8; }
+        .nav a.active { background: #38bdf8; color: #0f172a; font-weight: 600; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .reunion-card { background: #1e293b; border-radius: 10px; padding: 20px;
+                        border: 1px solid #334155; text-decoration: none; color: inherit;
+                        display: block; transition: all 0.2s; }
+        .reunion-card:hover { border-color: #38bdf8; transform: translateY(-2px); }
+        .reunion-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+        .reunion-num { font-size: 24px; font-weight: 700; color: #38bdf8; }
+        .reunion-hippo { font-size: 15px; font-weight: 600; color: #e2e8f0; margin-top: 4px; }
+        .reunion-pays { font-size: 12px; color: #94a3b8; }
+        .reunion-badge { background: #1e3a8a; color: #93c5fd; padding: 4px 10px;
+                         border-radius: 4px; font-size: 12px; font-weight: 600; }
+        .empty { text-align: center; padding: 40px; color: #64748b; font-style: italic; }
+        .date-nav { display: flex; gap: 10px; margin-bottom: 20px; }
+        .date-nav a { color: #38bdf8; text-decoration: none; padding: 8px 14px;
+                      border: 1px solid #334155; border-radius: 6px; font-size: 13px; }
+        .date-nav a:hover { background: #1e293b; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📅 Réunions PMU</h1>
+        <p class="subtitle">Programme du {{ date }} — cliquez sur une réunion pour voir ses courses</p>
+
+        <div class="nav">
+            <a href="/">🏠 Accueil</a>
+            <a href="/reunions" class="active">📅 Réunions</a>
+            <a href="/pronostics">📊 Pronostics</a>
+            <a href="/paris">💰 Paris</a>
+            <a href="/drivers">🏇 Drivers</a>
+            <a href="/learning">🎓 Learning</a>
+        </div>
+
+        <div class="date-nav">
+            <a href="/reunions?offset=-1">⬅️ Hier</a>
+            <a href="/reunions?offset=0">Aujourd'hui</a>
+            <a href="/reunions?offset=1">Demain ➡️</a>
+        </div>
+
+        {% if reunions %}
+        <div class="grid">
+            {% for r in reunions %}
+            <a href="/reunion/{{ date }}/{{ r.num }}" class="reunion-card">
+                <div class="reunion-header">
+                    <div>
+                        <div class="reunion-num">R{{ r.num }}</div>
+                        <div class="reunion-hippo">{{ r.hippodrome }}</div>
+                        {% if r.pays %}<div class="reunion-pays">{{ r.pays }}</div>{% endif %}
+                    </div>
+                    <div class="reunion-badge">{{ r.nb_courses }} courses</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">Aucune réunion trouvée pour cette date.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
