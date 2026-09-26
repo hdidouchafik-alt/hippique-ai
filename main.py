@@ -442,9 +442,30 @@ async def get_arrivee(parts):
     return [n for _, n in cls[:5]]
 
 
+# ============================================================
+# ROUTE RAPIDE : pour le site (lecture seule, sans PMU)
+# ============================================================
 @app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
+    ds = date_str(offset)
+    results = [x for x in COLLECTED if x.get("date") == ds]
+    return {
+        "ok": True,
+        "nouvelles": 0,
+        "evaluees": 0,
+        "total": len(results),
+        "total_evaluees": STATS["evaluated"],
+        "message": "Lecture seule. La collecte est geree par /api/collect (cron)."
+    }
+
+
+# ============================================================
+# ROUTE LOURDE : pour le cron uniquement (appel PMU + DB)
+# ============================================================
+@app.get("/api/collect")
+@app.post("/api/collect")
+async def collect_data(offset: int = 0):
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
     if not prog:
