@@ -6,403 +6,149 @@
     <title>Pronostics - Hippique AI</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: #0f172a; color: #e2e8f0; padding: 20px; line-height: 1.6;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; padding: 20px; line-height: 1.6; }
         .container { max-width: 1200px; margin: 0 auto; }
         h1 { color: #38bdf8; margin-bottom: 8px; font-size: 28px; }
         .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 14px; }
         .nav { margin-bottom: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
-        .nav a {
-            color: #38bdf8; text-decoration: none; padding: 8px 16px;
-            border: 1px solid #334155; border-radius: 6px; font-size: 14px;
-        }
+        .nav a { color: #38bdf8; text-decoration: none; padding: 8px 16px;
+                 border: 1px solid #334155; border-radius: 6px; font-size: 14px; }
         .nav a:hover { background: #1e293b; border-color: #38bdf8; }
         .nav a.active { background: #38bdf8; color: #0f172a; font-weight: 600; }
-        .section {
-            background: #1e293b; border-radius: 10px; padding: 24px;
-            margin-bottom: 24px; border: 1px solid #334155;
-        }
-        .section h2 {
-            color: #38bdf8; font-size: 20px; margin-bottom: 16px;
-            padding-bottom: 10px; border-bottom: 1px solid #334155;
-        }
-        .courses-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;
-        }
-        .course-card {
-            background: #0f172a; border-radius: 8px; padding: 16px;
-            border: 1px solid #334155; cursor: pointer; transition: all 0.2s;
-        }
+        .section { background: #1e293b; border-radius: 10px; padding: 24px;
+                   margin-bottom: 24px; border: 1px solid #334155; }
+        .section h2 { color: #38bdf8; font-size: 20px; margin-bottom: 16px;
+                      padding-bottom: 10px; border-bottom: 1px solid #334155; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+        .course-card { background: #0f172a; border-radius: 8px; padding: 16px;
+                       border: 1px solid #334155; text-decoration: none; color: inherit;
+                       display: block; transition: all 0.2s; }
         .course-card:hover { border-color: #38bdf8; transform: translateY(-2px); }
-        .course-card.quinte {
-            border-color: #fbbf24;
-            box-shadow: 0 0 20px rgba(251, 191, 36, 0.2);
-        }
-        .course-header {
-            display: flex; justify-content: space-between; align-items: start;
-            margin-bottom: 10px;
-        }
+        .course-card.quinte { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+        .course-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
         .course-title { font-weight: 600; color: #e2e8f0; font-size: 15px; }
-        .course-heure { color: #38bdf8; font-size: 14px; font-weight: 600; }
-        .course-meta {
-            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
-            font-size: 12px; color: #94a3b8;
-        }
-        .badge {
-            display: inline-block; padding: 3px 8px; border-radius: 4px;
-            font-size: 11px; font-weight: 600;
-        }
+        .course-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+                       font-size: 12px; color: #94a3b8; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px;
+                 font-size: 11px; font-weight: 600; }
         .badge-quinte { background: #78350f; color: #fcd34d; }
-        .badge-trot { background: #1e3a8a; color: #93c5fd; }
-        .badge-plat { background: #166534; color: #86efac; }
-        .badge-obstacle { background: #7f1d1d; color: #fca5a5; }
-        .arrivee {
-            display: flex; gap: 6px; margin-top: 12px;
-            padding-top: 12px; border-top: 1px solid #334155;
-        }
-        .arrivee-label {
-            color: #94a3b8; font-size: 11px; text-transform: uppercase;
-            margin-bottom: 6px;
-        }
-        .num-box {
-            background: #1e293b; color: #38bdf8; font-weight: 700;
-            width: 32px; height: 32px; border-radius: 6px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; border: 1px solid #334155;
-        }
-        .num-box.winner {
-            background: #fbbf24; color: #0f172a; border-color: #fbbf24;
-        }
-        .loading { text-align: center; padding: 40px; color: #64748b; }
-        .empty { text-align: center; padding: 40px; color: #64748b; font-style: italic; }
-        .btn-refresh {
-            background: #38bdf8; color: #0f172a; border: none;
-            padding: 10px 20px; border-radius: 6px; font-weight: 600;
-            cursor: pointer; font-size: 14px;
-        }
-        .btn-refresh:hover { background: #0ea5e9; }
-        .btn-refresh:disabled { opacity: 0.5; cursor: wait; }
-
-        /* Modal */
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85); z-index: 1000;
-            padding: 20px; overflow-y: auto;
-        }
-        .modal.active { display: block; }
-        .modal-content {
-            background: #1e293b; border-radius: 12px; max-width: 1000px;
-            margin: 0 auto; padding: 24px; border: 1px solid #334155;
-            position: relative;
-        }
-        .modal-close {
-            position: absolute; top: 16px; right: 16px;
-            background: #7f1d1d; color: white; border: none;
-            width: 32px; height: 32px; border-radius: 6px;
-            cursor: pointer; font-size: 18px; font-weight: 700;
-        }
-        .modal h3 { color: #38bdf8; margin-bottom: 16px; }
-        .partants-table {
-            width: 100%; border-collapse: collapse; font-size: 13px;
-            margin-top: 16px;
-        }
-        .partants-table th {
-            text-align: left; padding: 10px 6px; color: #94a3b8;
-            border-bottom: 1px solid #334155; font-size: 11px;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .partants-table td {
-            padding: 10px 6px; border-bottom: 1px solid #0f172a;
-        }
-        .partants-table tr:hover td { background: #0f172a; }
-        .pronostic-badge {
-            background: #166534; color: #86efac; padding: 2px 6px;
-            border-radius: 4px; font-size: 10px; font-weight: 700;
-        }
+        .arrivee { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px;
+                   border-top: 1px solid #334155; }
+        .arrivee-label { color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 6px; }
+        .num-box { background: #1e293b; color: #38bdf8; font-weight: 700;
+                   width: 32px; height: 32px; border-radius: 6px;
+                   display: flex; align-items: center; justify-content: center;
+                   font-size: 14px; border: 1px solid #334155; }
+        .num-box.winner { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
+        .empty { text-align: center; padding: 30px; color: #64748b; font-style: italic; }
+        .prono { color: #38bdf8; font-size: 13px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Pronostics</h1>
-        <p class="subtitle">Courses terminées et courses à venir</p>
+        <p class="subtitle">Hippique AI v{{ version }} — courses terminées et à venir</p>
 
         <div class="nav">
             <a href="/">🏠 Accueil</a>
             <a href="/pronostics" class="active">📊 Pronostics</a>
-            <a href="/learning">🎓 Learning</a>
             <a href="/paris">💰 Paris</a>
+            <a href="/learning">🎓 Learning</a>
+            <a href="/docs" target="_blank">📚 API</a>
         </div>
 
+        {% if quinte %}
         <div class="section">
             <h2>🏆 Quinté+ du jour</h2>
-            <div id="quinte-content">
-                <div class="loading">Chargement...</div>
+            <div class="course-card quinte">
+                <div class="course-header">
+                    <div>
+                        <div class="course-title">🏆 {{ quinte.course }}</div>
+                        <div class="course-meta" style="margin-top:6px;">
+                            <span>{{ quinte.hippodrome }}</span>
+                            <span>R{{ quinte.reunion }}C{{ quinte.num_course }}</span>
+                            <span>{{ quinte.distance }}m</span>
+                            <span>{{ quinte.discipline }}</span>
+                        </div>
+                    </div>
+                    <span class="badge badge-quinte">QUINTÉ+</span>
+                </div>
+                {% if quinte.arrivee %}
+                <div class="arrivee-label">Arrivée</div>
+                <div class="arrivee">
+                    {% for num in quinte.arrivee %}
+                    <div class="num-box {% if loop.index0 == 0 %}winner{% endif %}">{{ num }}</div>
+                    {% endfor %}
+                </div>
+                {% if quinte.evaluations and quinte.evaluations.ForecastAgent %}
+                <p class="prono">🎯 Pronostic : <strong>{{ quinte.evaluations.ForecastAgent.prediction | join(' - ') }}</strong>
+                    — Top 1 : {% if quinte.evaluations.ForecastAgent.top1 %}✅{% else %}❌{% endif %} ·
+                    Top 5 : {{ quinte.evaluations.ForecastAgent.top5 }}/5</p>
+                {% endif %}
+                {% else %}
+                <p style="color:#94a3b8;font-size:13px;margin-top:10px;">Course à venir</p>
+                {% endif %}
             </div>
+        </div>
+        {% endif %}
+
+        <div class="section">
+            <h2>⏰ Courses à venir ({{ a_venir|length }})</h2>
+            {% if a_venir %}
+            <div class="grid">
+                {% for c in a_venir %}
+                <a href="/api/course/{{ c.key }}" class="course-card">
+                    <div class="course-header">
+                        <div>
+                            <div class="course-title">{{ c.course }}</div>
+                            <div class="course-meta" style="margin-top:6px;">
+                                <span>{{ c.hippodrome }}</span>
+                                <span>R{{ c.reunion }}C{{ c.num_course }}</span>
+                                <span>{{ c.distance }}m</span>
+                                <span>{{ c.partants }} partants</span>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty">Aucune course à venir pour aujourd'hui.</div>
+            {% endif %}
         </div>
 
         <div class="section">
-            <h2>⏰ Courses à venir <button class="btn-refresh" id="btn-refresh" style="float:right;font-size:12px;padding:6px 12px;">🔄 Actualiser</button></h2>
-            <div id="a-venir-content">
-                <div class="loading">Chargement...</div>
+            <h2>✅ Courses terminées ({{ passees|length }})</h2>
+            {% if passees %}
+            <div class="grid">
+                {% for c in passees %}
+                <a href="/api/course/{{ c.key }}" class="course-card">
+                    <div class="course-header">
+                        <div>
+                            <div class="course-title">{{ c.course }}</div>
+                            <div class="course-meta" style="margin-top:6px;">
+                                <span>{{ c.hippodrome }}</span>
+                                <span>R{{ c.reunion }}C{{ c.num_course }}</span>
+                                <span>{{ c.discipline }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% if c.arrivee %}
+                    <div class="arrivee-label">Arrivée</div>
+                    <div class="arrivee">
+                        {% for num in c.arrivee %}
+                        <div class="num-box {% if loop.index0 == 0 %}winner{% endif %}">{{ num }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </a>
+                {% endfor %}
             </div>
-        </div>
-
-        <div class="section">
-            <h2>✅ Courses terminées (arrivées)</h2>
-            <div id="passees-content">
-                <div class="loading">Chargement...</div>
-            </div>
+            {% else %}
+            <div class="empty">Aucune course terminée.</div>
+            {% endif %}
         </div>
     </div>
-
-    <!-- Modal détail course -->
-    <div class="modal" id="modal-course">
-        <div class="modal-content">
-            <button class="modal-close" onclick="fermerModal()">.✕</buttonpron>
-            <div id="modal-body">
-                <div classostics="loading">Chargement...</div>
-            </ ?div>
-        </div>
-    </div>
-
-    <script>
-        function badgeDiscipline(discipline) {
-            const d = (discipline || '').toUpperCase();
-            if (d.includes('TROT')) return '<span class="badge badge-trot">TROT</span>';
-            if (d.includes('HAIES') || d.includes('STEEPLE') || d.includes('CROSS') || d.includes('OBSTACLE')) return '<span class="badge badge-obstacle">OBSTACLE</span>';
-            if (d.includes('PLAT')) return '<span class="badge badge-plat">PLAT</span>';
-            return '<span class="badge">' + (discipline || '?') + '</span>';
-        }
-
-        function afficherArrivee(arrivee) {
-            if (!arrivee || arrivee.length === 0) return '';
-            let html = '<div class="arrivee-label">Arrivée</div><div class="arrivee">';
-            for (let i = 0; i < arrivee.length; i++) {
-                const num = arrivee[i];
-                const cls = i === 0 ? 'num-box winner' : 'num-box';
-                html += `<div class="${cls}">${num}</div>`;
-            }
-            html += '</div>';
-            return html;
-        }
-
-        async function chargerQuinte() {
-            try {
-                const res = await fetch('/api/quinte/jour');
-                const data = await res.json();
-                const el = document.getElementById('quinte-content');
-                if (!data.ok) {
-                    el.innerHTML = '<div class="empty">Aucun Quinté+ détecté pour aujourd\'hui.</div>';
-                    return;
-                }
-                if (data.statut === 'termine') {
-                    const c = data.course;
-                    el.innerHTML = `
-                        <div class="course-card quinte" onclick="ouvrirCourse('${c.key}')">
-                            <div class="course-header">
-                                <div>
-                                    <div class="course-title">🏆 ${c.course || 'Quinté+'}</div>
-                                    <div class="course-meta" style="margin-top:6px;">
-                                        <span>${c.hippodrome || '?'}</span>
-                                        <span>R${c.reunion}C${c.num_course}</span>
-                                        ${badgeDiscipline(c.discipline)}
-                                    </div>
-                                </div>
-                                <span class="badge badge-quinte">QUINTÉ+</span>
-                            </div>
-                            ${afficherArrivee(c.arrivee)}
-                        </div>
-                    `;
-                } else if (data.statut === 'a_venir') {
-                    const c = data.course || {};
-                    el.innerHTML = `
-                        <div class="course-card quinte" onclick="ouvrirCourse('${c.key}')">
-                            <div class="course-header">
-                                <div>
-                                    <div class="course-title">🏆 ${c.course || 'Quinté+'}</div>
-                                    <div class="course-meta" style="margin-top:6px;">
-                                        <span>${c.hippodrome || '?'}</span>
-                                        <span>R${c.reunion}C${c.num_course}</span>
-                                        ${badgeDiscipline(c.discipline)}
-                                    </div>
-                                </div>
-                                <span class="badge badge-quinte">QUINTÉ+</span>
-                            </div>
-                            <p style="color:#94a3b8;font-size:13px;margin-top:10px;">Cliquez pour voir les partants →</p>
-                        </div>
-                    `;
-                } else {
-                    el.innerHTML = '<div class="empty">Erreur : ' + (data.error || 'inconnue') + '</div>';
-                }
-            } catch (e) {
-                document.getElementById('quinte-content').innerHTML = '<div class="empty">Erreur de chargement</div>';
-            }
-        }
-
-        async function chargerAVenir() {
-            try {
-                const res = await fetch('/api/courses/a_venir');
-                const data = await res.json();
-                const el = document.getElementById('a-venir-content');
-                if (!data.ok || !data.courses || data.courses.length === 0) {
-                    el.innerHTML = '<div class="empty">Aucune course à venir.</div>';
-                    return;
-                }
-                let html = '<div class="courses-grid">';
-                for (const c of data.courses) {
-                    html += `
-                        <div class="course-card" onclick="ouvrirCourse('${c.key}')">
-                            <div class="course-header">
-                                <div>
-                                    <div class="course-title">${c.course}</div>
-                                    <div class="course-meta" style="margin-top:6px;">
-                                        <span>${c.hippodrome}</span>
-                                        <span>R${c.reunion}C${c.num_course}</span>
-                                        <span>${c.distance}m</span>
-                                        <span>${c.partants} partants</span>
-                                        ${badgeDiscipline(c.discipline)}
-                                    </div>
-                                </div>
-                                <div class="course-heure">${c.heure}</div>
-                            </div>
-                        </div>
-                    `;
-                }
-                html += '</div>';
-                el.innerHTML = html;
-            } catch (e) {
-                document.getElementById('a-venir-content').innerHTML = '<div class="empty">Erreur de chargement</div>';
-            }
-        }
-
-        async function chargerPassees() {
-            try {
-                const res = await fetch('/api/courses/passees?limit=30');
-                const data = await res.json();
-                const el = document.getElementById('passees-content');
-                if (!data.courses || data.courses.length === 0) {
-                    el.innerHTML = '<div class="empty">Aucune course terminée pour le moment.</div>';
-                    return;
-                }
-                let html = '<div class="courses-grid">';
-                for (const c of data.courses.reverse()) {
-                    html += `
-                        <div class="course-card" onclick="ouvrirCourse('${c.key}')">
-                            <div class="course-header">
-                                <div>
-                                    <div class="course-title">${c.course || 'Course'}</div>
-                                    <div class="course-meta" style="margin-top:6px;">
-                                        <span>${c.hippodrome || '?'}</span>
-                                        <span>R${c.reunion}C${c.num_course}</span>
-                                        ${badgeDiscipline(c.discipline)}
-                                    </div>
-                                </div>
-                            </div>
-                            ${afficherArrivee(c.arrivee)}
-                        </div>
-                    `;
-                }
-                html += '</div>';
-                el.innerHTML = html;
-            } catch (e) {
-                document.getElementById('passees-content').innerHTML = '<div class="empty">Erreur de chargement</div>';
-            }
-        }
-
-        async function ouvrirCourse(key) {
-            const modal = document.getElementById('modal-course');
-            const body = document.getElementById('modal-body');
-            modal.classList.add('active');
-            body.innerHTML = '<div class="loading">Chargement de la course...</div>';
-
-            try {
-                const res = await fetch('/api/course/' + key);
-                const data = await res.json();
-                if (!data.ok) {
-                    body.innerHTML = '<div class="empty">Erreur : ' + (data.error || 'inconnue') + '</div>';
-                    return;
-                }
-
-                let html = '';
-                if (data.source === 'collected') {
-                    const c = data.course;
-                    html += `<h3>${c.course || 'Course'} — ${c.hippodrome || '?'}</h3>`;
-                    html += `<p style="color:#94a3b8;margin-bottom:12px;">R${c.reunion}C${c.num_course} · ${c.distance}m · ${c.discipline || '?'}</p>`;
-                    html += afficherArrivee(c.arrivee);
-                    if (c.evaluations && c.evaluations.ForecastAgent) {
-                        const fa = c.evaluations.ForecastAgent;
-                        html += `<p style="margin-top:16px;color:#94a3b8;font-size:13px;">Pronostic ForecastAgent : <strong>${(fa.prediction || []).join(' - ')}</strong></p>`;
-                        html += `<p style="color:#94a3b8;font-size:13px;">Top 1 : ${fa.top1 ? '✅' : '❌'} · Top 5 : ${fa.top5}/5</p>`;
-                    }
-                } else if (data.source === 'pmu') {
-                    const c = data.course;
-                    html += `<h3>${c.course} — ${c.hippodrome}</h3>`;
-                    html += `<p style="color:#94a3b8;margin-bottom:12px;">R${c.reunion}C${c.num_course} · ${c.distance}m · ${c.discipline || '?'} · ${c.partants} partants</p>`;
-
-                    if (data.pronostics && Object.keys(data.pronostics).length > 0) {
-                        html += '<p style="color:#38bdf8;font-size:13px;margin-bottom:12px;">🎯 Pronostic ForecastAgent : <strong>' + ((data.pronostics.ForecastAgent || []).join(' - ')) + '</strong></p>';
-                    }
-
-                    html += '<table class="partants-table"><thead><tr>';
-                    html += '<th>N°</th><th>Cheval</th><th>Driver/Jockey</th><th>Entraîneur</th><th>Musique</th><th>Cote</th><th>Gains</th><th>Infos</th>';
-                    html += '</tr></thead><tbody>';
-
-                    const pronosticTop = data (data.pronostics.ForecastAgent || []) : [];
-
-                    for (const p of (data.partants || [])) {
-                        const estProno = pronosticTop.includes(p.num);
-                        const pronoBadge = estProno ? '<span class="pronostic-badge">🎯</span>' : '';
-                        let infos = [];
-                        if (p.deferrage) infos.push('Défer: ' + p.deferrage);
-                        if (p.poids) infos.push(p.poids + 'kg');
-                        if (p.corde) infos.push('Corde ' + p.corde);
-                        if (p.sexe) infos.push(p.sexe + (p.age ? ' ' + p.age + 'a' : ''));
-
-                        html += `<tr>
-                            <td><strong>${p.num}</strong></td>
-                            <td>${p.nom} ${pronoBadge}</td>
-                            <td>${p.driver}</td>
-                            <td>${p.entraineur}</td>
-                            <td style="font-family:monospace;font-size:12px;">${p.musique || '—'}</td>
-                            <td>${p.cote ? p.cote : '—'}</td>
-                            <td>${p.gains ? Math.round(p.gains).toLocaleString('fr-FR') + ' €' : '—'}</td>
-                            <td style="color:#94a3b8;font-size:12px;">${infos.join(' · ') || '—'}</td>
-                        </tr>`;
-                    }
-                    html += '</tbody></table>';
-                }
-
-                body.innerHTML = html;
-            } catch (e) {
-                body.innerHTML = '<div class="empty">Erreur : ' + e.message + '</div>';
-            }
-        }
-
-        function fermerModal() {
-            document.getElementById('modal-course').classList.remove('active');
-        }
-
-        document.getElementById('modal-course').addEventListener('click', function(e) {
-            if (e.target === this) fermerModal();
-        });
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') fermerModal();
-        });
-
-        document.getElementById('btn-refresh').addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = '⏳...';
-            await Promise.all([chargerAVenir(), chargerQuinte()]);
-            this.disabled = false;
-            this.textContent = '🔄 Actualiser';
-        });
-
-        chargerQuinte();
-        chargerAVenir();
-        chargerPassees();
-    </script>
 </body>
 </html>
