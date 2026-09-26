@@ -13,16 +13,19 @@
             padding: 20px;
             line-height: 1.6;
         }
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
         h1 {
             color: #38bdf8;
-            margin-bottom: 8px;
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 700;
+            margin-bottom: 8px;
         }
         .subtitle {
             color: #94a3b8;
-            margin-bottom: 30px;
             font-size: 15px;
         }
         .nav {
@@ -30,6 +33,7 @@
             display: flex;
             gap: 12px;
             flex-wrap: wrap;
+            justify-content: center;
         }
         .nav a {
             color: #38bdf8;
@@ -64,96 +68,70 @@
             padding-bottom: 10px;
             border-bottom: 1px solid #334155;
         }
-        .grid {
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
         }
-        .card {
+        .stat-card {
             background: #0f172a;
             border-radius: 8px;
             padding: 20px;
             border: 1px solid #334155;
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+            text-align: center;
         }
-        .card:hover {
-            border-color: #38bdf8;
-            transform: translateY(-2px);
-        }
-        .card-title {
-            font-size: 13px;
+        .stat-label {
+            font-size: 12px;
             color: #94a3b8;
             text-transform: uppercase;
             letter-spacing: 1px;
             margin-bottom: 8px;
         }
-        .card-value {
+        .stat-value {
             font-size: 28px;
             font-weight: 700;
             color: #e2e8f0;
-            margin-bottom: 4px;
         }
-        .card-value.positive { color: #4ade80; }
-        .card-value.negative { color: #f87171; }
-        .card-value.neutral { color: #fbbf24; }
-        .card-value.blue { color: #38bdf8; }
-        .card-sub {
-            font-size: 13px;
-            color: #64748b;
-        }
-        .actions {
+        .stat-value.green { color: #4ade80; }
+        .stat-value.red { color: #f87171; }
+        .stat-value.blue { color: #38bdf8; }
+        .stat-value.yellow { color: #fbbf24; }
+        .actions-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
         }
-        .action-btn {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .action-card {
             background: #0f172a;
             border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 16px;
+            border-radius: 10px;
+            padding: 24px;
             text-decoration: none;
             color: #e2e8f0;
             transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .action-btn:hover {
+        .action-card:hover {
             border-color: #38bdf8;
             background: #1e293b;
+            transform: translateY(-3px);
         }
         .action-icon {
-            font-size: 24px;
+            font-size: 32px;
+            margin-bottom: 4px;
         }
-        .action-label {
+        .action-title {
+            font-size: 17px;
             font-weight: 600;
-            font-size: 14px;
+            color: #e2e8f0;
         }
         .action-desc {
-            font-size: 12px;
+            font-size: 13px;
             color: #94a3b8;
+            line-height: 1.5;
         }
-        .loading {
-            text-align: center;
-            padding: 30px;
-            color: #64748b;
-        }
-        .badge {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-        .badge-green { background: #166534; color: #86efac; }
-        .badge-red { background: #7f1d1d; color: #fca5a5; }
-        .badge-yellow { background: #78350f; color: #fcd34d; }
-        .badge-blue { background: #1e3a8a; color: #93c5fd; }
         .footer {
             text-align: center;
             padding: 30px 0;
@@ -161,71 +139,71 @@
             font-size: 12px;
         }
         .footer a { color: #38bdf8; text-decoration: none; }
+        .loading { text-align: center; padding: 20px; color: #64748b; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🐎 Hippique AI</h1>
-        <p class="subtitle">Pronostics hippiques par intelligence artificielle — v5.8</p>
+        <div class="header">
+            <h1>🐎 Hippique AI</h1>
+            <p class="subtitle">Pronostics hippiques par intelligence artificielle</p>
+        </div>
 
         <div class="nav">
             <a href="/" class="active">🏠 Accueil</a>
+            <a href="/reunions">📅 Réunions</a>
             <a href="/pronostics">📊 Pronostics</a>
             <a href="/paris">💰 Paris PMU</a>
+            <a href="/drivers">🏇 Drivers</a>
             <a href="/learning">🎓 Learning</a>
             <a href="/docs" target="_blank">📚 API</a>
         </div>
 
         <div class="section">
             <h2>📊 État du système</h2>
-            <div class="grid" id="stats-grid">
+            <div class="stats-grid" id="stats-grid">
                 <div class="loading">Chargement...</div>
             </div>
         </div>
 
         <div class="section">
             <h2>🚀 Accès rapide</h2>
-            <div class="actions">
-                <a href="/pronostics" class="action-btn">
-                    <span class="action-icon">📊</span>
-                    <div>
-                        <div class="action-label">Pronostics du jour</div>
-                        <div class="action-desc">Courses à venir et arrivées</div>
-                    </div>
+            <div class="actions-grid">
+                <a href="/reunions" class="action-card">
+                    <div class="action-icon">📅</div>
+                    <div class="action-title">Réunions PMU</div>
+                    <div class="action-desc">Programme du jour, courses et partants</div>
                 </a>
-                <a href="/paris" class="action-btn">
-                    <span class="action-icon">💰</span>
-                    <div>
-                        <div class="action-label">Paris PMU</div>
-                        <div class="action-desc">Stats des paris (Simple, Couplé, Quinté+)</div>
-                    </div>
+                <a href="/pronostics" class="action-card">
+                    <div class="action-icon">📊</div>
+                    <div class="action-title">Pronostics</div>
+                    <div class="action-desc">Quinté+ et courses terminées</div>
                 </a>
-                <a href="/learning" class="action-btn">
-                    <span class="action-icon">🎓</span>
-                    <div>
-                        <div class="action-label">Learning</div>
-                        <div class="action-desc">Performances des 7 agents</div>
-                    </div>
+                <a href="/drivers" class="action-card">
+                    <div class="action-icon">🏇</div>
+                    <div class="action-title">Drivers & Jockeys</div>
+                    <div class="action-desc">Classement complet et statistiques</div>
                 </a>
-                <a href="/docs" target="_blank" class="action-btn">
-                    <span class="action-icon">📚</span>
-                    <div>
-                        <div class="action-label">API (Swagger)</div>
-                        <div class="action-desc">Toutes les routes disponibles</div>
-                    </div>
+                <a href="/paris" class="action-card">
+                    <div class="action-icon">💰</div>
+                    <div class="action-title">Paris PMU</div>
+                    <div class="action-desc">Simple, Couplé, Trio, Quinté+</div>
                 </a>
-            </div>
-        </div>
-
-        <div class="section">
-            <h2>🏆 Top drivers</h2>
-            <div id="drivers-content">
-                <div class="loading">Chargement...</div>
+                <a href="/learning" class="action-card">
+                    <div class="action-icon">🎓</div>
+                    <div class="action-title">Learning</div>
+                    <div class="action-desc">Performances des 7 agents</div>
+                </a>
+                <a href="/docs" target="_blank" class="action-card">
+                    <div class="action-icon">📚</div>
+                    <div class="action-title">API (Swagger)</div>
+                    <div class="action-desc">Toutes les routes disponibles</div>
+                </a>
             </div>
         </div>
 
         <div class="footer">
-            <p>Hippique AI v5.8 · <a href="https://github.com/hdidouchafik-alt/hippique-ai" target="_blank">GitHub</a></p>
+            <p>Hippique AI · <a href="https://github.com/hdidouchafik-alt/hippique-ai" target="_blank">GitHub</a></p>
         </div>
     </div>
 
@@ -236,25 +214,21 @@
                 const data = await res.json();
 
                 const html = `
-                    <div class="card">
-                        <div class="card-title">Version</div>
-                        <div class="card-value blue">${data.version || '?'}</div>
-                        <div class="card-sub">API active</div>
+                    <div class="stat-card">
+                        <div class="stat-label">Version</div>
+                        <div class="stat-value blue">${data.version || '?'}</div>
                     </div>
-                    <div class="card">
-                        <div class="card-title">Base de données</div>
-                        <div class="card-value ${data.database ? 'positive' : 'negative'}">${data.database ? '✅ OK' : '❌ HS'}</div>
-                        <div class="card-sub">Neon PostgreSQL</div>
+                    <div class="stat-card">
+                        <div class="stat-label">Base de données</div>
+                        <div class="stat-value ${data.database ? 'green' : 'red'}">${data.database ? '✅ OK' : '❌ HS'}</div>
                     </div>
-                    <div class="card">
-                        <div class="card-title">Courses collectées</div>
-                        <div class="card-value neutral">${data.results_collected || 0}</div>
-                        <div class="card-sub">Résultats en base</div>
+                    <div class="stat-card">
+                        <div class="stat-label">Courses collectées</div>
+                        <div class="stat-value yellow">${data.results_collected || 0}</div>
                     </div>
-                    <div class="card">
-                        <div class="card-title">Prédictions évaluées</div>
-                        <div class="card-value neutral">${data.evaluated || 0}</div>
-                        <div class="card-sub">Total des évaluations</div>
+                    <div class="stat-card">
+                        <div class="stat-label">Prédictions évaluées</div>
+                        <div class="stat-value">${data.evaluated || 0}</div>
                     </div>
                 `;
                 document.getElementById('stats-grid').innerHTML = html;
@@ -263,46 +237,7 @@
             }
         }
 
-        async function chargerDrivers() {
-            try {
-                const res = await fetch('/api/drivers/top');
-                const data = await res.json();
-                const drivers = (data.drivers || []).slice(0, 10);
-
-                if (drivers.length === 0) {
-                    document.getElementById('drivers-content').innerHTML = '<div class="loading">Aucun driver en base</div>';
-                    return;
-                }
-
-                let html = '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-                html += '<thead><tr style="color:#94a3b8;border-bottom:1px solid #334155;text-align:left;">';
-                html += '<th style="padding:10px 8px;">Driver</th>';
-                html += '<th style="padding:10px 8px;">Courses</th>';
-                html += '<th style="padding:10px 8px;">Victoires</th>';
-                html += '<th style="padding:10px 8px;">Top 5</th>';
-                html += '<th style="padding:10px 8px;">Taux victoire</th>';
-                html += '</tr></thead><tbody>';
-
-                for (const d of drivers) {
-                    const taux = d.courses > 0 ? ((d.victoires / d.courses) * 100).toFixed(1) : '0';
-                    const badgeCls = taux >= 25 ? 'badge-green' : (taux >= 15 ? 'badge-yellow' : 'badge-red');
-                    html += `<tr style="border-bottom:1px solid #0f172a;">
-                        <td style="padding:10px 8px;"><strong>${d.driver}</strong></td>
-                        <td style="padding:10px 8px;">${d.courses}</td>
-                        <td style="padding:10px 8px;">${d.victoires}</td>
-                        <td style="padding:10px 8px;">${d.top5}</td>
-                        <td style="padding:10px 8px;"><span class="badge ${badgeCls}">${taux}%</span></td>
-                    </tr>`;
-                }
-                html += '</tbody></table>';
-                document.getElementById('drivers-content').innerHTML = html;
-            } catch (e) {
-                document.getElementById('drivers-content').innerHTML = '<div class="loading">Erreur de chargement</div>';
-            }
-        }
-
         chargerStats();
-        chargerDrivers();
         setInterval(chargerStats, 60000);
     </script>
 </body>
