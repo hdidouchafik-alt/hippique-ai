@@ -117,7 +117,77 @@ async def root(request: Request):
 
 @app.get("/pronostics", response_class=HTMLResponse)
 async def pronostics_page(request: Request):
-    return templates.TemplateResponse(request, "pronostics.html")
+    try:
+        passees = [c for c in COLLECTED if c.get("arrivee")][-20:]
+        passees.reverse()
+        ds = date_str(0)
+        prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+        a_venir = []
+        if prog:
+            for r in ((prog.get("programme") or {}).get("reunions") or []):
+                if not isinstance(r, dict):
+                    continue
+                nr = r.get("numOfficiel")
+                hippo_obj = r.get("hippodrome") or {}
+                hippo = hippo_obj.get("libelleLong", "?")
+                if not hippodrome_ok(hippo_obj, hippo):
+                    continue
+                for c in (r.get("courses") or []):
+                    if not isinstance(c, dict):
+                        continue
+                    st = (c.get("statut") or "").upper()
+                    if "FIN" in st or "ARRIVE" in st:
+                        continue
+                    nc = c.get("numOrdre")
+                    a_venir.append({
+                        "key": ds + "-R" + str(nr) + "C" + str(nc),
+                        "reunion": nr,
+                        "num_course": nc,
+                        "hippodrome": hippo,
+                        "course": c.get("libelle", "Course"),
+                        "discipline": c.get("discipline", "?"),
+                        "distance": c.get("distance", 0),
+                        "partants": c.get("nombreDeclaresPartants", 0),
+                    })
+        quinte = None
+        if prog:
+            for r in ((prog.get("programme") or {}).get("reunions") or []):
+                if not isinstance(r, dict):
+                    continue
+                for c in (r.get("courses") or []):
+                    if not isinstance(c, dict):
+                        continue
+                    if not detecter_quinte(c, r):
+                        continue
+                    nr = r.get("numOfficiel")
+                    nc = c.get("numOrdre")
+                    key = ds + "-R" + str(nr) + "C" + str(nc)
+                    for collected in COLLECTED:
+                        if collected.get("key") == key:
+                            quinte = collected
+                            break
+                    if quinte is None:
+                        quinte = {
+                            "key": key,
+                            "course": c.get("libelle", "Quinté+"),
+                            "hippodrome": (r.get("hippodrome") or {}).get("libelleLong", "?"),
+                            "reunion": nr,
+                            "num_course": nc,
+                            "discipline": c.get("discipline", "?"),
+                            "distance": c.get("distance", 0),
+                            "arrivee": None,
+                        }
+                    break
+                if quinte:
+                    break
+        return templates.TemplateResponse(request, "pronostics.html", {
+            "passees": passees,
+            "a_venir": a_venir,
+            "quinte": quinte,
+            "version": app.version,
+        })
+    except Exception as e:
+        return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
 
 
 @app.get("/learning", response_class=HTMLResponse)
