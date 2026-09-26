@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="5.2.0")
+app = FastAPI(title="Hippique AI", version="5.3.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -37,7 +37,6 @@ MISE = 10
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-# Nombre minimum de partants pour que les z-scores soient fiables
 MIN_PARTANTS_ZSCORE = 5
 
 COLLECTED = []
@@ -115,18 +114,14 @@ async def drivers_top():
     return {"drivers": db.get_all_driver_stats()}
 
 
-@app.get("/api/admin/rebuild-drivers")
-@app.post("/api/admin/rebuild-drivers")
-async def admin_rebuild_drivers(offset: int = 0):
+async def rebuild_drivers_task(offset: int = 0):
     if not DB_OK:
-        return {"error": "DB indisponible"}
+        return
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
     if not prog:
-        return {"error": "PMU indisponible", "date": ds}
+        return
     reunions = (prog.get("programme") or {}).get("reunions") or []
-    processed = 0
-    ignorees = 0
     for r in reunions:
         if not isinstance(r, dict):
             continue
@@ -134,7 +129,6 @@ async def admin_rebuild_drivers(offset: int = 0):
         hippo_obj = r.get("hippodrome") or {}
         hippo = hippo_obj.get("libelleLong", "?")
         if not hippodrome_ok(hippo_obj, hippo):
-            ignorees += 1
             continue
         for c in (r.get("courses") or []):
             if not isinstance(c, dict):
@@ -169,8 +163,13 @@ async def admin_rebuild_drivers(offset: int = 0):
                 else:
                     db.update_driver(driver, None)
             db.update_hippodrome(hippo)
-            processed += 1
-    return {"ok": True, "date": ds, "courses_traitees": processed, "ignorees": ignorees}
+
+
+@app.get("/api/admin/rebuild-drivers")
+@app.post("/api/admin/rebuild-drivers")
+async def admin_rebuild_drivers(background_tasks: BackgroundTasks, offset: int = 0):
+    background_tasks.add_task(rebuild_drivers_task, offset=offset)
+    return {"ok": True, "queued": True, "message": "Rebuild en cours (2-5 min)"}
 
 
 @app.post("/api/chat")
@@ -282,6 +281,10 @@ async def admin_purge(confirm: str = ""):
     return {"ok": True, "message": "Base purge"}
 
 
+# ============================================================
+# SCORES DE BASE (identiques pour toutes disciplines)
+# ============================================================
+
 def parse_musique(s):
     return [m.strip() for m in re.split(r"\s+", s or "") if m.strip()]
 
@@ -327,9 +330,83 @@ def score_risk(musique):
     return max(0, 2 - da * 0.5)
 
 
+# ============================================================
+# SCORES SPÉCIFIQUES PAR DISCIPLINE
+# ============================================================
+
+def detect_discipline(discipline_str):
+    """Détecte la discipline d'une course à partir du libellé PMU."""
+    d = (discipline_str or "").upper()
+    if "TROT" in d:
+        return "TROT"
+    if any(x in d for x in ("HAIES", "STEEPLE", "CROSS", "OBSTACLE")):
+        return "OBSTACLE"
+    if "PLAT" in d:
+        return "PLAT"
+    return "AUTRE"
+
+
+def score_deferrage(p):
+    """Bonus si le cheval est déferré (trot uniquement)."""
+    d = (p.get("deferrage") or "").upper()
+    if "QUATRE" in d or "D4" in d:
+        return 2.0
+    if "ANTERIEURS" in d or "POSTERIEURS" in d:
+        return 1.0
+    return 0.0
+
+
+def score_poids_brut(p):
+    """Retourne le poids monté (utile pour z-score)."""
+    for key in ("poidsConditionMonte", "poids", "handicapPoids"):
+        v = p.get(key)
+        if v:
+            try:
+                return float(v)
+            except Exception:
+                pass
+    return None
+
+
+def score_corde(p):
+    """Corde : plus le numéro est bas, meilleur c'est (au plat)."""
+    c = p.get("corde")
+    if c is None:
+        return 0.0
+    try:
+        c = int(c)
+        return max(0.0, 10.0 - c)
+    except Exception:
+        return 0.0
+
+
+def score_experience(p):
+    """Nombre de courses courues (utile en obstacle)."""
+    n = p.get("nombreCourses")
+    if n is None:
+        return 0.0
+    try:
+        return min(float(n) / 20.0, 1.0) * 3.0
+    except Exception:
+        return 0.0
+
+
+def score_handicap_distance(p):
+    """Recul au trot (handicap de distance) — pénalité."""
+    h = p.get("handicapDistance")
+    if not h:
+        return 0.0
+    try:
+        return -min(float(h) / 25.0, 2.0)
+    except Exception:
+        return 0.0
+
+
+# ============================================================
+# Z-SCORE
+# ============================================================
+
 def zscore(values, v):
-    """Calcule le z-score de v par rapport à la liste values.
-    Retourne 0.0 si l'écart-type est nul ou s'il y a moins de 2 valeurs."""
     if len(values) < 2:
         return 0.0
     m = statistics.mean(values)
@@ -342,10 +419,12 @@ def zscore(values, v):
     return (v - m) / s
 
 
-def predire(participants):
-    # ------------------------------------------------------------
-    # ÉTAPE 1 : récupérer les valeurs brutes (comme avant)
-    # ------------------------------------------------------------
+# ============================================================
+# PRÉDIRE — adapté par discipline
+# ============================================================
+
+def predire(participants, discipline="AUTRE"):
+    # ---- ÉTAPE 1 : valeurs brutes ----
     raw = []
     for p in participants:
         if not isinstance(p, dict):
@@ -364,57 +443,80 @@ def predire(participants):
             "sc": score_cote(cote),
             "sg": score_gains(gains),
             "sr": score_risk(musique),
+            "sdef": score_deferrage(p),
+            "spoids": score_poids_brut(p),
+            "scorde": score_corde(p),
+            "sexp": score_experience(p),
+            "shand": score_handicap_distance(p),
         })
 
-    # ------------------------------------------------------------
-    # ÉTAPE 2 : calculer les z-scores (sauf si trop peu de partants)
-    # ------------------------------------------------------------
-    use_zscore = len(raw) >= MIN_PARTANTS_ZSCORE
+    use_z = len(raw) >= MIN_PARTANTS_ZSCORE
 
-    if use_zscore:
-        sf_all = [r["sf"] for r in raw]
-        sd_all = [r["sd"] for r in raw]
-        sc_all = [r["sc"] for r in raw]
-        sg_all = [r["sg"] for r in raw]
-        sr_all = [r["sr"] for r in raw]
-
+    # ---- ÉTAPE 2 : z-scores par feature ----
     scored = []
     for r in raw:
-        if use_zscore:
-            zf = zscore(sf_all, r["sf"])
-            zd = zscore(sd_all, r["sd"])
-            zc = zscore(sc_all, r["sc"])
-            zg = zscore(sg_all, r["sg"])
-            zr = zscore(sr_all, r["sr"])
-            # Nouveau forecast v5.2 : pondération des z-scores
-            forecast = zf * 0.20 + zd * 0.15 + zc * 0.35 + zg * 0.20 + zr * 0.10
+        if use_z:
+            # Features de base
+            zf = zscore([x["sf"] for x in raw], r["sf"])
+            zd = zscore([x["sd"] for x in raw], r["sd"])
+            zc = zscore([x["sc"] for x in raw], r["sc"])
+            zg = zscore([x["sg"] for x in raw], r["sg"])
+            zr = zscore([x["sr"] for x in raw], r["sr"])
+
+            # Features discipline-spécifiques (calculées seulement si applicables)
+            zdef = 0.0
+            zpoids = 0.0
+            zcorde = 0.0
+            zexp = 0.0
+            zhand = 0.0
+
+            if discipline == "TROT":
+                zdef = zscore([x["sdef"] for x in raw], r["sdef"])
+                zhand = zscore([x["shand"] for x in raw], r["shand"])
+
+            if discipline in ("PLAT", "OBSTACLE"):
+                poids_vals = [x["spoids"] for x in raw if x["spoids"] is not None]
+                if len(poids_vals) >= 2 and r["spoids"] is not None:
+                    # Pour le poids, MOINS = MIEUX → on inverse le signe
+                    zpoids = -zscore(poids_vals, r["spoids"])
+
+            if discipline == "PLAT":
+                zcorde = zscore([x["scorde"] for x in raw], r["scorde"])
+
+            if discipline == "OBSTACLE":
+                zexp = zscore([x["sexp"] for x in raw], r["sexp"])
+
+            # ---- Combinaison finale selon discipline ----
+            if discipline == "TROT":
+                forecast = (zf * 0.15 + zd * 0.20 + zc * 0.30
+                            + zg * 0.15 + zr * 0.15 + zdef * 0.05 + zhand * 0.05)
+            elif discipline == "PLAT":
+                forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
+                            + zg * 0.15 + zpoids * 0.10 + zcorde * 0.05)
+            elif discipline == "OBSTACLE":
+                forecast = (zf * 0.20 + zd * 0.15 + zc * 0.30
+                            + zg * 0.15 + zpoids * 0.10 + zexp * 0.10)
+            else:
+                # Fallback : config v5.2
+                forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
+                            + zg * 0.20 + zr * 0.10)
         else:
-            # Fallback : ancien calcul absolu pour les courses à < 5 partants
-            zf = zd = zc = zg = zr = 0.0
+            # Moins de 5 partants : on garde les scores absolus
             forecast = (r["sf"] * 0.15 + r["sd"] * 0.15 + r["sc"] * 0.45
                         + r["sg"] * 0.15 + r["sr"] * 0.10)
 
         scored.append({
             "num": r["num"],
-            # Les agents individuels gardent leurs scores absolus
             "form": r["sf"],
             "driver": r["sd"],
             "market": r["sc"],
             "class": r["sg"],
             "risk": r["sr"],
-            # Z-scores stockés (utile pour debug / affichage)
-            "z_form": round(zf, 3),
-            "z_driver": round(zd, 3),
-            "z_market": round(zc, 3),
-            "z_class": round(zg, 3),
-            "z_risk": round(zr, 3),
-            # Score de synthèse utilisé par ForecastAgent
+            "deferrage": r["sdef"],
             "forecast": forecast,
         })
 
-    # ------------------------------------------------------------
-    # ÉTAPE 3 : construire les prédictions (inchangé)
-    # ------------------------------------------------------------
+    # ---- ÉTAPE 3 : prédictions par agent ----
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
@@ -425,10 +527,10 @@ def predire(participants):
     return preds
 
 
-def evaluer(participants, arrivee, hippodrome):
+def evaluer(participants, arrivee, hippodrome, discipline="AUTRE"):
     if not participants or not arrivee:
         return {}
-    preds = predire(participants)
+    preds = predire(participants, discipline=discipline)
     v1 = arrivee[0]
     v5 = set(arrivee[:5])
     if DB_OK:
@@ -611,12 +713,17 @@ async def agent_collect(offset: int = 0):
             arr = await get_arrivee(parts)
             if not arr:
                 continue
-            ev = evaluer(parts, arr, hippo)
+            # DÉTECTION DISCIPLINE
+            discipline_raw = c.get("discipline") or ""
+            discipline = detect_discipline(discipline_raw)
+            ev = evaluer(parts, arr, hippo, discipline=discipline)
             if ev:
                 eval_ += 1
             item = {"key": key, "date": ds, "reunion": nr, "num_course": nc,
                     "course": c.get("libelle", "Course"), "hippodrome": hippo,
-                    "discipline": c.get("discipline", "?"), "distance": c.get("distance", 0),
+                    "discipline": discipline_raw,
+                    "discipline_norm": discipline,
+                    "distance": c.get("distance", 0),
                     "partants": c.get("nombreDeclaresPartants", 0),
                     "arrivee": arr[:5], "evaluations": ev}
             COLLECTED.append(item)
@@ -641,11 +748,9 @@ async def proxy_pmu(path: str):
 
 
 # ============================================================
-# NOUVELLE ROUTE POUR CRON-JOB.ORG (réponse immédiate)
+# ROUTE CRON
 # ============================================================
 @app.get("/api/cron/run")
 async def cron_run(background_tasks: BackgroundTasks):
-    """Route légère pour cron-job.org : lance la collecte en arrière-plan
-    et répond immédiatement. Évite les timeouts et les réponses trop grosses."""
     background_tasks.add_task(agent_collect, offset=0)
     return {"ok": True, "queued": True}
