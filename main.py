@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="5.3.0")
+app = FastAPI(title="Hippique AI", version="5.4.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -282,7 +282,7 @@ async def admin_purge(confirm: str = ""):
 
 
 # ============================================================
-# SCORES DE BASE (identiques pour toutes disciplines)
+# SCORES DE BASE
 # ============================================================
 
 def parse_musique(s):
@@ -331,11 +331,10 @@ def score_risk(musique):
 
 
 # ============================================================
-# SCORES SPÉCIFIQUES PAR DISCIPLINE
+# v5.4 : SCORES SPÉCIFIQUES PAR DISCIPLINE (Phase 1)
 # ============================================================
 
 def detect_discipline(discipline_str):
-    """Détecte la discipline d'une course à partir du libellé PMU."""
     d = (discipline_str or "").upper()
     if "TROT" in d:
         return "TROT"
@@ -346,21 +345,43 @@ def detect_discipline(discipline_str):
     return "AUTRE"
 
 
+def normalize_terrain(terrain_str):
+    """Normalise l'état du terrain PMU."""
+    t = (terrain_str or "").upper()
+    if any(x in t for x in ("TRES LOURD", "TRÈS LOURD")):
+        return "TRES_LOURD"
+    if "LOURD" in t:
+        return "LOURD"
+    if any(x in t for x in ("SOUPLE", "COLLANT")):
+        return "SOUPLE"
+    if "BON" in t:
+        return "BON"
+    if "PSF" in t or "FIBRE" in t:
+        return "PSF"
+    return "INCONNU"
+
+
+# ---------- 1. DÉFERRAGE (TROT) ----------
+
 def score_deferrage(p):
-    """Bonus si le cheval est déferré (trot uniquement)."""
+    """Score de déferrage (trot uniquement). D4 = top."""
     d = (p.get("deferrage") or "").upper()
     if "QUATRE" in d or "D4" in d:
-        return 2.0
-    if "ANTERIEURS" in d or "POSTERIEURS" in d:
-        return 1.0
+        return 3.0
+    if "ANTERIEURS" in d or "DA" in d:
+        return 1.5
+    if "POSTERIEURS" in d or "DP" in d:
+        return 1.5
     return 0.0
 
 
-def score_poids_brut(p):
-    """Retourne le poids monté (utile pour z-score)."""
+# ---------- 2. POIDS RELATIF (PLAT, OBSTACLE) ----------
+
+def poids_brut(p):
+    """Retourne le poids monté, ou None."""
     for key in ("poidsConditionMonte", "poids", "handicapPoids"):
         v = p.get(key)
-        if v:
+        if v is not None:
             try:
                 return float(v)
             except Exception:
@@ -368,38 +389,69 @@ def score_poids_brut(p):
     return None
 
 
-def score_corde(p):
-    """Corde : plus le numéro est bas, meilleur c'est (au plat)."""
+# ---------- 3. CORDE (PLAT) ----------
+
+def corde_brute(p):
     c = p.get("corde")
     if c is None:
-        return 0.0
+        return None
     try:
-        c = int(c)
-        return max(0.0, 10.0 - c)
+        return int(c)
     except Exception:
-        return 0.0
+        return None
 
 
-def score_experience(p):
-    """Nombre de courses courues (utile en obstacle)."""
-    n = p.get("nombreCourses")
-    if n is None:
-        return 0.0
-    try:
-        return min(float(n) / 20.0, 1.0) * 3.0
-    except Exception:
-        return 0.0
+def hippodrome_a_virages(hippo):
+    """Détection simple : hippodromes connus pour leurs virages serrés (corde importante)."""
+    h = (hippo or "").upper()
+    # Hippodromes de plat classiques avec corde importante
+    return any(x in h for x in (
+        "VINCENNES", "LONGCHAMP", "CHANTILLY", "DEAUVILLE",
+        "SAINT-CLOUD", "CAGNES", "MARSEILLE", "TOULOUSE",
+        "BORDEAUX", "LYON", "NANTES", "ANGERS", "CAEN",
+    ))
 
 
-def score_handicap_distance(p):
-    """Recul au trot (handicap de distance) — pénalité."""
-    h = p.get("handicapDistance")
-    if not h:
+# ---------- 4. TERRAIN (PLAT, OBSTACLE) ----------
+
+def bonus_terrain(terrain_norm, discipline):
+    """Bonus selon l'état du terrain.
+    Terrain lourd = avantage aux chevaux endurants → on pénalise légèrement
+    tous les chevaux mais on donne un bonus aux chevaux avec 'poids léger'."""
+    # Non utilisé seul, sert d'info dans le z-score global
+    if terrain_norm in ("LOURD", "TRES_LOURD"):
+        return 1.0  # malus global (course difficile)
+    if terrain_norm in ("BON", "PSF"):
         return 0.0
-    try:
-        return -min(float(h) / 25.0, 2.0)
-    except Exception:
+    return 0.5
+
+
+# ---------- 5. EXPÉRIENCE OBSTACLE (h/s/c dans musique) ----------
+
+def score_experience_obstacle(musique, discipline):
+    """Compte les courses d'obstacle dans la musique :
+       h = haies, s = steeple, c = cross, t = tombé, a = arrêté."""
+    if discipline != "OBSTACLE":
         return 0.0
+    count_h = sum(1 for m in musique if "h" in str(m).lower() and not str(m).lower().startswith("d"))
+    count_s = sum(1 for m in musique if "s" in str(m).lower())
+    count_c = sum(1 for m in musique if "c" in str(m).lower())
+    total = count_h + count_s * 1.5 + count_c * 2.0
+    return min(total, 6.0)  # plafonné à 6
+
+
+def score_incidents_obstacle(musique, discipline):
+    """Pénalité pour chutes (T) et arrêts (A) récents en obstacle."""
+    if discipline != "OBSTACLE":
+        return 0.0
+    incidents = 0
+    for m in musique[:5]:
+        mm = str(m).lower()
+        if mm.startswith("t"):  # tombé
+            incidents += 1.5
+        elif mm.startswith("a"):  # arrêté
+            incidents += 1.0
+    return -incidents
 
 
 # ============================================================
@@ -420,10 +472,10 @@ def zscore(values, v):
 
 
 # ============================================================
-# PRÉDIRE — adapté par discipline
+# PRÉDIRE — v5.4
 # ============================================================
 
-def predire(participants, discipline="AUTRE"):
+def predire(participants, discipline="AUTRE", terrain="INCONNU", hippodrome="", type_depart=""):
     # ---- ÉTAPE 1 : valeurs brutes ----
     raw = []
     for p in participants:
@@ -436,6 +488,7 @@ def predire(participants, discipline="AUTRE"):
         driver = p.get("driver") or p.get("jockey") or ""
         cote = (p.get("dernierRapportDirect") or {}).get("rapport")
         gains = (p.get("gainsParticipant") or {}).get("gainsCarriere", 0)
+
         raw.append({
             "num": num,
             "sf": score_musique(musique),
@@ -443,16 +496,23 @@ def predire(participants, discipline="AUTRE"):
             "sc": score_cote(cote),
             "sg": score_gains(gains),
             "sr": score_risk(musique),
+            # --- v5.4 features spécifiques ---
             "sdef": score_deferrage(p),
-            "spoids": score_poids_brut(p),
-            "scorde": score_corde(p),
-            "sexp": score_experience(p),
-            "shand": score_handicap_distance(p),
+            "spoids": poids_brut(p),
+            "scorde": corde_brute(p),
+            "sobst": score_experience_obstacle(musique, discipline),
+            "sincid": score_incidents_obstacle(musique, discipline),
         })
 
     use_z = len(raw) >= MIN_PARTANTS_ZSCORE
 
-    # ---- ÉTAPE 2 : z-scores par feature ----
+    # Pré-calcul des poids relatifs (PLAT, OBSTACLE)
+    poids_vals = [r["spoids"] for r in raw if r["spoids"] is not None]
+    poids_moyen = statistics.mean(poids_vals) if len(poids_vals) >= 2 else None
+
+    # Pré-calcul des cordes (PLAT uniquement si hippodrome avec virages)
+    applique_corde = (discipline == "PLAT") and hippodrome_a_virages(hippodrome)
+
     scored = []
     for r in raw:
         if use_z:
@@ -463,45 +523,52 @@ def predire(participants, discipline="AUTRE"):
             zg = zscore([x["sg"] for x in raw], r["sg"])
             zr = zscore([x["sr"] for x in raw], r["sr"])
 
-            # Features discipline-spécifiques (calculées seulement si applicables)
+            # --- v5.4 features spécifiques ---
             zdef = 0.0
             zpoids = 0.0
             zcorde = 0.0
-            zexp = 0.0
-            zhand = 0.0
+            zobst = 0.0
+            zincid = 0.0
 
+            # TROT : déferrage
             if discipline == "TROT":
                 zdef = zscore([x["sdef"] for x in raw], r["sdef"])
-                zhand = zscore([x["shand"] for x in raw], r["shand"])
 
-            if discipline in ("PLAT", "OBSTACLE"):
-                poids_vals = [x["spoids"] for x in raw if x["spoids"] is not None]
-                if len(poids_vals) >= 2 and r["spoids"] is not None:
-                    # Pour le poids, MOINS = MIEUX → on inverse le signe
-                    zpoids = -zscore(poids_vals, r["spoids"])
+            # PLAT / OBSTACLE : poids relatif (moins = mieux)
+            if discipline in ("PLAT", "OBSTACLE") and poids_moyen is not None and r["spoids"] is not None:
+                ecart = r["spoids"] - poids_moyen
+                # écart-type des poids
+                if len(poids_vals) >= 2:
+                    sp = statistics.pstdev(poids_vals) or 1.0
+                    zpoids = -(ecart / sp)  # moins = mieux
 
-            if discipline == "PLAT":
-                zcorde = zscore([x["scorde"] for x in raw], r["scorde"])
+            # PLAT : corde (uniquement sur hippodromes à virages)
+            if applique_corde and r["scorde"] is not None:
+                cordes_valides = [x["scorde"] for x in raw if x["scorde"] is not None]
+                if len(cordes_valides) >= 2:
+                    # moins = mieux (corde intérieure avantagée)
+                    zcorde = -zscore(cordes_valides, r["scorde"])
 
+            # OBSTACLE : expérience + incidents
             if discipline == "OBSTACLE":
-                zexp = zscore([x["sexp"] for x in raw], r["sexp"])
+                zobst = zscore([x["sobst"] for x in raw], r["sobst"])
+                zincid = zscore([x["sincid"] for x in raw], r["sincid"])
 
-            # ---- Combinaison finale selon discipline ----
+            # ---- Combinaison finale par discipline (v5.4) ----
             if discipline == "TROT":
                 forecast = (zf * 0.15 + zd * 0.20 + zc * 0.30
-                            + zg * 0.15 + zr * 0.15 + zdef * 0.05 + zhand * 0.05)
+                            + zg * 0.15 + zr * 0.10 + zdef * 0.10)
             elif discipline == "PLAT":
-                forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
-                            + zg * 0.15 + zpoids * 0.10 + zcorde * 0.05)
-            elif discipline == "OBSTACLE":
                 forecast = (zf * 0.20 + zd * 0.15 + zc * 0.30
-                            + zg * 0.15 + zpoids * 0.10 + zexp * 0.10)
+                            + zg * 0.15 + zpoids * 0.10 + zcorde * 0.10)
+            elif discipline == "OBSTACLE":
+                forecast = (zf * 0.15 + zd * 0.15 + zc * 0.25
+                            + zg * 0.10 + zobst * 0.20 + zincid * 0.15)
             else:
-                # Fallback : config v5.2
                 forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
                             + zg * 0.20 + zr * 0.10)
         else:
-            # Moins de 5 partants : on garde les scores absolus
+            # Moins de 5 partants : fallback scores absolus
             forecast = (r["sf"] * 0.15 + r["sd"] * 0.15 + r["sc"] * 0.45
                         + r["sg"] * 0.15 + r["sr"] * 0.10)
 
@@ -513,6 +580,7 @@ def predire(participants, discipline="AUTRE"):
             "class": r["sg"],
             "risk": r["sr"],
             "deferrage": r["sdef"],
+            "obstacle_exp": r["sobst"],
             "forecast": forecast,
         })
 
@@ -527,10 +595,11 @@ def predire(participants, discipline="AUTRE"):
     return preds
 
 
-def evaluer(participants, arrivee, hippodrome, discipline="AUTRE"):
+def evaluer(participants, arrivee, hippodrome, discipline="AUTRE", terrain="INCONNU", type_depart=""):
     if not participants or not arrivee:
         return {}
-    preds = predire(participants, discipline=discipline)
+    preds = predire(participants, discipline=discipline,
+                    terrain=terrain, hippodrome=hippodrome, type_depart=type_depart)
     v1 = arrivee[0]
     v5 = set(arrivee[:5])
     if DB_OK:
@@ -713,16 +782,21 @@ async def agent_collect(offset: int = 0):
             arr = await get_arrivee(parts)
             if not arr:
                 continue
-            # DÉTECTION DISCIPLINE
+            # DÉTECTION DISCIPLINE + TERRAIN
             discipline_raw = c.get("discipline") or ""
             discipline = detect_discipline(discipline_raw)
-            ev = evaluer(parts, arr, hippo, discipline=discipline)
+            terrain_raw = c.get("terrain") or c.get("conditionPiste") or ""
+            terrain = normalize_terrain(terrain_raw)
+            type_depart = c.get("depart") or ""
+            ev = evaluer(parts, arr, hippo, discipline=discipline,
+                         terrain=terrain, type_depart=type_depart)
             if ev:
                 eval_ += 1
             item = {"key": key, "date": ds, "reunion": nr, "num_course": nc,
                     "course": c.get("libelle", "Course"), "hippodrome": hippo,
                     "discipline": discipline_raw,
                     "discipline_norm": discipline,
+                    "terrain": terrain,
                     "distance": c.get("distance", 0),
                     "partants": c.get("nombreDeclaresPartants", 0),
                     "arrivee": arr[:5], "evaluations": ev}
@@ -747,9 +821,6 @@ async def proxy_pmu(path: str):
     return {"error": "PMU indisponible"}
 
 
-# ============================================================
-# ROUTE CRON
-# ============================================================
 @app.get("/api/cron/run")
 async def cron_run(background_tasks: BackgroundTasks):
     background_tasks.add_task(agent_collect, offset=0)
