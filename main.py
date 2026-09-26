@@ -27,7 +27,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="4.1.0")
+app = FastAPI(title="Hippique AI", version="5.0.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -104,23 +104,11 @@ async def health():
     }
 
 
-@app.get("/api/db-test")
-async def db_test():
-    r = {"DB_OK": DB_OK, "has_url": False, "has_psycopg": False, "connect_ok": False, "error": None}
-    url = os.environ.get("DATABASE_URL", "")
-    r["has_url"] = bool(url)
-    r["url_len"] = len(url)
-    try:
-        import psycopg
-        r["has_psycopg"] = True
-        if url:
-            with psycopg.connect(url, connect_timeout=10) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT 1")
-                    r["connect_ok"] = True
-    except Exception as e:
-        r["error"] = str(e)
-    return r
+@app.get("/api/drivers/top")
+async def drivers_top():
+    if not DB_OK:
+        return {"drivers": []}
+    return {"drivers": db.get_all_driver_stats()}
 
 
 @app.post("/api/chat")
@@ -248,13 +236,12 @@ def score_musique(musique):
 
 
 def score_driver(driver):
-    tops = {"E. Raffin": 2.0, "M. Abrivard": 1.8, "F. Nivard": 2.0, "D. Thomain": 1.6,
-            "B. Rochard": 1.5, "A. Barrier": 1.5, "P.ph. Ploquin": 1.4, "N. Bazire": 1.8,
-            "J.m. Bazire": 1.8, "Y. Lebourgeois": 1.5, "C. Demuro": 2.0, "M. Guyon": 1.9,
-            "C. Soumillon": 2.0, "S. Pasquier": 1.9}
-    for k, v in tops.items():
-        if driver and k.lower() in driver.lower():
-            return v
+    # Score dynamique depuis la DB
+    if DB_OK and driver:
+        dyn = db.get_driver_score(driver)
+        if dyn is not None:
+            return dyn
+    # Fallback : score par défaut
     return 0.5
 
 
@@ -312,12 +299,34 @@ def predire(participants):
     return preds
 
 
-def evaluer(participants, arrivee):
+def evaluer(participants, arrivee, hippodrome):
     if not participants or not arrivee:
         return {}
     preds = predire(participants)
     v1 = arrivee[0]
     v5 = set(arrivee[:5])
+    # Mettre à jour les stats drivers
+    if DB_OK:
+        for p in participants:
+            if not isinstance(p, dict):
+                continue
+            num = p.get("numPmu")
+            driver = p.get("driver") or p.get("jockey") or ""
+            if not num or not driver:
+                continue
+            try:
+                num_int = int(num)
+            except Exception:
+                continue
+            if num_int in v5:
+                if num_int == v1:
+                    db.update_driver(driver, 1)
+                else:
+                    db.update_driver(driver, 2)
+            else:
+                db.update_driver(driver, None)
+        db.update_hippodrome(hippodrome)
+    # Évaluation classique
     cotes = {}
     for p in participants:
         if not isinstance(p, dict):
@@ -442,30 +451,9 @@ async def get_arrivee(parts):
     return [n for _, n in cls[:5]]
 
 
-# ============================================================
-# ROUTE RAPIDE : pour le site (lecture seule, sans PMU)
-# ============================================================
 @app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
-    ds = date_str(offset)
-    results = [x for x in COLLECTED if x.get("date") == ds]
-    return {
-        "ok": True,
-        "nouvelles": 0,
-        "evaluees": 0,
-        "total": len(results),
-        "total_evaluees": STATS["evaluated"],
-        "message": "Lecture seule. La collecte est geree par /api/collect (cron)."
-    }
-
-
-# ============================================================
-# ROUTE LOURDE : pour le cron uniquement (appel PMU + DB)
-# ============================================================
-@app.get("/api/collect")
-@app.post("/api/collect")
-async def collect_data(offset: int = 0):
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
     if not prog:
@@ -499,7 +487,7 @@ async def collect_data(offset: int = 0):
             arr = await get_arrivee(parts)
             if not arr:
                 continue
-            ev = evaluer(parts, arr)
+            ev = evaluer(parts, arr, hippo)
             if ev:
                 eval_ += 1
             item = {"key": key, "date": ds, "reunion": nr, "num_course": nc,
