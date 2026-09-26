@@ -1034,6 +1034,214 @@ async def proxy_pmu(path: str):
     return {"error": "PMU indisponible"}
 
 
+# ============================================================
+# v5.8 : ROUTES COURSES (arrivée + partants)
+# ============================================================
+
+@app.get("/api/courses/passees")
+async def courses_passees(limit: int = 30):
+    """Liste des courses terminées (avec arrivée)."""
+    courses = [c for c in COLLECTED if c.get("arrivee")]
+    courses = courses[-limit:]
+    return {"count": len(courses), "courses": courses}
+
+
+@app.get("/api/courses/a_venir")
+async def courses_a_venir(offset: int = 0):
+    """Liste des courses du jour non terminées."""
+    ds = date_str(offset)
+    prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+    if not prog:
+        return {"ok": False, "courses": [], "error": "PMU indisponible"}
+    reunions = (prog.get("programme") or {}).get("reunions") or []
+    courses = []
+    for r in reunions:
+        if not isinstance(r, dict):
+            continue
+        nr = r.get("numOfficiel")
+        hippo_obj = r.get("hippodrome") or {}
+        hippo = hippo_obj.get("libelleLong", "?")
+        if not hippodrome_ok(hippo_obj, hippo):
+            continue
+        for c in (r.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
+            st = (c.get("statut") or "").upper()
+            if "FIN" in st or "ARRIVE" in st:
+                continue
+            nc = c.get("numOrdre")
+            key = ds + "-R" + str(nr) + "C" + str(nc)
+            heure = c.get("heureDepart") or ""
+            try:
+                h = datetime.fromtimestamp(int(heure) / 1000).strftime("%H:%M")
+            except Exception:
+                h = str(heure)[:5] if heure else "?"
+            courses.append({
+                "key": key,
+                "reunion": nr,
+                "num_course": nc,
+                "hippodrome": hippo,
+                "course": c.get("libelle", "Course"),
+                "discipline": c.get("discipline", "?"),
+                "distance": c.get("distance", 0),
+                "partants": c.get("nombreDeclaresPartants", 0),
+                "heure": h,
+                "statut": st,
+            })
+    return {"ok": True, "count": len(courses), "courses": courses, "date": ds}
+
+
+@app.get("/api/course/{key}")
+async def course_detail(key: str):
+    """Détail d'une course : infos + partants (avec pronostic si dispo)."""
+    # Vérifier si c'est une course déjà collectée
+    for c in COLLECTED:
+        if c.get("key") == key:
+            return {"ok": True, "source": "collected", "course": c}
+
+    # Sinon, c'est une course à venir : récupérer les partants via PMU
+    # key format : "26092026-R1C3"
+    parts = key.split("-")
+    if len(parts) != 2 or not parts[0] or not parts[1].startswith("R"):
+        return {"ok": False, "error": "Clé invalide"}
+
+    ds = parts[0]
+    rc = parts[1][1:]  # "1C3"
+    if "C" not in rc:
+        return {"ok": False, "error": "Clé invalide"}
+    nr, nc = rc.split("C", 1)
+    try:
+        nr = int(nr)
+        nc = int(nc)
+    except Exception:
+        return {"ok": False, "error": "Clé invalide"}
+
+    prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+    if not prog:
+        return {"ok": False, "error": "PMU indisponible"}
+
+    course_info = None
+    reunion_info = None
+    for r in ((prog.get("programme") or {}).get("reunions") or []):
+        if not isinstance(r, dict):
+            continue
+        if r.get("numOfficiel") == nr:
+            reunion_info = r
+            for c in (r.get("courses") or []):
+                if isinstance(c, dict) and c.get("numOrdre") == nc:
+                    course_info = c
+                    break
+            break
+
+    if not course_info:
+        return {"ok": False, "error": "Course introuvable"}
+
+    parts_data = await get_participants(ds, nr, nc)
+    if not parts_data:
+        return {"ok": False, "error": "Partants indisponibles"}
+
+    # Construire la liste des partants
+    liste = []
+    for p in parts_data:
+        if not isinstance(p, dict):
+            continue
+        num = p.get("numPmu")
+        if not num:
+            continue
+        nom = p.get("nom") or "?"
+        driver = p.get("driver") or p.get("jockey") or "?"
+        entraineur = p.get("entraineur") or "?"
+        musique = p.get("musique") or ""
+        cote = (p.get("dernierRapportDirect") or {}).get("rapport")
+        gains = (p.get("gainsParticipant") or {}).get("gainsCarriere", 0)
+        deferrage = p.get("deferrage") or ""
+        poids = p.get("poidsConditionMonte") or p.get("poids")
+        corde = p.get("corde")
+        sexe = p.get("sexe") or "?"
+        age = p.get("age")
+
+        liste.append({
+            "num": num,
+            "nom": nom,
+            "driver": driver,
+            "entraineur": entraineur,
+            "musique": musique,
+            "cote": cote,
+            "gains": gains,
+            "deferrage": deferrage,
+            "poids": poids,
+            "corde": corde,
+            "sexe": sexe,
+            "age": age,
+        })
+
+    # Calculer les pronostics si possible
+    discipline_raw = course_info.get("discipline") or ""
+    discipline = detect_discipline(discipline_raw)
+    terrain_raw = course_info.get("terrain") or course_info.get("conditionPiste") or ""
+    terrain = normalize_terrain(terrain_raw)
+    type_depart = course_info.get("depart") or ""
+    distance_course = course_info.get("distance") or None
+    surface_raw = course_info.get("surface") or course_info.get("piste") or ""
+
+    try:
+        preds = predire(parts_data, discipline=discipline, terrain=terrain,
+                        hippodrome=(reunion_info.get("hippodrome") or {}).get("libelleLong", "") if reunion_info else "",
+                        type_depart=type_depart, distance_course=distance_course, surface=surface_raw)
+    except Exception:
+        preds = {}
+
+    return {
+        "ok": True,
+        "source": "pmu",
+        "course": {
+            "key": key,
+            "date": ds,
+            "reunion": nr,
+            "num_course": nc,
+            "hippodrome": (reunion_info.get("hippodrome") or {}).get("libelleLong", "?") if reunion_info else "?",
+            "course": course_info.get("libelle", "Course"),
+            "discipline": discipline_raw,
+            "discipline_norm": discipline,
+            "terrain": terrain,
+            "distance": distance_course,
+            "partants": course_info.get("nombreDeclaresPartants", 0),
+            "statut": (course_info.get("statut") or "").upper(),
+        },
+        "partants": liste,
+        "pronostics": preds,
+    }
+
+
+@app.get("/api/quinte/jour")
+async def quinte_du_jour(offset: int = 0):
+    """Retourne le Quinté+ du jour avec son arrivée si terminé, sinon ses partants."""
+    ds = date_str(offset)
+    prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+    if not prog:
+        return {"ok": False, "error": "PMU indisponible"}
+
+    for r in ((prog.get("programme") or {}).get("reunions") or []):
+        if not isinstance(r, dict):
+            continue
+        for c in (r.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
+            if not detecter_quinte(c, r):
+                continue
+            nr = r.get("numOfficiel")
+            nc = c.get("numOrdre")
+            key = ds + "-R" + str(nr) + "C" + str(nc)
+            # Chercher dans COLLECTED
+            for collected in COLLECTED:
+                if collected.get("key") == key:
+                    return {"ok": True, "statut": "termine", "course": collected}
+
+            # Sinon, récupérer les partants
+            details = await course_detail(key)
+            return {"ok": True, "statut": "a_venir", **details}
+
+    return {"ok": False, "error": "Aucun Quinté+ trouvé ce jour"}
 @app.get("/api/cron/run")
 async def cron_run(background_tasks: BackgroundTasks):
     background_tasks.add_task(agent_collect, offset=0)
