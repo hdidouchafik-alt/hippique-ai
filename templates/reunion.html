@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ reunion.hippodrome }} - Hippique AI</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+               background: #0f172a; color: #e2e8f0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #38bdf8; margin-bottom: 8px; font-size: 28px; }
+        .subtitle { color: #94a3b8; margin-bottom: 30px; font-size: 14px; }
+        .nav { margin-bottom: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav a { color: #38bdf8; text-decoration: none; padding: 8px 16px;
+                 border: 1px solid #334155; border-radius: 6px; font-size: 14px; }
+        .nav a:hover { background: #1e293b; border-color: #38bdf8; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+        .course-card { background: #1e293b; border-radius: 10px; padding: 18px;
+                       border: 1px solid #334155; text-decoration: none; color: inherit;
+                       display: block; transition: all 0.2s; }
+        .course-card:hover { border-color: #38bdf8; transform: translateY(-2px); }
+        .course-card.quinte { border-color: #fbbf24; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2); }
+        .course-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px; }
+        .course-num { background: #0f172a; color: #38bdf8; font-weight: 700;
+                      padding: 4px 10px; border-radius: 6px; font-size: 14px;
+                      border: 1px solid #334155; }
+        .course-title { font-weight: 600; color: #e2e8f0; font-size: 14px; margin-bottom: 8px; }
+        .course-meta { display: flex; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #94a3b8; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 4px;
+                 font-size: 11px; font-weight: 600; }
+        .badge-quinte { background: #78350f; color: #fcd34d; }
+        .badge-termine { background: #166534; color: #86efac; }
+        .badge-avenir { background: #1e3a8a; color: #93c5fd; }
+        .arrivee { display: flex; gap: 6px; margin-top: 12px; padding-top: 12px;
+                   border-top: 1px solid #334155; flex-wrap: wrap; align-items: center; }
+        .arrivee-label { color: #94a3b8; font-size: 11px; text-transform: uppercase;
+                         margin-right: 8px; }
+        .num-box { background: #0f172a; color: #38bdf8; font-weight: 700;
+                   width: 30px; height: 30px; border-radius: 6px;
+                   display: flex; align-items: center; justify-content: center;
+                   font-size: 13px; border: 1px solid #334155; }
+        .num-box.winner { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
+        .empty { text-align: center; padding: 40px; color: #64748b; font-style: italic; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #38bdf8;
+                     text-decoration: none; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/reunions" class="back-link">⬅️ Retour aux réunions</a>
+        <h1>R{{ reunion.num }} — {{ reunion.hippodrome }}</h1>
+        <p class="subtitle">{{ reunion.pays }} · {{ reunion.courses|length }} courses</p>
+
+        <div class="nav">
+            <a href="/">🏠 Accueil</a>
+            <a href="/reunions">📅 Réunions</a>
+            <a href="/pronostics">📊 Pronostics</a>
+            <a href="/paris">💰 Paris</a>
+            <a href="/drivers">🏇 Drivers</a>
+            <a href="/learning">🎓 Learning</a>
+        </div>
+
+        {% if reunion.courses %}
+        <div class="grid">
+            {% for c in reunion.courses %}
+            <a href="/course_detail/{{ c.key }}" class="course-card {% if c.est_quinte %}quinte{% endif %}">
+                <div class="course-header">
+                    <div class="course-num">C{{ c.num_course }}</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                        {% if c.est_quinte %}<span class="badge badge-quinte">🏆 QUINTÉ+</span>{% endif %}
+                        {% if c.statut == 'termine' %}<span class="badge badge-termine">TERMINÉ</span>
+                        {% else %}<span class="badge badge-avenir">{{ c.heure or 'À VENIR' }}</span>{% endif %}
+                    </div>
+                </div>
+                <div class="course-title">{{ c.course }}</div>
+                <div class="course-meta">
+                    <span>{{ c.discipline }}</span>
+                    <span>{{ c.distance }}m</span>
+                    <span>{{ c.partants }} partants</span>
+                </div>
+                {% if c.arrivee %}
+                <div class="arrivee">
+                    <span class="arrivee-label">Arrivée</span>
+                    {% for num in c.arrivee %}
+                    <div class="num-box {% if loop.index0 == 0 %}winner{% endif %}">{{ num }}</div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">Aucune course pour cette réunion.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
