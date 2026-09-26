@@ -323,7 +323,7 @@ async def course_detail_page(request: Request, key: str):
         })
     except Exception as e:
         return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
-        @app.get("/drivers", response_class=HTMLResponse)
+@app.get("/drivers", response_class=HTMLResponse)
 async def drivers_page(request: Request):
     return templates.TemplateResponse(request, "drivers.html", {"version": app.version})
 @app.get("/paris", response_class=HTMLResponse)
