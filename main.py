@@ -39,9 +39,6 @@ HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 MIN_PARTANTS_ZSCORE = 5
 
-# ============================================================
-# v5.7 : MISES OFFICIELLES PMU
-# ============================================================
 MISES_PMU = {
     "simple_gagnant": 2.0,
     "simple_place": 2.0,
@@ -71,7 +68,6 @@ STATS = {
     }
 }
 
-# Statistiques cumulées par type de pari (pour la page /paris)
 PARIS_STATS = {
     "simple_gagnant": {"gagne": 0, "total": 0, "mise": 0.0, "gain": 0.0},
     "simple_place": {"gagne": 0, "total": 0, "mise": 0.0, "gain": 0.0},
@@ -131,16 +127,13 @@ async def learning_page(request: Request):
 
 @app.get("/paris", response_class=HTMLResponse)
 async def paris_page(request: Request):
-    """Nouvelle page v5.7 : stats des paris PMU."""
     try:
         return templates.TemplateResponse(request, "paris.html")
     except Exception:
-        # Fallback si le template n'existe pas encore
         return HTMLResponse(
             "<h1>Page /paris</h1>"
-            "<p>Template <code>templates/paris.html</code> manquant.</p>"
-            "<p>Les données sont disponibles ici : "
-            "<a href='/api/paris/stats'>/api/paris/stats</a></p>"
+            "<p>Template manquant.</p>"
+            "<p>Donnees : <a href='/api/paris/stats'>/api/paris/stats</a></p>"
         )
 
 
@@ -259,7 +252,7 @@ def compute_roi():
         roi[name]["mise"] = round(mise, 2)
         roi[name]["gain"] = round(gain, 2)
     return roi
-
+    
 
 @app.get("/api/learning/metrics")
 async def learning_metrics():
@@ -301,14 +294,13 @@ async def learning_metrics():
         "top1_hit_rate": round(avg1, 3),
         "top5_hit_rate": round(avg5, 3),
         "agents": agents_scores,
-        "paris": PARIS_STATS,  # v5.7
+        "paris": PARIS_STATS,
         "database": DB_OK,
     }
 
 
 @app.get("/api/paris/stats")
 async def paris_stats():
-    """v5.7 : stats dédiées aux paris PMU."""
     stats = {}
     for pari, s in PARIS_STATS.items():
         total = s.get("total", 0)
@@ -325,8 +317,6 @@ async def paris_stats():
             bloc["gain"] = round(gain, 2)
             bloc["roi_euros"] = round(gain - mise, 2)
             bloc["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
-        if pari.startswith("quinte_"):
-            bloc["mise_unitaire"] = MISES_PMU.get(pari, 2.0)
         stats[pari] = bloc
     return {
         "stats": stats,
@@ -364,10 +354,6 @@ async def admin_purge(confirm: str = ""):
         db.reset_all()
     return {"ok": True, "message": "Base purge"}
 
-
-# ============================================================
-# SCORES DE BASE
-# ============================================================
 
 def parse_musique(s):
     return [m.strip() for m in re.split(r"\s+", s or "") if m.strip()]
@@ -414,10 +400,6 @@ def score_risk(musique):
     return max(0, 2 - da * 0.5)
 
 
-# ============================================================
-# v5.6 : FEATURES SPÉCIFIQUES PAR DISCIPLINE
-# ============================================================
-
 def detect_discipline(discipline_str):
     d = (discipline_str or "").upper()
     if "TROT" in d:
@@ -431,7 +413,7 @@ def detect_discipline(discipline_str):
 
 def normalize_terrain(terrain_str):
     t = (terrain_str or "").upper()
-    if any(x in t for x in ("TRES LOURD", "TRÈS LOURD")):
+    if any(x in t for x in ("TRES LOURD", "TRES LOURD")):
         return "TRES_LOURD"
     if "LOURD" in t:
         return "LOURD"
@@ -596,39 +578,24 @@ def zscore(values, v):
     return (v - m) / s
 
 
-# ============================================================
-# v5.7 : DÉTECTION QUINTÉ+ + CALCUL ROI PMU
-# ============================================================
-
 def detecter_quinte(course, reunion):
-    """Détecte si une course est le Quinté+ du jour.
-    Pas de fallback : uniquement si le champ PMU l'indique.
-    Teste plusieurs champs dans l'ordre."""
     if not isinstance(course, dict):
         return False
-
-    # Champs possibles dans la course
     for key in ("categorieParticuliere", "paris", "typePari", "specialite",
                 "libelle", "libelleCourt", "conditions", "categorie"):
         val = str(course.get(key) or "").upper()
         if "QUINTE" in val or "Q5" in val or "Q+" in val:
             return True
-
-    # Champ spécifique possible : "quinte" = True/1
     if course.get("quinte"):
         return True
-
-    # Champ dans la réunion
     if isinstance(reunion, dict):
         for key in ("quinte", "quintePlus", "courseQuinte", "numeroQuinte"):
             if reunion.get(key):
                 return True
-
     return False
 
 
 def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
-    """Calcule le ROI PMU pour tous les paris."""
     resultats = {}
     if not arrivee:
         return resultats
@@ -644,8 +611,7 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
     pred_top4 = pred[:4] if len(pred) >= 4 else pred
     pred_top5 = pred[:5] if len(pred) >= 5 else pred
 
-    # Simple Gagnant
-    gagne = bool(pred([_top5) and pred_top5[0] == v1
+    gagne = bool(pred_top5) and pred_top5[0] == v1
     mise = MISES_PMU["simple_gagnant"]
     cote = cotes.get(v1, 0) if v1 else 0
     gain = mise * cote * 0.85 if gagne and cote > 0 else 0
@@ -655,7 +621,6 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
         "roi_euros": round(gain - mise, 2),
     }
 
-    # Simple Placé
     gagne = bool(pred_top5) and pred_top5[0] in v3
     mise = MISES_PMU["simple_place"]
     cote = cotes.get(pred_top5[0], 0) if pred_top5 else 0
@@ -666,26 +631,21 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
         "roi_euros": round(gain - mise, 2),
     }
 
-    # Couplé Gagnant
     gagne = len(set(pred_top2) & set(arrivee[:2])) == 2 if len(arrivee) >= 2 else False
     resultats["couple_gagnant"] = {"gagne": gagne}
 
-    # Couplé Placé
     gagne = len(set(pred_top2) & v3) == 2 if v3 else False
     resultats["couple_place"] = {"gagne": gagne}
 
-    # Trio
     gagne = set(pred_top3) == v3 if v3 else False
     resultats["trio"] = {"gagne": gagne}
 
-    # Quinté+
     if est_quinte and len(arrivee) >= 5:
         resultats["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5]}
         resultats["quinte_desordre"] = {"gagne": set(pred_top5) == v5}
         resultats["quinte_bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4}
         resultats["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3}
 
-    # Top 5 / Top 4
     resultats["top5"] = {"gagne": len(set(pred_top5) & v5) == 5 if v5 else False}
     resultats["top4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
 
@@ -693,7 +653,6 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
 
 
 def maj_paris_stats(roi_pmu):
-    """Met à jour les stats cumulées des paris."""
     for pari, data in roi_pmu.items():
         if pari not in PARIS_STATS:
             continue
@@ -703,11 +662,7 @@ def maj_paris_stats(roi_pmu):
         if "mise" in data:
             PARIS_STATS[pari]["mise"] = PARIS_STATS[pari].get("mise", 0.0) + data["mise"]
             PARIS_STATS[pari]["gain"] = PARIS_STATS[pari].get("gain", 0.0) + data.get("gain", 0)
-
-
-# ============================================================
-# PRÉDIRE — v5.7
-# ============================================================
+            
 
 def predire(participants, discipline="AUTRE", terrain="INCONNU",
             hippodrome="", type_depart="", distance_course=None, surface=""):
@@ -744,10 +699,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
         })
 
     use_z = len(raw) >= MIN_PARTANTS_ZSCORE
-
     poids_vals = [r["spoids"] for r in raw if r["spoids"] is not None]
     poids_moyen = statistics.mean(poids_vals) if len(poids_vals) >= 2 else None
-
     applique_corde = (discipline == "PLAT") and hippodrome_a_virages(hippodrome)
 
     scored = []
@@ -759,7 +712,12 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             zg = zscore([x["sg"] for x in raw], r["sg"])
             zr = zscore([x["sr"] for x in raw], r["sr"])
 
-            zdef = zpoids = zcorde = zobst = zincid = 0.0
+            zdef = 0.0
+            zpoids = 0.0
+            zcorde = 0.0
+            zobst = 0.0
+            zincid = 0.0
+
             if discipline == "TROT":
                 zdef = zscore([x["sdef"] for x in raw], r["sdef"])
             if discipline in ("PLAT", "OBSTACLE") and poids_moyen is not None and r["spoids"] is not None:
@@ -774,18 +732,22 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
                 zobst = zscore([x["sobst"] for x in raw], r["sobst"])
                 zincid = zscore([x["sincid"] for x in raw], r["sincid"])
 
-            zauto = zhand = zdist = zrec = 0.0
+            zauto = 0.0
+            zhand = 0.0
+            zdist = 0.0
+            zrec = 0.0
+
             if discipline == "TROT":
                 zauto = zscore([x["sauto"] for x in raw], r["sauto"])
-                zhand = zscorex["shand"] for x in raw], r["shand"])
+                zhand = zscore([x["shand"] for x in raw], r["shand"])
                 zrec = zscore([x["srec"] for x in raw], r["srec"])
             if discipline == "OBSTACLE":
                 zrec = zscore([x["srec"] for x in raw], r["srec"])
             if any(x["sdist"] != 0 for x in raw):
                 zdist = zscore([x["sdist"] for x in raw], r["sdist"])
 
-            zo = zhauteur = 0.0
             zo = zscore([x["soeil"] for x in raw], r["soeil"])
+            zhauteur = 0.0
             if discipline == "OBSTACLE":
                 zhauteur = zscore([x["shauteur"] for x in raw], r["shauteur"])
 
@@ -803,4 +765,276 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
                             + zpoids * 0.08 + zrec * 0.04 + zhauteur * 0.02)
             else:
                 forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
-                            + zg * 0
+                            + zg * 0.20 + zr * 0.10)
+        else:
+            forecast = (r["sf"] * 0.15 + r["sd"] * 0.15 + r["sc"] * 0.45
+                        + r["sg"] * 0.15 + r["sr"] * 0.10)
+
+        scored.append({
+            "num": r["num"],
+            "form": r["sf"],
+            "driver": r["sd"],
+            "market": r["sc"],
+            "class": r["sg"],
+            "risk": r["sr"],
+            "forecast": forecast,
+        })
+
+    preds = {k: [] for k in STATS["agents"].keys()}
+    for agent in preds:
+        key = agent.replace("Agent", "").lower()
+        if key == "forecast":
+            key = "forecast"
+        s = sorted(scored, key=lambda x: x.get(key, 0), reverse=True)
+        preds[agent] = [x["num"] for x in s[:5]]
+    return preds
+
+
+def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
+            terrain="INCONNU", type_depart="", distance_course=None,
+            surface="", est_quinte=False):
+    if not participants or not arrivee:
+        return {}
+    preds = predire(participants, discipline=discipline, terrain=terrain,
+                    hippodrome=hippodrome, type_depart=type_depart,
+                    distance_course=distance_course, surface=surface)
+
+    v1 = arrivee[0]
+    v5 = set(arrivee[:5])
+
+    if DB_OK:
+        for p in participants:
+            if not isinstance(p, dict):
+                continue
+            num = p.get("numPmu")
+            driver = p.get("driver") or p.get("jockey") or ""
+            if not num or not driver:
+                continue
+            try:
+                num_int = int(num)
+            except Exception:
+                continue
+            if num_int in v5:
+                if num_int == v1:
+                    db.update_driver(driver, 1)
+                else:
+                    db.update_driver(driver, 2)
+            else:
+                db.update_driver(driver, None)
+        db.update_hippodrome(hippodrome)
+
+    cotes = {}
+    for p in participants:
+        if not isinstance(p, dict):
+            continue
+        num = p.get("numPmu")
+        cote = (p.get("dernierRapportDirect") or {}).get("rapport")
+        if num and cote:
+            try:
+                cotes[int(num)] = float(cote)
+            except Exception:
+                pass
+
+    roi_pmu = calculer_roi_pmu(preds, arrivee, cotes, est_quinte=est_quinte)
+    maj_paris_stats(roi_pmu)
+
+    res = {}
+    for name, pred in preds.items():
+        h1 = 1 if pred and pred[0] == v1 else 0
+        h5 = len(set(pred) & v5) if pred else 0
+        cote_top1 = cotes.get(pred[0]) if pred else None
+        s = STATS["agents"][name]
+        s["tot"] += 1
+        s["h1"] += h1
+        s["h5"] += h5
+        if DB_OK:
+            db.save_agent(name, s["h1"], s["h5"], s["tot"])
+        res[name] = {"top1": h1, "top5": h5, "prediction": pred, "cote_top1": cote_top1}
+        if name == "ForecastAgent":
+            res[name]["roi_pmu"] = roi_pmu
+
+    STATS["evaluated"] += 1
+    if DB_OK:
+        db.save_meta("evaluated", str(STATS["evaluated"]))
+    return res
+
+
+BLACKLIST = [
+    "CHILI", "CHILE", "VALPARAISO",
+    "SAN ISIDRO", "PALERMO", "LA PLATA", "ARGENTINE",
+    "SUEDE", "SWEDEN", "SOLVALLA",
+    "URUGUAY", "MONTEVIDEO",
+    "BRESIL", "BRAZIL", "SAO PAULO",
+    "USA", "UNITED STATES",
+    "AUSTRALIA", "AUSTRALIE",
+    "JAPON", "JAPAN", "TOKYO",
+    "HONG KONG",
+    "SINGAPOUR", "SINGAPORE",
+    "INDE", "INDIA",
+    "MAURICE",
+    "AFRIQUE DU SUD",
+    "PEROU", "PERU",
+    "MEXIQUE", "MEXICO",
+    "CANADA", "TORONTO",
+    "NORVEGE", "OSLO",
+    "DANEMARK",
+    "FINLANDE",
+    "RUSSIE", "MOSCOU",
+    "TURQUIE", "ISTANBUL",
+    "EMIRATS", "DUBAI",
+    "QATAR", "ARABIE",
+    "COREE", "SEOUL",
+    "CHINE", "SHANGHAI",
+    "THAILANDE",
+    "MALAISIE",
+    "INDONESIE",
+    "NOUVELLE-ZELANDE", "NEW ZEALAND",
+    "VENEZUELA",
+    "COLOMBIE",
+    "EQUATEUR",
+    "BOLIVIE",
+    "PARAGUAY",
+]
+
+
+def hippodrome_ok(hippo_obj, nom):
+    if not nom:
+        return False
+    nom_up = nom.upper()
+    for mot in BLACKLIST:
+        if mot.upper() in nom_up:
+            return False
+    if isinstance(hippo_obj, dict):
+        pays = hippo_obj.get("pays") or {}
+        if isinstance(pays, dict):
+            nom_pays = (pays.get("libelle") or "").upper()
+            for mot in BLACKLIST:
+                if mot.upper() in nom_pays:
+                    return False
+    return True
+
+
+def date_str(offset=0):
+    d = datetime.now() + timedelta(days=offset)
+    return d.strftime("%d%m%Y")
+
+
+async def pmu_get(url):
+    try:
+        async with httpx.AsyncClient(timeout=20.0, headers=HEADERS) as c:
+            r = await c.get(url)
+            if r.status_code == 200:
+                return r.json()
+            return None
+    except Exception:
+        return None
+
+
+async def get_participants(ds, r, c):
+    url = PMU_BASE + "/programme/" + ds + "/R" + str(r) + "/C" + str(c) + "/participants"
+    data = await pmu_get(url)
+    if data:
+        return data.get("participants", [])
+    return []
+
+
+async def get_arrivee(parts):
+    cls = []
+    for p in parts:
+        if not isinstance(p, dict):
+            continue
+        place = p.get("place") or p.get("ordreArrivee") or p.get("position")
+        num = p.get("numPmu")
+        if place and num:
+            try:
+                cls.append((int(place), int(num)))
+            except Exception:
+                continue
+    cls.sort(key=lambda x: x[0])
+    return [n for _, n in cls[:5]]
+
+
+@app.get("/api/agent/collect")
+@app.post("/api/agent/collect")
+async def agent_collect(offset: int = 0):
+    ds = date_str(offset)
+    prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+    if not prog:
+        return {"ok": False, "nouvelles": 0, "evaluees": 0, "total": len(COLLECTED)}
+    reunions = (prog.get("programme") or {}).get("reunions") or []
+    nouv = 0
+    eval_ = 0
+    ignorees = 0
+    for r in reunions:
+        if not isinstance(r, dict):
+            continue
+        nr = r.get("numOfficiel")
+        hippo_obj = r.get("hippodrome") or {}
+        hippo = hippo_obj.get("libelleLong", "?")
+        if not hippodrome_ok(hippo_obj, hippo):
+            ignorees += 1
+            continue
+        for c in (r.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
+            st = (c.get("statut") or "").upper()
+            if "FIN" not in st and "ARRIVE" not in st:
+                continue
+            nc = c.get("numOrdre")
+            key = ds + "-R" + str(nr) + "C" + str(nc)
+            if any(x.get("key") == key for x in COLLECTED):
+                continue
+            parts = await get_participants(ds, nr, nc)
+            if not parts:
+                continue
+            arr = await get_arrivee(parts)
+            if not arr:
+                continue
+            discipline_raw = c.get("discipline") or ""
+            discipline = detect_discipline(discipline_raw)
+            terrain_raw = c.get("terrain") or c.get("conditionPiste") or ""
+            terrain = normalize_terrain(terrain_raw)
+            type_depart = c.get("depart") or ""
+            distance_course = c.get("distance") or None
+            surface_raw = c.get("surface") or c.get("piste") or ""
+            est_quinte = detecter_quinte(c, r)
+            ev = evaluer(parts, arr, hippo, discipline=discipline,
+                         terrain=terrain, type_depart=type_depart,
+                         distance_course=distance_course, surface=surface_raw,
+                         est_quinte=est_quinte)
+            if ev:
+                eval_ += 1
+            item = {"key": key, "date": ds, "reunion": nr, "num_course": nc,
+                    "course": c.get("libelle", "Course"), "hippodrome": hippo,
+                    "discipline": discipline_raw,
+                    "discipline_norm": discipline,
+                    "terrain": terrain,
+                    "distance": c.get("distance", 0),
+                    "partants": c.get("nombreDeclaresPartants", 0),
+                    "est_quinte": est_quinte,
+                    "arrivee": arr[:5], "evaluations": ev}
+            COLLECTED.append(item)
+            if DB_OK:
+                db.save_result(item)
+            nouv += 1
+    return {"ok": True, "nouvelles": nouv, "evaluees": eval_, "ignorees": ignorees,
+            "total": len(COLLECTED), "total_evaluees": STATS["evaluated"]}
+
+
+@app.get("/api/results")
+async def list_results(limit: int = 50):
+    return {"count": len(COLLECTED), "results": COLLECTED[-limit:]}
+
+
+@app.get("/api/pmu/proxy/{path:path}")
+async def proxy_pmu(path: str):
+    data = await pmu_get(PMU_BASE + "/" + path)
+    if data:
+        return data
+    return {"error": "PMU indisponible"}
+
+
+@app.get("/api/cron/run")
+async def cron_run(background_tasks: BackgroundTasks):
+    background_tasks.add_task(agent_collect, offset=0)
+    return {"ok": True, "queued": True}
