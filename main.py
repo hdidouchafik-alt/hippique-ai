@@ -27,7 +27,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="5.0.0")
+app = FastAPI(title="Hippique AI", version="5.1.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -109,6 +109,64 @@ async def drivers_top():
     if not DB_OK:
         return {"drivers": []}
     return {"drivers": db.get_all_driver_stats()}
+
+
+@app.get("/api/admin/rebuild-drivers")
+@app.post("/api/admin/rebuild-drivers")
+async def admin_rebuild_drivers(offset: int = 0):
+    if not DB_OK:
+        return {"error": "DB indisponible"}
+    ds = date_str(offset)
+    prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+    if not prog:
+        return {"error": "PMU indisponible", "date": ds}
+    reunions = (prog.get("programme") or {}).get("reunions") or []
+    processed = 0
+    ignorees = 0
+    for r in reunions:
+        if not isinstance(r, dict):
+            continue
+        nr = r.get("numOfficiel")
+        hippo_obj = r.get("hippodrome") or {}
+        hippo = hippo_obj.get("libelleLong", "?")
+        if not hippodrome_ok(hippo_obj, hippo):
+            ignorees += 1
+            continue
+        for c in (r.get("courses") or []):
+            if not isinstance(c, dict):
+                continue
+            st = (c.get("statut") or "").upper()
+            if "FIN" not in st and "ARRIVE" not in st:
+                continue
+            nc = c.get("numOrdre")
+            parts = await get_participants(ds, nr, nc)
+            if not parts:
+                continue
+            arr = await get_arrivee(parts)
+            if not arr:
+                continue
+            v1 = arr[0]
+            v5 = set(arr[:5])
+            for p in parts:
+                if not isinstance(p, dict):
+                    continue
+                num = p.get("numPmu")
+                driver = p.get("driver") or p.get("jockey") or ""
+                if not num or not driver:
+                    continue
+                try:
+                    num_int = int(num)
+                except Exception:
+                    continue
+                if num_int == v1:
+                    db.update_driver(driver, 1)
+                elif num_int in v5:
+                    db.update_driver(driver, 2)
+                else:
+                    db.update_driver(driver, None)
+            db.update_hippodrome(hippo)
+            processed += 1
+    return {"ok": True, "date": ds, "courses_traitees": processed, "ignorees": ignorees}
 
 
 @app.post("/api/chat")
@@ -236,12 +294,10 @@ def score_musique(musique):
 
 
 def score_driver(driver):
-    # Score dynamique depuis la DB
     if DB_OK and driver:
         dyn = db.get_driver_score(driver)
         if dyn is not None:
             return dyn
-    # Fallback : score par défaut
     return 0.5
 
 
@@ -305,7 +361,6 @@ def evaluer(participants, arrivee, hippodrome):
     preds = predire(participants)
     v1 = arrivee[0]
     v5 = set(arrivee[:5])
-    # Mettre à jour les stats drivers
     if DB_OK:
         for p in participants:
             if not isinstance(p, dict):
@@ -326,7 +381,6 @@ def evaluer(participants, arrivee, hippodrome):
             else:
                 db.update_driver(driver, None)
         db.update_hippodrome(hippodrome)
-    # Évaluation classique
     cotes = {}
     for p in participants:
         if not isinstance(p, dict):
