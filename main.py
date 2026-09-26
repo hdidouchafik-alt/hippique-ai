@@ -1,5 +1,6 @@
 import os
 import re
+import statistics
 import httpx
 from pathlib import Path
 from datetime import datetime, timedelta
@@ -27,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="5.1.0")
+app = FastAPI(title="Hippique AI", version="5.2.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -35,6 +36,9 @@ app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="stat
 MISE = 10
 PMU_BASE = "https://online.turfinfo.api.pmu.fr/rest/client/61"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
+
+# Nombre minimum de partants pour que les z-scores soient fiables
+MIN_PARTANTS_ZSCORE = 5
 
 COLLECTED = []
 STATS = {
@@ -323,11 +327,26 @@ def score_risk(musique):
     return max(0, 2 - da * 0.5)
 
 
+def zscore(values, v):
+    """Calcule le z-score de v par rapport à la liste values.
+    Retourne 0.0 si l'écart-type est nul ou s'il y a moins de 2 valeurs."""
+    if len(values) < 2:
+        return 0.0
+    m = statistics.mean(values)
+    try:
+        s = statistics.pstdev(values)
+    except Exception:
+        return 0.0
+    if s == 0:
+        return 0.0
+    return (v - m) / s
+
+
 def predire(participants):
-    preds = {}
-    for k in STATS["agents"].keys():
-        preds[k] = []
-    scored = []
+    # ------------------------------------------------------------
+    # ÉTAPE 1 : récupérer les valeurs brutes (comme avant)
+    # ------------------------------------------------------------
+    raw = []
     for p in participants:
         if not isinstance(p, dict):
             continue
@@ -338,14 +357,65 @@ def predire(participants):
         driver = p.get("driver") or p.get("jockey") or ""
         cote = (p.get("dernierRapportDirect") or {}).get("rapport")
         gains = (p.get("gainsParticipant") or {}).get("gainsCarriere", 0)
-        sf = score_musique(musique)
-        sd = score_driver(driver)
-        sc = score_cote(cote)
-        sg = score_gains(gains)
-        sr = score_risk(musique)
-        forecast = sf * 0.15 + sd * 0.15 + sc * 0.45 + sg * 0.15 + sr * 0.10
-        scored.append({"num": num, "form": sf, "driver": sd, "market": sc,
-                       "class": sg, "risk": sr, "forecast": forecast})
+        raw.append({
+            "num": num,
+            "sf": score_musique(musique),
+            "sd": score_driver(driver),
+            "sc": score_cote(cote),
+            "sg": score_gains(gains),
+            "sr": score_risk(musique),
+        })
+
+    # ------------------------------------------------------------
+    # ÉTAPE 2 : calculer les z-scores (sauf si trop peu de partants)
+    # ------------------------------------------------------------
+    use_zscore = len(raw) >= MIN_PARTANTS_ZSCORE
+
+    if use_zscore:
+        sf_all = [r["sf"] for r in raw]
+        sd_all = [r["sd"] for r in raw]
+        sc_all = [r["sc"] for r in raw]
+        sg_all = [r["sg"] for r in raw]
+        sr_all = [r["sr"] for r in raw]
+
+    scored = []
+    for r in raw:
+        if use_zscore:
+            zf = zscore(sf_all, r["sf"])
+            zd = zscore(sd_all, r["sd"])
+            zc = zscore(sc_all, r["sc"])
+            zg = zscore(sg_all, r["sg"])
+            zr = zscore(sr_all, r["sr"])
+            # Nouveau forecast v5.2 : pondération des z-scores
+            forecast = zf * 0.20 + zd * 0.15 + zc * 0.35 + zg * 0.20 + zr * 0.10
+        else:
+            # Fallback : ancien calcul absolu pour les courses à < 5 partants
+            zf = zd = zc = zg = zr = 0.0
+            forecast = (r["sf"] * 0.15 + r["sd"] * 0.15 + r["sc"] * 0.45
+                        + r["sg"] * 0.15 + r["sr"] * 0.10)
+
+        scored.append({
+            "num": r["num"],
+            # Les agents individuels gardent leurs scores absolus
+            "form": r["sf"],
+            "driver": r["sd"],
+            "market": r["sc"],
+            "class": r["sg"],
+            "risk": r["sr"],
+            # Z-scores stockés (utile pour debug / affichage)
+            "z_form": round(zf, 3),
+            "z_driver": round(zd, 3),
+            "z_market": round(zc, 3),
+            "z_class": round(zg, 3),
+            "z_risk": round(zr, 3),
+            # Score de synthèse utilisé par ForecastAgent
+            "forecast": forecast,
+        })
+
+    # ------------------------------------------------------------
+    # ÉTAPE 3 : construire les prédictions (inchangé)
+    # ------------------------------------------------------------
+    preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
         if key == "forecast":
