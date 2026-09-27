@@ -876,6 +876,42 @@ def maj_paris_stats(roi_pmu):
         if "mise" in data:
             PARIS_STATS[pari]["mise"] = PARIS_STATS[pari].get("mise", 0.0) + data["mise"]
             PARIS_STATS[pari]["gain"] = PARIS_STATS[pari].get("gain", 0.0) + data.get("gain", 0)
+def compute_agent_weights(discipline=None):
+    """Calcule les poids des agents basés sur leur historique."""
+    weights = {}
+    for name, s in STATS["agents"].items():
+        if name in ("ForecastAgent", "MetaAgent"):
+            continue
+        tot = s["tot"]
+        if tot < 20:
+            weights[name] = 0.5
+            continue
+        t1r = s["h1"] / tot
+        t5r = s["h5"] / (tot * 5)
+        score = t1r * 0.7 + t5r * 0.3
+        weights[name] = max(0.05, score)
+
+    total = sum(weights.values()) or 1
+    for k in weights:
+        weights[k] /= total
+    return weights
+
+
+def meta_predict(preds, weights):
+    """Combine les prédictions des agents avec leurs poids."""
+    score_par_cheval = {}
+    for agent, pred in preds.items():
+        if agent not in weights or not pred:
+            continue
+        w = weights[agent]
+        for i, num in enumerate(pred[:5]):
+            points = w * (5 - i)
+            score_par_cheval[num] = score_par_cheval.get(num, 0) + points
+
+    classes = sorted(score_par_cheval.items(), key=lambda x: x[1], reverse=True)
+    return [num for num, _ in classes[:5]]
+
+
             
 
 def predire(participants, discipline="AUTRE", terrain="INCONNU",
