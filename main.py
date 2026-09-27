@@ -66,6 +66,7 @@ STATS = {
         "TrackAgent": {"h1": 0, "h5": 0, "tot": 0},
         "ForecastAgent": {"h1": 0, "h5": 0, "tot": 0},
         "MetaAgent": {"h1": 0, "h5": 0, "tot": 0},
+        "DemoAgent": {"h1": 0, "h5": 0, "tot": 0},
     }
 }
 
