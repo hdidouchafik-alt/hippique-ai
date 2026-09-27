@@ -129,7 +129,11 @@
                     <tr><td><strong>Top 5</strong></td><td>{{ stats.top5.gagne }}</td><td>{{ stats.top5.total }}</td><td><span class="badge {{ 'badge-green' if stats.top5.taux_reussite > 0 else 'badge-red' }}">{{ stats.top5.taux_reussite }}%</span></td></tr>
                 </tbody>
             </table>
-        </div>
+        </div<div class="card">
+                    <div class="card-title">Trio</div>
+                    <div class="card-value {% if stats.trio.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.trio.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.trio.gagne }} / {{ stats.trio.total }} réussis</div>
+                </div>>
 
         <div class="section">
             <h2>🏆 Focus Quinté+</h2>
