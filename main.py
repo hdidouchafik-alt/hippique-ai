@@ -1094,8 +1094,10 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             continue
         musique = parse_musique(p.get("musique", ""))
         driver = p.get("driver") or p.get("jockey") or ""
-        cote = (p.get("dernierRapportDirect") or {}).get("rapport")
-        gains = (p.get("gainsParticipant") or {}).get("gainsCarriere", 0)
+        ref = p.get("dernierRapportReference") or {}
+cote = ref.get("rapport")
+        g = p.get("gainsParticipant") or {}
+gains = g.get("gainsAnneePrecedente", 0)
 
         raw.append({
             "num": num,
@@ -1111,8 +1113,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "sincid": score_incidents_obstacle(musique, discipline),
             "sauto": score_autostart(p, num, type_depart),
             "shand": score_handicap_distance(p),
-            "sdist": score_distance_optimale(p, distance_course, discipline),
-            "srec": score_record(p, discipline),
+            "sdist": 0.0,
+            "srec": 0.0,
             "soeil": score_oeilleres(p),
             "shauteur": score_hauteur(p, discipline),
             "sdem": score_demographie(p, discipline),
