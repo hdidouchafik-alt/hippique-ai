@@ -1000,6 +1000,13 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
                     hippodrome=hippodrome, type_depart=type_depart,
                     distance_course=distance_course, surface=surface)
 
+    # v5.9 : MetaAgent
+    try:
+        weights = compute_agent_weights(discipline=discipline)
+        preds["MetaAgent"] = meta_predict(preds, weights)
+    except Exception:
+        preds["MetaAgent"] = preds.get("ForecastAgent", [])
+
     v1 = arrivee[0]
     v5 = set(arrivee[:5])
 
@@ -1039,14 +1046,37 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
     roi_pmu = calculer_roi_pmu(preds, arrivee, cotes, est_quinte=est_quinte)
     maj_paris_stats(roi_pmu)
 
-    
+    res = {}
+    for name, pred in preds.items():
+        h1 = 1 if pred and pred[0] == v1 else 0
+        h5 = len(set(pred) & v5) if pred else 0
+        cote_top1 = cotes.get(pred[0]) if pred else None
+
+        # v5.9 : évaluation stricte
+        h_ordered = 0
+        for i in range(min(len(pred), len(arrivee))):
+            if pred[i] == arrivee[i]:
+                h_ordered += 1
+        podium_exact = 1 if (len(pred) >= 3 and len(arrivee) >= 3
+                             and pred[:3] == arrivee[:3]) else 0
+        top1_in_top3 = 1 if (pred and arrivee and pred[0] in arrivee[:3]) else 0
+
         s = STATS["agents"][name]
         s["tot"] += 1
         s["h1"] += h1
         s["h5"] += h5
         if DB_OK:
             db.save_agent(name, s["h1"], s["h5"], s["tot"])
-        res[name] = {"top1": h1, "top5": h5, "prediction": pred, "cote_top1": cote_top1}
+
+        res[name] = {
+            "top1": h1,
+            "top5": h5,
+            "h_ordered": h_ordered,
+            "podium": podium_exact,
+            "top1_in_top3": top1_in_top3,
+            "prediction": pred,
+            "cote_top1": cote_top1,
+        }
         if name == "ForecastAgent":
             res[name]["roi_pmu"] = roi_pmu
 
