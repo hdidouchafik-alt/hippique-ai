@@ -203,6 +203,7 @@ async def reunions_page(request: Request, offset: int = 0):
         ds = date_str(offset)
         prog = await pmu_get(PMU_BASE + "/programme/" + ds)
         reunions = []
+        now_ts = datetime.now().timestamp()
         if prog:
             for r in ((prog.get("programme") or {}).get("reunions") or []):
                 if not isinstance(r, dict):
@@ -219,6 +220,15 @@ async def reunions_page(request: Request, offset: int = 0):
                     nc = c.get("numOrdre")
                     st = (c.get("statut") or "").upper()
                     fini = "FIN" in st or "ARRIVE" in st
+                    heure_ts = None
+                    hd = c.get("heureDepart")
+                    if hd:
+                        try:
+                            heure_ts = int(hd) / 1000
+                        except Exception:
+                            pass
+                    if not fini and heure_ts and now_ts > heure_ts + 1800:
+                        fini = True
                     key = ds + "-R" + str(nr) + "C" + str(nc)
                     arrivee = None
                     for col in COLLECTED:
