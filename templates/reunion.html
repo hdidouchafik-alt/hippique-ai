@@ -54,13 +54,14 @@
         <p class="subtitle">{{ reunion.pays }} · {{ reunion.courses|length }} courses</p>
 
         <div class="nav">
-            <a href="/">🏠 Accueil</a>
-            <a href="/reunions">📅 Réunions</a>
-            <a href="/pronostics">📊 Pronostics</a>
-            <a href="/paris">💰 Paris</a>
-            <a href="/drivers">🏇 Drivers</a>
-            <a href="/learning">🎓 Learning</a>
-        </div>
+    <a href="/">🏠 Accueil</a>
+    <a href="/reunions" class="active">📅 Réunions</a>
+    <a href="/pronostics">📊 Pronostics</a>
+    <a href="/paris">💰 Paris</a>
+    <a href="/drivers">🏇 Drivers</a>
+    <a href="/learning">🎓 Learning</a>
+    <a href="/docs" target="_blank">📚 API</a>
+</div>
 
         {% if reunion.courses %}
         <div class="grid">
