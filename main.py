@@ -1185,11 +1185,6 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "shisto": score_historique(p),
             "savis": score_avis_entraineur(p),
         })
-        })
-        "strainer": score_trainer(p),
-            "spedigree": score_pedigree(p),
-            "shisto": score_historique(p),
-            "savis": score_avis_entraineur(p),
 
     use_z = len(raw) >= MIN_PARTANTS_ZSCORE
     poids_vals = [r["spoids"] for r in raw if r["spoids"] is not None]
