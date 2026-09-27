@@ -994,6 +994,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "srec": score_record(p, discipline),
             "soeil": score_oeilleres(p),
             "shauteur": score_hauteur(p, discipline),
+            "sdem": score_demographie(p, discipline),
         })
 
     use_z = len(raw) >= MIN_PARTANTS_ZSCORE
@@ -1075,6 +1076,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "market": r["sc"],
             "class": r["sg"],
             "risk": r["sr"],
+            "démo": r["sdem"],
             "forecast": forecast,
         })
 
