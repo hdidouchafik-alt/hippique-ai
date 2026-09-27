@@ -1095,9 +1095,9 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
         musique = parse_musique(p.get("musique", ""))
         driver = p.get("driver") or p.get("jockey") or ""
         ref = p.get("dernierRapportReference") or {}
-cote = ref.get("rapport")
+        cote = ref.get("rapport")
         g = p.get("gainsParticipant") or {}
-gains = g.get("gainsAnneePrecedente", 0)
+        gains = g.get("gainsAnneePrecedente", 0)
 
         raw.append({
             "num": num,
