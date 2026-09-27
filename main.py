@@ -1279,8 +1279,6 @@ scored.append({
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
-        if key == "forecast":
-            key = "forecast"
         s = sorted(scored, key=lambda x: x.get(key, 0), reverse=True)
         preds[agent] = [x["num"] for x in s[:5]]
     return preds
