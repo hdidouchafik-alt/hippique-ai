@@ -65,19 +65,7 @@ STATS = {
         "RiskAgent": {"h1": 0, "h5": 0, "tot": 0},
         "TrackAgent": {"h1": 0, "h5": 0, "tot": 0},
         "ForecastAgent": {"h1": 0, "h5": 0, "tot": 0},
-        STATS = {
-    "evaluated": 0,
-    "agents": {
-        "FormAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "DriverAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "MarketAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "ClassAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "RiskAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "TrackAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "ForecastAgent": {"h1": 0, "h5": 0, "tot": 0},
         "MetaAgent": {"h1": 0, "h5": 0, "tot": 0},
-    }
-}
     }
 }
 
