@@ -319,9 +319,44 @@ async def course_detail_page(request: Request, key: str):
         data = await course_detail(key)
         if not data.get("ok"):
             return HTMLResponse(f"<h1>Erreur</h1><pre>{data.get('error')}</pre>", status_code=404)
+
+        # v5.11 : navigation prev/next
+        prev_key = None
+        next_key = None
+        try:
+            parts = key.split("-")
+            if len(parts) == 2:
+                ds = parts[0]
+                prog = await pmu_get(PMU_BASE + "/programme/" + ds)
+                if prog:
+                    all_keys = []
+                    for r in ((prog.get("programme") or {}).get("reunions") or []):
+                        if not isinstance(r, dict):
+                            continue
+                        hippo_obj = r.get("hippodrome") or {}
+                        hippo = hippo_obj.get("libelleLong", "?")
+                        if not hippodrome_ok(hippo_obj, hippo):
+                            continue
+                        nr = r.get("numOfficiel")
+                        for c in (r.get("courses") or []):
+                            if not isinstance(c, dict):
+                                continue
+                            nc = c.get("numOrdre")
+                            all_keys.append(ds + "-R" + str(nr) + "C" + str(nc))
+                    if key in all_keys:
+                        idx = all_keys.index(key)
+                        if idx > 0:
+                            prev_key = all_keys[idx - 1]
+                        if idx < len(all_keys) - 1:
+                            next_key = all_keys[idx + 1]
+        except Exception:
+            pass
+
         return templates.TemplateResponse(request, "course.html", {
             "data": data,
             "version": app.version,
+            "prev_key": prev_key,
+            "next_key": next_key,
         })
     except Exception as e:
         return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
