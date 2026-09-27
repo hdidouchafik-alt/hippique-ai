@@ -949,7 +949,7 @@ def compute_agent_weights(discipline=None):
     """Calcule les poids des agents basés sur leur historique."""
     weights = {}
     for name, s in STATS["agents"].items():
-        if name in ("ForecastAgent", "MetaAgent"):
+        if name in ("MetaAgent", "DemoAgent"):
             continue
         tot = s["tot"]
         if tot < 20:
