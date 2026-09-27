@@ -1036,6 +1036,68 @@ def score_demographie(p, discipline):
     if age is None:
         return 0.0
 
+def score_trainer(p):
+    """Score entraîneur basé sur ses statistiques (nom)."""
+    trainer = (p.get("entraineur") or "").strip()
+    if not trainer or not DB_OK:
+        return 0.5
+    try:
+        dyn = db.get_driver_score(trainer)
+        if dyn is not None:
+            return dyn
+    except Exception:
+        pass
+    return 0.5
+
+
+def score_pedigree(p):
+    """Score basé sur le père (nomPere).
+    10 = père de qualité (gagnant), 1 = inconnu."""
+    pere = (p.get("nomPere") or "").strip().upper()
+    if not pere:
+        return 0.0
+    # Pères connus et réputés (liste à enrichir)
+    top_peres = {
+        "READY CASH": 9.0,
+        "BIRD PARKER": 8.5,
+        "FACE TIME BOURBON": 8.0,
+        "CHARLY DU NOYER": 8.0,
+        "GOLDEN BRIDGE": 8.0,
+        "TACTICAL LANDING": 7.5,
+        "SJ'S CAVIAR": 7.5,
+        "INTERNATIONAL MONI": 7.0,
+        "VARENNE": 6.5,
+        "CHAPTER SEVEN": 6.5,
+    }
+    return top_peres.get(pere, 5.0) / 10.0  # Normalisé 0-1
+
+
+def score_historique(p):
+    """Score basé sur les stats carrière : courses, victoires, places."""
+    try:
+        nc = int(p.get("nombreCourses", 0))
+        nv = int(p.get("nombreVictoires", 0))
+        np_ = int(p.get("nombrePlaces", 0))
+    except Exception:
+        return 0.0
+    if nc == 0:
+        return 0.0
+    taux_v = nv / nc
+    taux_p = np_ / nc
+    # Score pondéré : victoire x 7, place x 3
+    return (taux_v * 7.0) + (taux_p * 3.0)
+
+
+def score_avis_entraineur(p):
+    """Score basé sur l'avis de l'entraîneur (signal avant-course)."""
+    avis = (p.get("avisEntraineur") or "").strip().upper()
+    if avis == "POSITIF":
+        return 8.0
+    if avis == "NEUTRE":
+        return 5.0
+    if avis == "NEGATIF":
+        return 2.0
+    return 5.0
     # Normaliser le sexe
     est_male = sexe in ("M", "MALE", "H") and sexe != "H"
     est_femelle = sexe in ("F", "FEMELLE")
