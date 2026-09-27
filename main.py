@@ -1243,13 +1243,17 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
                 forecast = (zf * 0.15 + zd * 0.22 + zc * 0.28
             + zg * 0.12 + zr * 0.10 + zdef * 0.13)
             elif discipline == "PLAT":
-                forecast = (zf * 0.18 + zd * 0.13 + zc * 0.28
-                            + zg * 0.12 + zpoids * 0.10 + zcorde * 0.08
-                            + zdist * 0.06 + zo * 0.05)
+                forecast = (zf * 0.12 + zd * 0.10 + zc * 0.22
+                            + zg * 0.08 + zpoids * 0.08 + zcorde * 0.06
+                            + zdist * 0.04 + zo * 0.04
+                            + ztrainer * 0.08 + zpedigree * 0.06
+                            + zhisto * 0.08 + zavis * 0.04)
             elif discipline == "OBSTACLE":
-                forecast = (zf * 0.13 + zd * 0.13 + zc * 0.22
-                            + zg * 0.08 + zobst * 0.18 + zincid * 0.12
-                            + zpoids * 0.08 + zrec * 0.04 + zhauteur * 0.02)
+                forecast = (zf * 0.10 + zd * 0.10 + zc * 0.18
+                            + zg * 0.06 + zobst * 0.14 + zincid * 0.10
+                            + zpoids * 0.06 + zhauteur * 0.02
+                            + ztrainer * 0.08 + zpedigree * 0.04
+                            + zhisto * 0.08 + zavis * 0.04)
             else:
                 forecast = (zf * 0.20 + zd * 0.15 + zc * 0.35
                             + zg * 0.20 + zr * 0.10)
