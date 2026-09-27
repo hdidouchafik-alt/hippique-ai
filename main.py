@@ -464,7 +464,7 @@ async def rebuild_drivers_task(offset: int = 0):
                 if not isinstance(p, dict):
                     continue
                 num = p.get("numPmu")
-                driver = p.get("driver") or p.get("jockey") or ""
+                driver =         p.get("driver") or p.get("jockey") or ""
                 if not num or not driver:
                     continue
                 try:
