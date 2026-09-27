@@ -1635,3 +1635,16 @@ async def quinte_du_jour(offset: int = 0):
 async def cron_run(background_tasks: BackgroundTasks):
     background_tasks.add_task(agent_collect, offset=0)
     return {"ok": True, "queued": True}
+    
+    
+    
+
+@app.on_event("startup")
+async def _startup_recalc():
+    """Au démarrage : recalcule les stats de paris depuis COLLECTED."""
+    try:
+        recalculer_paris_stats()
+        totals = {k: v.get("total", 0) for k, v in PARIS_STATS.items()}
+        print("PARIS_STATS recalculé : " + str(totals))
+    except Exception as e:
+        print("PARIS_STATS recalc error: " + str(e))
