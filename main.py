@@ -902,8 +902,8 @@ def maj_paris_stats(roi_pmu):
             PARIS_STATS[pari]["gain"] = PARIS_STATS[pari].get("gain", 0.0) + data.get("gain", 0)
             
             
-            def recalculer_paris_stats():
-    """Recalcule PARIS_STATS à partir de COLLECTED (appelé au démarrage)."""
+def recalculer_paris_stats():
+    """Recalcule PARIS_STATS a partir de COLLECTED (appele au demarrage)."""
     for pari in PARIS_STATS:
         for k in PARIS_STATS[pari]:
             PARIS_STATS[pari][k] = 0
