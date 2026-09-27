@@ -879,7 +879,7 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
     gagne = bool(pred_top5) and pred_top5[0] in v3
     mise = MISES_PMU["simple_place"]
     cote = cotes.get(pred_top5[0], 0) if pred_top5 else 0
-    gain = mise * cote * 0.30 if gagne and cote > 0 else 0
+    gain = mise * cote * 0.40 if gagne and cote > 0 else 0
     resultats["simple_place"] = {
         "gagne": gagne, "mise": mise,
         "gain": round(gain, 2),
