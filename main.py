@@ -900,6 +900,34 @@ def maj_paris_stats(roi_pmu):
         if "mise" in data:
             PARIS_STATS[pari]["mise"] = PARIS_STATS[pari].get("mise", 0.0) + data["mise"]
             PARIS_STATS[pari]["gain"] = PARIS_STATS[pari].get("gain", 0.0) + data.get("gain", 0)
+            
+            
+            def recalculer_paris_stats():
+    """Recalcule PARIS_STATS à partir de COLLECTED (appelé au démarrage)."""
+    for pari in PARIS_STATS:
+        for k in PARIS_STATS[pari]:
+            PARIS_STATS[pari][k] = 0
+
+    for course in COLLECTED:
+        ev = course.get("evaluations") or {}
+        fa = ev.get("ForecastAgent") or {}
+        pred = fa.get("prediction") or []
+        arrivee = course.get("arrivee") or []
+        if not pred or not arrivee:
+            continue
+
+        cote_top1 = fa.get("cote_top1") or 0
+        cotes = {}
+        if cote_top1 and pred:
+            try:
+                cotes[int(pred[0])] = float(cote_top1)
+            except Exception:
+                pass
+
+        est_quinte = course.get("est_quinte", False)
+        roi_pmu = calculer_roi_pmu({"ForecastAgent": pred}, arrivee, cotes,
+                                    est_quinte=est_quinte)
+        maj_paris_stats(roi_pmu)
 def compute_agent_weights(discipline=None):
     """Calcule les poids des agents basés sur leur historique."""
     weights = {}
