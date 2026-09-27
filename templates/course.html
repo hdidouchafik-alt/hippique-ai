@@ -34,13 +34,65 @@
         .prono-badge { background: #166534; color: #86efac; padding: 2px 6px;
                        border-radius: 4px; font-size: 10px; font-weight: 700; }
         .back-link { display: inline-block; margin-bottom: 20px; color: #38bdf8;
+            .nav-arrows {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .nav-arrows a {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: #1e293b;
+            color: #38bdf8;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .nav-arrows a:hover {
+            background: #334155;
+            border-color: #38bdf8;
+            transform: translateY(-1px);
+        }
+        .nav-arrows .disabled {
+            opacity: 0.3;
+            pointer-events: none;
+            cursor: not-allowed;
+        }
+        .nav-arrows .arrow {
+            font-size: 18px;
+            font-weight: 700;
+        }
                      text-decoration: none; font-size: 14px; }
         .empty { text-align: center; padding: 30px; color: #64748b; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <a href="/reunions" class="back-link">⬅️ Retour</a>
+    <div class="nav-arrows">
+            {% if prev_key %}
+            <a href="/course_detail/{{ prev_key }}">
+                <span class="arrow">‹</span> Course précédente
+            </a>
+            {% else %}
+            <span class="disabled nav-arrows a"><span class="arrow">‹</span> Course précédente</span>
+            {% endif %}
+
+            <a href="/reunions" style="background: transparent;">📅 Réunions</a>
+
+            {% if next_key %}
+            <a href="/course_detail/{{ next_key }}">
+                Course suivante <span class="arrow">›</span>
+            </a>
+            {% else %}
+            <span class="disabled nav-arrows a">Course suivante <span class="arrow">›</span></span>
+            {% endif %}
+        </div>
 
         {% if data.source == 'collected' %}
             {% set c = data.course %}
