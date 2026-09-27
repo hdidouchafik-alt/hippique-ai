@@ -1276,7 +1276,7 @@ scored.append({
             "forecast": forecast,
         })
 
-    preds = {k: [] for k in STATS["agents"].keys()}
+preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
         if key == "forecast":
