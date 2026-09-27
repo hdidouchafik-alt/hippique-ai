@@ -1261,7 +1261,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             forecast = (r["sf"] * 0.15 + r["sd"] * 0.15 + r["sc"] * 0.45
                         + r["sg"] * 0.15 + r["sr"] * 0.10)
 
-scored.append({
+        scored.append({
             "num": r["num"],
             "form": r["sf"],
             "driver": r["sd"],
