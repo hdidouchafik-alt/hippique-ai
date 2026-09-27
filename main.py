@@ -902,7 +902,7 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
         resultats["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3}
 
     resultats["top5"] = {"gagne": len(set(pred_top5) & v5) == 5 if v5 else False}
-    resultats["top4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
+    resultats["top4"] = {"gagne": len(set(pred_top4) & v4) == 4 if v4 else False}
 
     return resultats
 
