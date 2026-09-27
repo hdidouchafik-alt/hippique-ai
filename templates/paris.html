@@ -89,6 +89,11 @@
                     <div class="card-value {{ 'positive' if stats.top5.taux_reussite >= 5 else 'negative' }}">{{ stats.top5.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.top5.gagne }} / {{ stats.top5.total }} réussis</div>
                 </div>
+                <div class="card">
+                    <div class="card-title">Trio</div>
+                    <div class="card-value {% if stats.trio.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.trio.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.trio.gagne }} / {{ stats.trio.total }} réussis</div>
+                </div>
             </div>
         </div>
 
