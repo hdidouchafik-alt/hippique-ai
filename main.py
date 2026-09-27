@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="5.9.0")
+app = FastAPI(title="Hippique AI", version="6.0.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -1174,9 +1174,8 @@ gains = g.get("gainsAnneePrecedente", 0)
                 zhauteur = zscore([x["shauteur"] for x in raw], r["shauteur"])
 
             if discipline == "TROT":
-                forecast = (zf * 0.12 + zd * 0.18 + zc * 0.25
-                            + zg * 0.10 + zr * 0.08 + zdef * 0.10
-                            + zauto * 0.07 + zhand * 0.05 + zrec * 0.05)
+                forecast = (zf * 0.15 + zd * 0.22 + zc * 0.28
+            + zg * 0.12 + zr * 0.10 + zdef * 0.13)
             elif discipline == "PLAT":
                 forecast = (zf * 0.18 + zd * 0.13 + zc * 0.28
                             + zg * 0.12 + zpoids * 0.10 + zcorde * 0.08
