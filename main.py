@@ -903,6 +903,65 @@ def meta_predict(preds, weights):
 
             
 
+def score_demographie(p, discipline):
+    """Score basé sur sexe + âge, ajusté par discipline."""
+    sexe = (p.get("sexe") or "").upper()
+    age = p.get("age")
+    try:
+        age = int(age) if age is not None else None
+    except Exception:
+        age = None
+
+    if age is None:
+        return 0.0
+
+    # Normaliser le sexe
+    est_male = sexe in ("M", "MALE", "H") and sexe != "H"
+    est_femelle = sexe in ("F", "FEMELLE")
+    est_hongre = sexe in ("H", "HONGRE")
+    est_male = sexe in ("M", "MALE") or (sexe == "H" and False)  # correction
+
+    score = 0.0
+
+    if discipline == "TROT":
+        if est_male and 4 <= age <= 7:
+            score = 1.0
+        elif est_femelle and 4 <= age <= 7:
+            score = 0.5
+        elif est_hongre and 4 <= age <= 7:
+            score = 0.3
+        elif age <= 3:
+            score = -1.0
+        elif age >= 8:
+            score = -0.5
+
+    elif discipline == "PLAT":
+        if 3 <= age <= 5:
+            if est_male or est_hongre:
+                score = 1.2
+            else:
+                score = 0.8
+        elif age == 2:
+            score = -0.5
+        elif age >= 6:
+            score = -0.3
+
+    elif discipline == "OBSTACLE":
+        if 5 <= age <= 9:
+            score = 1.0
+        elif age == 4:
+            score = 0.5
+        elif age >= 10:
+            score = -0.5
+        elif age <= 3:
+            score = -1.5
+
+    # Ajustement : léger bonus pour les femelles en obstacle
+    if discipline == "OBSTACLE" and est_femelle:
+        score += 0.2
+
+    return score
+
 def predire(participants, discipline="AUTRE", terrain="INCONNU",
             hippodrome="", type_depart="", distance_course=None, surface=""):
     raw = []
