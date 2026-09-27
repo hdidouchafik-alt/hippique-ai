@@ -270,23 +270,30 @@ async def reunion_detail(request: Request, date: str, num: int):
         hippo_obj = reunion.get("hippodrome") or {}
         hippo = hippo_obj.get("libelleLong", "?")
         courses_list = []
+        now_ts = datetime.now().timestamp()
         for c in (reunion.get("courses") or []):
             if not isinstance(c, dict):
                 continue
             nc = c.get("numOrdre")
             st = (c.get("statut") or "").upper()
             fini = "FIN" in st or "ARRIVE" in st
+            heure_ts = None
+            heure_str = ""
+            hd = c.get("heureDepart")
+            if hd:
+                try:
+                    heure_ts = int(hd) / 1000
+                    heure_str = datetime.fromtimestamp(heure_ts).strftime("%H:%M")
+                except Exception:
+                    pass
+            if not fini and heure_ts and now_ts > heure_ts + 1800:
+                fini = True
             key = date + "-R" + str(num) + "C" + str(nc)
             arrivee = None
             for col in COLLECTED:
                 if col.get("key") == key:
                     arrivee = col.get("arrivee")
                     break
-            heure = c.get("heureDepart") or ""
-            try:
-                h = datetime.fromtimestamp(int(heure) / 1000).strftime("%H:%M")
-            except Exception:
-                h = ""
             courses_list.append({
                 "key": key,
                 "num_course": nc,
@@ -296,7 +303,7 @@ async def reunion_detail(request: Request, date: str, num: int):
                 "partants": c.get("nombreDeclaresPartants", 0),
                 "statut": "termine" if fini else "a_venir",
                 "arrivee": arrivee,
-                "heure": h,
+                "heure": heure_str,
                 "est_quinte": detecter_quinte(c, reunion),
             })
         return templates.TemplateResponse(request, "reunion.html", {
