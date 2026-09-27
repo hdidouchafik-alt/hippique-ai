@@ -1039,11 +1039,7 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
     roi_pmu = calculer_roi_pmu(preds, arrivee, cotes, est_quinte=est_quinte)
     maj_paris_stats(roi_pmu)
 
-    res = {}
-    for name, pred in preds.items():
-        h1 = 1 if pred and pred[0] == v1 else 0
-        h5 = len(set(pred) & v5) if pred else 0
-        cote_top1 = cotes.get(pred[0]) if pred else None
+    
         s = STATS["agents"][name]
         s["tot"] += 1
         s["h1"] += h1
