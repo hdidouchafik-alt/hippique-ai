@@ -383,13 +383,32 @@ async def drivers_page(request: Request):
 @app.get("/paris", response_class=HTMLResponse)
 async def paris_page(request: Request):
     try:
-        return templates.TemplateResponse(request, "paris.html")
-    except Exception:
-        return HTMLResponse(
-            "<h1>Page /paris</h1>"
-            "<p>Template manquant.</p>"
-            "<p>Donnees : <a href='/api/paris/stats'>/api/paris/stats</a></p>"
-        )
+        stats_calc = {}
+        for pari, s in PARIS_STATS.items():
+            total = s.get("total", 0)
+            gagne = s.get("gagne", 0)
+            bloc = {
+                "total": total,
+                "gagne": gagne,
+                "taux_reussite": round(gagne / total * 100, 2) if total > 0 else 0,
+            }
+            if pari in ("simple_gagnant", "simple_place"):
+                mise = s.get("mise", 0.0)
+                gain = s.get("gain", 0.0)
+                bloc["mise"] = round(mise, 2)
+                bloc["gain"] = round(gain, 2)
+                bloc["roi_euros"] = round(gain - mise, 2)
+                bloc["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
+            stats_calc[pari] = bloc
+
+        return templates.TemplateResponse(request, "paris.html", {
+            "stats": stats_calc,
+            "mises": MISES_PMU,
+            "evaluated": STATS["evaluated"],
+            "version": app.version,
+        })
+    except Exception as e:
+        return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
 
 
 @app.get("/api/health")
