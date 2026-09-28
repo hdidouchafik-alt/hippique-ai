@@ -721,6 +721,20 @@ async def learning_metrics():
 
 @app.get("/api/paris/stats")
 async def paris_stats():
+    # Garantir que toutes les clés existent
+    cles_obligatoires = [
+        "simple_gagnant", "simple_place", "couple_gagnant", "couple_place",
+        "trio", "2sur4", "multi4", "multi5", "super4",
+        "quinte_ordre", "quinte_desordre", "bonus4", "bonus3"
+    ]
+    for cle in cles_obligatoires:
+        if cle not in PARIS_STATS:
+            PARIS_STATS[cle] = {"gagne": 0, "total": 0}
+        if "mise" not in PARIS_STATS[cle]:
+            PARIS_STATS[cle]["mise"] = 0.0
+        if "gain" not in PARIS_STATS[cle]:
+            PARIS_STATS[cle]["gain"] = 0.0
+
     stats = {}
     for pari, s in PARIS_STATS.items():
         total = s.get("total", 0)
@@ -743,8 +757,7 @@ async def paris_stats():
         "mises_reference": MISES_PMU,
         "evaluated": STATS["evaluated"],
     }
-
-
+    
 @app.get("/api/learning/reset")
 async def learning_reset():
     COLLECTED.clear()
