@@ -670,13 +670,14 @@ async def learning_metrics():
             "roi_pari": sg.get("total", 0),
             "roi_gagne": sg.get("gagne", 0),
             "paris": {
-            "paris": {
                 "simple_gagnant": {
                     "roi_pct": sg.get("roi_pct", 0),
                     "roi_euros": sg.get("roi_euros", 0),
                     "taux": sg.get("taux_reussite", 0),
                     "gagne": sg.get("gagne", 0),
                     "total": sg.get("total", 0),
+                    "mise": sg.get("mise", 0),
+                    "gain": sg.get("gain", 0),
                 },
                 "simple_place": {
                     "roi_pct": sp.get("roi_pct", 0),
@@ -684,6 +685,8 @@ async def learning_metrics():
                     "taux": sp.get("taux_reussite", 0),
                     "gagne": sp.get("gagne", 0),
                     "total": sp.get("total", 0),
+                    "mise": sp.get("mise", 0),
+                    "gain": sp.get("gain", 0),
                 },
                 "couple_gagnant": {
                     "taux": cg.get("taux_reussite", 0),
