@@ -80,9 +80,16 @@
                     <div class="card-sub">{{ stats.simple_place.gagne }} / {{ stats.simple_place.total }} réussis</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Top 4 (4sur5)</div>
-                    <div class="card-value {{ 'positive' if stats.mult4.taux_reussite >= 25 else 'neutral' }}">{{ stats.multi4.taux_reussite }}%</div>
-                    <div class="card-sub">{{ stats.multi4.gagne }} / {{ stats.top4.total }} réussis</div>
+                    <div class="card">
+                    <div class="card-title">Multi en 4</div>
+                    <div class="card-value {% if stats.multi4.taux_reussite >= 15 %}positive{% else %}neutral{% endif %}">{{ stats.multi4.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.multi4.gagne }} / {{ stats.multi4.total }} réussis</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Super 4</div>
+                    <div class="card-value {% if stats.super4.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.super4.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.super4.gagne }} / {{ stats.super4.total }} réussis</div>
+                </div>
                 </div>
                 <div class="card">
                     <div class="card-title">multi5</div>
