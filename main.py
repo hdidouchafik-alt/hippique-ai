@@ -663,6 +663,18 @@ async def learning_metrics():
             "total": s["tot"],
             "top1": s["h1"],
             "top5": s["h5"],
+            agents_scores[name] = {
+            "score": score,
+            "total": s["tot"],
+            "top1": s["h1"],
+            "top5": s["h5"],
+            "roi_pct": sg.get("roi_pct", 0),
+            "roi_pnl": sg.get("roi_euros", 0),
+            "roi_mise": sg.get("mise", 0),
+            "roi_gain": sg.get("gain", 0),
+            "roi_pari": sg.get("total", 0),
+            "roi_gagne": sg.get("gagne", 0),
+            "paris": {
             "paris": {
                 "simple_gagnant": {
                     "roi_pct": sg.get("roi_pct", 0),
