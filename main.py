@@ -1235,6 +1235,10 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
                 zdist = zscore([x["sdist"] for x in raw], r["sdist"])
 
             zo = zscore([x["soeil"] for x in raw], r["soeil"])
+            ztrainer = zscore([x["strainer"] for x in raw], r["strainer"])
+            zpedigree = zscore([x["spedigree"] for x in raw], r["spedigree"])
+            zhisto = zscore([x["shisto"] for x in raw], r["shisto"])
+            zavis = zscore([x["savis"] for x in raw], r["savis"])
             zhauteur = 0.0
             if discipline == "OBSTACLE":
                 zhauteur = zscore([x["shauteur"] for x in raw], r["shauteur"])
