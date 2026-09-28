@@ -543,11 +543,11 @@ def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     gagne = len(set(pred_top2) & v3) == 2 if v3 else False
     res["couple_place"] = {"gagne": gagne, "mise": 2.0}
 
-    # Trio (2 €)
+    # Trio (2 €) — les 3 premiers exacts
     gagne = set(pred_top3) == v3 if v3 else False
     res["trio"] = {"gagne": gagne, "mise": 2.0}
 
-    # 2sur4 (3 €) — les 2 premiers prédits doivent être dans le top 4
+    # 2sur4 (3 €) — les 2 premiers prédits dans le top 4
     gagne = len(set(pred_top2) & v4) == 2 if v4 else False
     res["2sur4"] = {"gagne": gagne, "mise": 3.0}
 
@@ -555,22 +555,20 @@ def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     gagne = set(pred_top4) == v4 if v4 else False
     res["multi4"] = {"gagne": gagne, "mise": 2.0}
 
-    # Multi en 5 (2 €) — 4 des 5 premiers
-    gagne = len(set(pred_top5) & v5) >= 4 if v5 else False
+    # Multi en 5 (2 €) — les 5 premiers, ordre libre
+    gagne = set(pred_top5) == v5 if v5 else False
     res["multi5"] = {"gagne": gagne, "mise": 2.0}
 
     # Super 4 (2 €) — les 4 premiers, ordre EXACT
     gagne = pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False
     res["super4"] = {"gagne": gagne, "mise": 2.0}
 
-    # Bonus 3 (2 €) — 3 des 5 premiers
-    gagne = len(set(pred_top5) & v5) == 3 if v5 else False
-    res["bonus3"] = {"gagne": gagne, "mise": 2.0}
-
-    # Quinté+ (2 €)
+    # Bonus 4sur5 et Bonus 3 — UNIQUEMENT sur Quinté+
     if est_quinte and len(arrivee) >= 5:
         res["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5], "mise": 2.0}
         res["quinte_desordre"] = {"gagne": set(pred_top5) == v5, "mise": 2.0}
+        res["bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4, "mise": 2.0}
+        res["bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3, "mise": 2.0}
 
     return res
 
