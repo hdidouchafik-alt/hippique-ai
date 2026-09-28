@@ -82,6 +82,7 @@ PARIS_STATS = {
     "super4": {"gagne": 0, "total": 0},
     "quinte_ordre": {"gagne": 0, "total": 0},
     "quinte_desordre": {"gagne": 0, "total": 0},
+    "bonus4": {"gagne": 0, "total": 0},
     "bonus3": {"gagne": 0, "total": 0},
 }
 
@@ -587,6 +588,7 @@ def compute_roi_per_agent():
             "quinte_ordre": {"gagne": 0, "total": 0},
             "quinte_desordre": {"gagne": 0, "total": 0},
             "quinte_bonus4": {"gagne": 0, "total": 0},
+            "bonus4": {"gagne": 0, "total": 0},
             "quinte_bonus3": {"gagne": 0, "total": 0},
         }
 
