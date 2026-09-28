@@ -402,6 +402,11 @@ async def paris_page(request: Request):
                 bloc["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
             stats_calc[pari] = bloc
 
+# Alias pour compatibilité ancien template
+        stats_calc["top4"] = stats_calc.get("multi4", {"taux_reussite": 0, "gagne": 0, "total": 0})
+        stats_calc["top5"] = stats_calc.get("multi5", {"taux_reussite": 0, "gagne": 0, "total": 0})
+        stats_calc["quinte_bonus4"] = stats_calc.get("super4", {"taux_reussite": 0, "gagne": 0, "total": 0})
+        stats_calc["quinte_bonus3"] = stats_calc.get("bonus3", {"taux_reussite": 0, "gagne": 0, "total": 0})
         return templates.TemplateResponse(request, "paris.html", {
             "stats": stats_calc,
             "mises": MISES_PMU,
