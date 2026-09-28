@@ -20,7 +20,7 @@
                    margin-bottom: 24px; border: 1px solid #334155; }
         .section h2 { color: #38bdf8; font-size: 20px; margin-bottom: 16px;
                       padding-bottom: 10px; border-bottom: 1px solid #334155; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
         .card { background: #0f172a; border-radius: 8px; padding: 16px;
                 border: 1px solid #334155; }
         .card-title { font-size: 12px; color: #94a3b8; text-transform: uppercase;
@@ -40,7 +40,6 @@
                  font-size: 11px; font-weight: 600; }
         .badge-green { background: #166534; color: #86efac; }
         .badge-red { background: #7f1d1d; color: #fca5a5; }
-        .badge-yellow { background: #78350f; color: #fcd34d; }
         .note { font-size: 12px; color: #64748b; font-style: italic;
                 margin-top: 12px; padding: 12px; background: #0f172a;
                 border-left: 3px solid #38bdf8; border-radius: 4px; }
@@ -71,16 +70,15 @@
             <div class="grid">
                 <div class="card">
                     <div class="card-title">Simple Gagnant</div>
-                    <div class="card-value {{ 'positive' if stats.simple_gagnant.taux_reussite >= 25 else 'neutral' }}">{{ stats.simple_gagnant.taux_reussite }}%</div>
+                    <div class="card-value {% if stats.simple_gagnant.taux_reussite >= 25 %}positive{% else %}neutral{% endif %}">{{ stats.simple_gagnant.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.simple_gagnant.gagne }} / {{ stats.simple_gagnant.total }} réussis</div>
                 </div>
                 <div class="card">
                     <div class="card-title">Simple Placé</div>
-                    <div class="card-value {{ 'positive' if stats.simple_place.taux_reussite >= 50 else 'neutral' }}">{{ stats.simple_place.taux_reussite }}%</div>
+                    <div class="card-value {% if stats.simple_place.taux_reussite >= 50 %}positive{% else %}neutral{% endif %}">{{ stats.simple_place.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.simple_place.gagne }} / {{ stats.simple_place.total }} réussis</div>
                 </div>
                 <div class="card">
-                    <div class="card">
                     <div class="card-title">Multi en 4</div>
                     <div class="card-value {% if stats.multi4.taux_reussite >= 15 %}positive{% else %}neutral{% endif %}">{{ stats.multi4.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.multi4.gagne }} / {{ stats.multi4.total }} réussis</div>
@@ -90,14 +88,12 @@
                     <div class="card-value {% if stats.super4.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.super4.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.super4.gagne }} / {{ stats.super4.total }} réussis</div>
                 </div>
+                <div class="card">
+                    <div class="card-title">Multi en 5</div>
+                    <div class="card-value {% if stats.multi5.taux_reussite >= 20 %}positive{% else %}neutral{% endif %}">{{ stats.multi5.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.multi5.gagne }} / {{ stats.multi5.total }} réussis</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">multi5</div>
-                    <div class="card-value {{ 'positive' if stats.multi5.taux_reussite >= 5 else 'negative' }}">{{ stats.multi5.taux_reussite }}%</div>
-                    <div class="card-sub">{{ stats.multi.gagne }} / {{ stats.multi5.total }} réussis</div>
-                </div>
-                <div class="card"
-                    <div class="card">
                     <div class="card-title">Trio</div>
                     <div class="card-value {% if stats.trio.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.trio.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.trio.gagne }} / {{ stats.trio.total }} réussis</div>
@@ -106,7 +102,6 @@
                     <div class="card-title">2sur4</div>
                     <div class="card-value {% if stats["2sur4"].taux_reussite >= 25 %}positive{% else %}neutral{% endif %}">{{ stats["2sur4"].taux_reussite }}%</div>
                     <div class="card-sub">{{ stats["2sur4"].gagne }} / {{ stats["2sur4"].total }} réussis</div>
-                </div>
                 </div>
             </div>
         </div>
@@ -120,16 +115,16 @@
                         <td><strong>Simple Gagnant</strong></td>
                         <td>{{ stats.simple_gagnant.mise }} €</td>
                         <td>{{ stats.simple_gagnant.gain }} €</td>
-                        <td class="{{ 'positive' if stats.simple_gagnant.roi_euros >= 0 else 'negative' }}">{{ stats.simple_gagnant.roi_euros }} €</td>
-                        <td class="{{ 'positive' if stats.simple_gagnant.roi_pct >= 0 else 'negative' }}">{{ stats.simple_gagnant.roi_pct }}%</td>
+                        <td class="{% if stats.simple_gagnant.roi_euros >= 0 %}positive{% else %}negative{% endif %}">{{ stats.simple_gagnant.roi_euros }} €</td>
+                        <td class="{% if stats.simple_gagnant.roi_pct >= 0 %}positive{% else %}negative{% endif %}">{{ stats.simple_gagnant.roi_pct }}%</td>
                         <td>{{ stats.simple_gagnant.gagne }} / {{ stats.simple_gagnant.total }} ({{ stats.simple_gagnant.taux_reussite }}%)</td>
                     </tr>
                     <tr>
                         <td><strong>Simple Placé</strong></td>
                         <td>{{ stats.simple_place.mise }} €</td>
                         <td>{{ stats.simple_place.gain }} €</td>
-                        <td class="{{ 'positive' if stats.simple_place.roi_euros >= 0 else 'negative' }}">{{ stats.simple_place.roi_euros }} €</td>
-                        <td class="{{ 'positive' if stats.simple_place.roi_pct >= 0 else 'negative' }}">{{ stats.simple_place.roi_pct }}%</td>
+                        <td class="{% if stats.simple_place.roi_euros >= 0 %}positive{% else %}negative{% endif %}">{{ stats.simple_place.roi_euros }} €</td>
+                        <td class="{% if stats.simple_place.roi_pct >= 0 %}positive{% else %}negative{% endif %}">{{ stats.simple_place.roi_pct }}%</td>
                         <td>{{ stats.simple_place.gagne }} / {{ stats.simple_place.total }} ({{ stats.simple_place.taux_reussite }}%)</td>
                     </tr>
                 </tbody>
@@ -141,44 +136,42 @@
             <table>
                 <thead><tr><th>Pari</th><th>Réussis</th><th>Total</th><th>Taux</th></tr></thead>
                 <tbody>
-                    <tr><td><strong>Couplé Gagnant</strong></td><td>{{ stats.couple_gagnant.gagne }}</td><td>{{ stats.couple_gagnant.total }}</td><td><span class="badge {{ 'badge-green' if stats.couple_gagnant.taux_reussite > 0 else 'badge-red' }}">{{ stats.couple_gagnant.taux_reussite }}%</span></td></tr>
-                    <tr><td><strong>Couplé Placé</strong></td><td>{{ stats.couple_place.gagne }}</td><td>{{ stats.couple_place.total }}</td><td><span class="badge {{ 'badge-green' if stats.couple_place.taux_reussite > 0 else 'badge-red' }}">{{ stats.couple_place.taux_reussite }}%</span></td></tr>
-                    <tr><td><strong>Trio</strong></td><td>{{ stats.trio.gagne }}</td><td>{{ stats.trio.total }}</td><td><span class="badge {{ 'badge-green' if stats.trio.taux_reussite > 0 else 'badge-red' }}">{{ stats.trio.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Couplé Gagnant</strong></td><td>{{ stats.couple_gagnant.gagne }}</td><td>{{ stats.couple_gagnant.total }}</td><td><span class="badge {% if stats.couple_gagnant.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.couple_gagnant.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Couplé Placé</strong></td><td>{{ stats.couple_place.gagne }}</td><td>{{ stats.couple_place.total }}</td><td><span class="badge {% if stats.couple_place.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.couple_place.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Trio</strong></td><td>{{ stats.trio.gagne }}</td><td>{{ stats.trio.total }}</td><td><span class="badge {% if stats.trio.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.trio.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>2sur4</strong></td><td>{{ stats["2sur4"].gagne }}</td><td>{{ stats["2sur4"].total }}</td><td><span class="badge {% if stats["2sur4"].taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats["2sur4"].taux_reussite }}%</span></td></tr>
                     <tr><td><strong>Multi en 4</strong></td><td>{{ stats.multi4.gagne }}</td><td>{{ stats.multi4.total }}</td><td><span class="badge {% if stats.multi4.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.multi4.taux_reussite }}%</span></td></tr>
                     <tr><td><strong>Super 4</strong></td><td>{{ stats.super4.gagne }}</td><td>{{ stats.super4.total }}</td><td><span class="badge {% if stats.super4.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.super4.taux_reussite }}%</span></td></tr>
-                    <tr><td><strong>Multi en 5</strong></td><td>{{ stats.multi5.gagne }}</td><td>{{ stats.multi5.total }}</td><td><span class="badge {% ifANT stats.multi5.taux_re**ussite > 0 %}badge-green{% ( else %}badge-red{% endif %}">{{Python stats.multi5.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Multi en 5</strong></td><td>{{ stats.multi5.gagne }}</td><td>{{ stats.multi5.total }}</td><td><span class="badge {% if stats.multi5.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.multi5.taux_reussite }}%</span></td></tr>
                     <tr><td><strong>Bonus 3</strong></td><td>{{ stats.bonus3.gagne }}</td><td>{{ stats.bonus3.total }}</td><td><span class="badge {% if stats.bonus3.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.bonus3.taux_reussite }}%</span></td></tr>
-                    <tr><td><strong>2sur4</strong></td><td>{{ stats["2sur4"].gagne }}</td><td>{{ stats["2sur4"].total }}</td><td><span class="badge {% if stats["2sur4"].taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats["2sur4"].taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Quinté+ Ordre</strong></td><td>{{ stats.quinte_ordre.gagne }}</td><td>{{ stats.quinte_ordre.total }}</td><td><span class="badge {% if stats.quinte_ordre.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.quinte_ordre.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>Quinté+ Désordre</strong></td><td>{{ stats.quinte_desordre.gagne }}</td><td>{{ stats.quinte_desordre.total }}</td><td><span class="badge {% if stats.quinte_desordre.taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats.quinte_desordre.taux_reussite }}%</span></td></tr>
                 </tbody>
             </table>
-        </div<div class="card">
-                    <div class="card-title">Trio</div>
-                    <div class="card-value {% if stats.trio.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.trio.taux_reussite }}%</div>
-                    <div class="card-sub">{{ stats.trio.gagne }} / {{ stats.trio.total }} réussis</div>
-                </div>>
+        </div>
 
         <div class="section">
             <h2>🏆 Focus Quinté+</h2>
             <div class="grid">
                 <div class="card">
                     <div class="card-title">🎯 Ordre exact</div>
-                    <div class="card-value {{ 'positive' if stats.quinte_ordre.gagne > 0 else 'neutral' }}">{{ stats.quinte_ordre.gagne }}</div>
+                    <div class="card-value {% if stats.quinte_ordre.gagne > 0 %}positive{% else %}neutral{% endif %}">{{ stats.quinte_ordre.gagne }}</div>
                     <div class="card-sub">sur {{ stats.quinte_ordre.total }} Quinté+ ({{ stats.quinte_ordre.taux_reussite }}%)</div>
                 </div>
                 <div class="card">
                     <div class="card-title">🎲 Désordre</div>
-                    <div class="card-value {{ 'positive' if stats.quinte_desordre.gagne > 0 else 'neutral' }}">{{ stats.quinte_desordre.gagne }}</div>
+                    <div class="card-value {% if stats.quinte_desordre.gagne > 0 %}positive{% else %}neutral{% endif %}">{{ stats.quinte_desordre.gagne }}</div>
                     <div class="card-sub">sur {{ stats.quinte_desordre.total }} Quinté+ ({{ stats.quinte_desordre.taux_reussite }}%)</div>
                 </div>
                 <div class="card">
                     <div class="card-title">🎁 Bonus 4sur5</div>
-                    <div class="card-value {{ 'positive' if stats.quinte_bonus4.gagne > 0 else 'neutral' }}">{{ stats.quinte_bonus4.gagne }}</div>
-                    <div class="card-sub">sur {{ stats.quinte_bonus4.total }} Quinté+ ({{ stats.quinte_bonus4.taux_reussite }}%)</div>
+                    <div class="card-value {% if stats.multi5.gagne > 0 %}positive{% else %}neutral{% endif %}">{{ stats.multi5.gagne }}</div>
+                    <div class="card-sub">sur {{ stats.multi5.total }} courses ({{ stats.multi5.taux_reussite }}%)</div>
                 </div>
                 <div class="card">
                     <div class="card-title">🎁 Bonus 3</div>
-                    <div class="card-value {{ 'positive' if stats.quinte_bonus3.gagne > 0 else 'neutral' }}">{{ stats.quinte_bonus3.gagne }}</div>
-                    <div class="card-sub">sur {{ stats.quinte_bonus3.total }} Quinté+ ({{ stats.quinte_bonus3.taux_reussite }}%)</div>
+                    <div class="card-value {% if stats.bonus3.gagne > 0 %}positive{% else %}neutral{% endif %}">{{ stats.bonus3.gagne }}</div>
+                    <div class="card-sub">sur {{ stats.bonus3.total }} courses ({{ stats.bonus3.taux_reussite }}%)</div>
                 </div>
             </div>
         </div>
