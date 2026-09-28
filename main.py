@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.0.0")
+app = FastAPI(title="Hippique AI", version="6.2.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -76,6 +76,7 @@ PARIS_STATS = {
     "couple_gagnant": {"gagne": 0, "total": 0},
     "couple_place": {"gagne": 0, "total": 0},
     "trio": {"gagne": 0, "total": 0},
+    "2sur4": {"gagne": 0, "total": 0},
     "quinte_ordre": {"gagne": 0, "total": 0},
     "quinte_desordre": {"gagne": 0, "total": 0},
     "quinte_bonus4": {"gagne": 0, "total": 0},
@@ -501,37 +502,125 @@ async def create_prediction(payload: PredIn):
     return result
 
 
-def compute_roi():
-    roi = {}
-    for name in STATS["agents"].keys():
-        roi[name] = {"mise": 0.0, "gain": 0.0, "pari": 0, "gagne": 0}
+def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
+    """Calcule le ROI d'un agent pour tous les paris PMU (vraies mises)."""
+    res = {}
+    if not arrivee or not pred:
+        return res
+
+    v1 = arrivee[0]
+    v3 = set(arrivee[:3]) if len(arrivee) >= 3 else set(arrivee)
+    v4 = set(arrivee[:4]) if len(arrivee) >= 4 else set(arrivee)
+    v5 = set(arrivee[:5]) if len(arrivee) >= 5 else set(arrivee)
+
+    pred_top2 = pred[:2] if len(pred) >= 2 else pred
+    pred_top3 = pred[:3] if len(pred) >= 3 else pred
+    pred_top4 = pred[:4] if len(pred) >= 4 else pred
+    pred_top5 = pred[:5] if len(pred) >= 5 else pred
+
+    # Simple Gagnant (2 €) — ROI en euros
+    gagne = bool(pred_top5) and pred_top5[0] == v1
+    cote = cote_top1 or 0
+    gain = 2.0 * cote if gagne and cote > 0 else 0
+    res["simple_gagnant"] = {"gagne": gagne, "mise": 2.0, "gain": gain}
+
+    # Simple Placé (2 €) — ROI en euros (approximé ×0.40)
+    gagne = bool(pred_top5) and pred_top5[0] in v3
+    cote = cote_top1 or 0
+    gain = 2.0 * cote * 0.40 if gagne and cote > 0 else 0
+    res["simple_place"] = {"gagne": gagne, "mise": 2.0, "gain": gain}
+
+    # Couplé Gagnant (2 €) — taux
+    gagne = len(set(pred_top2) & set(arrivee[:2])) == 2 if len(arrivee) >= 2 else False
+    res["couple_gagnant"] = {"gagne": gagne, "mise": 2.0}
+
+    # Couplé Placé (2 €) — taux
+    gagne = len(set(pred_top2) & v3) == 2 if v3 else False
+    res["couple_place"] = {"gagne": gagne, "mise": 2.0}
+
+    # Trio (2 €) — taux
+    gagne = set(pred_top3) == v3 if v3 else False
+    res["trio"] = {"gagne": gagne, "mise": 2.0}
+
+    # 2sur4 (3 €) — taux
+    gagne = len(set(pred_top4) & v4) >= 2 if v4 else False
+    res["2sur4"] = {"gagne": gagne, "mise": 3.0}
+
+    # Quinté+ (2 €) — taux
+    if est_quinte and len(arrivee) >= 5:
+        res["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5], "mise": 2.0}
+        res["quinte_desordre"] = {"gagne": set(pred_top5) == v5, "mise": 2.0}
+        res["quinte_bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4, "mise": 2.0}
+        res["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3, "mise": 2.0}
+
+    return res
+
+
+def compute_roi_per_agent():
+    """Pour chaque agent, calcule le ROI par type de pari (vraies mises)."""
+    resultat = {}
+    for agent_name in STATS["agents"].keys():
+        resultat[agent_name] = {
+            "simple_gagnant": {"mise": 0.0, "gain": 0.0, "gagne": 0, "total": 0},
+            "simple_place": {"mise": 0.0, "gain": 0.0, "gagne": 0, "total": 0},
+            "couple_gagnant": {"gagne": 0, "total": 0},
+            "couple_place": {"gagne": 0, "total": 0},
+            "trio": {"gagne": 0, "total": 0},
+            "2sur4": {"gagne": 0, "total": 0},
+            "quinte_ordre": {"gagne": 0, "total": 0},
+            "quinte_desordre": {"gagne": 0, "total": 0},
+            "quinte_bonus4": {"gagne": 0, "total": 0},
+            "quinte_bonus3": {"gagne": 0, "total": 0},
+        }
+
     for course in COLLECTED:
         ev = course.get("evaluations") or {}
+        arrivee = course.get("arrivee") or []
+        est_quinte = course.get("est_quinte", False)
+        if not arrivee:
+            continue
+
         for agent_name, data in ev.items():
-            if agent_name not in roi:
+            if agent_name not in resultat:
                 continue
-            cote = data.get("cote_top1")
-            if not cote:
+            pred = data.get("prediction") or []
+            cote_top1 = data.get("cote_top1")
+            if not pred:
                 continue
-            roi[agent_name]["mise"] += MISE
-            roi[agent_name]["pari"] += 1
-            if data.get("top1") == 1:
-                roi[agent_name]["gain"] += MISE * float(cote)
-                roi[agent_name]["gagne"] += 1
-    for name in roi:
-        mise = roi[name]["mise"]
-        gain = roi[name]["gain"]
-        roi[name]["pnl"] = round(gain - mise, 2)
-        roi[name]["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
-        roi[name]["mise"] = round(mise, 2)
-        roi[name]["gain"] = round(gain, 2)
-    return roi
+
+            roi = calculer_roi_agent(pred, arrivee, cote_top1, est_quinte)
+
+            for pari, d in roi.items():
+                if pari not in resultat[agent_name]:
+                    continue
+                resultat[agent_name][pari]["total"] += 1
+                if d.get("gagne"):
+                    resultat[agent_name][pari]["gagne"] += 1
+                if "mise" in d:
+                    resultat[agent_name][pari]["mise"] = resultat[agent_name][pari].get("mise", 0) + d["mise"]
+                    resultat[agent_name][pari]["gain"] = resultat[agent_name][pari].get("gain", 0) + d.get("gain", 0)
+
+    # Calculs finaux
+    for agent_name, paris in resultat.items():
+        for pari, d in paris.items():
+            total = d.get("total", 0)
+            gagne = d.get("gagne", 0)
+            d["taux_reussite"] = round(gagne / total * 100, 2) if total > 0 else 0
+            if "mise" in d:
+                mise = d["mise"]
+                gain = d["gain"]
+                d["roi_euros"] = round(gain - mise, 2)
+                d["roi_pct"] = round((gain - mise) / mise * 100, 2) if mise > 0 else 0
+                d["mise"] = round(mise, 2)
+                d["gain"] = round(gain, 2)
+
+    return resultat
     
 
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     evaluated = STATS["evaluated"]
-    roi = compute_roi()
+    roi_per_agent = compute_roi_per_agent()
     agents_scores = {}
     for name, s in STATS["agents"].items():
         if s["tot"] > 0:
@@ -541,18 +630,56 @@ async def learning_metrics():
             score = min(100.0, max(0.0, score))
         else:
             score = 50.0
-        r = roi.get(name, {})
+        paris_agent = roi_per_agent.get(name, {})
+        # ROI Simple Gagnant + Placé (en euros)
+        sg = paris_agent.get("simple_gagnant", {})
+        sp = paris_agent.get("simple_place", {})
+        cg = paris_agent.get("couple_gagnant", {})
+        cp = paris_agent.get("couple_place", {})
+        trio = paris_agent.get("trio", {})
+        t24 = paris_agent.get("2sur4", {})
+
         agents_scores[name] = {
             "score": score,
             "total": s["tot"],
             "top1": s["h1"],
             "top5": s["h5"],
-            "roi_pct": r.get("roi_pct", 0),
-            "roi_pnl": r.get("pnl", 0),
-            "roi_mise": r.get("mise", 0),
-            "roi_gain": r.get("gain", 0),
-            "roi_pari": r.get("pari", 0),
-            "roi_gagne": r.get("gagne", 0),
+            "paris": {
+                "simple_gagnant": {
+                    "roi_pct": sg.get("roi_pct", 0),
+                    "roi_euros": sg.get("roi_euros", 0),
+                    "taux": sg.get("taux_reussite", 0),
+                    "gagne": sg.get("gagne", 0),
+                    "total": sg.get("total", 0),
+                },
+                "simple_place": {
+                    "roi_pct": sp.get("roi_pct", 0),
+                    "roi_euros": sp.get("roi_euros", 0),
+                    "taux": sp.get("taux_reussite", 0),
+                    "gagne": sp.get("gagne", 0),
+                    "total": sp.get("total", 0),
+                },
+                "couple_gagnant": {
+                    "taux": cg.get("taux_reussite", 0),
+                    "gagne": cg.get("gagne", 0),
+                    "total": cg.get("total", 0),
+                },
+                "couple_place": {
+                    "taux": cp.get("taux_reussite", 0),
+                    "gagne": cp.get("gagne", 0),
+                    "total": cp.get("total", 0),
+                },
+                "trio": {
+                    "taux": trio.get("taux_reussite", 0),
+                    "gagne": trio.get("gagne", 0),
+                    "total": trio.get("total", 0),
+                },
+                "2sur4": {
+                    "taux": t24.get("taux_reussite", 0),
+                    "gagne": t24.get("gagne", 0),
+                    "total": t24.get("total", 0),
+                },
+            },
         }
     if evaluated > 0:
         nb = len(STATS["agents"])
@@ -913,6 +1040,11 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
 
     gagne = set(pred_top3) == v3 if v3 else False
     resultats["trio"] = {"gagne": gagne}
+    # 2sur4 (3 €)
+    v4_local = set(arrivee[:4]) if len(arrivee) >= 4 else set(arrivee)
+    pred_top4_local = pred[:4] if len(pred) >= 4 else pred
+    gagne = len(set(pred_top4_local) & v4_local) >= 2
+    resultats["2sur4"] = {"gagne": gagne}
 
     if est_quinte and len(arrivee) >= 5:
         resultats["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5]}
@@ -964,6 +1096,15 @@ def recalculer_paris_stats():
         roi_pmu = calculer_roi_pmu({"ForecastAgent": pred}, arrivee, cotes,
                                     est_quinte=est_quinte)
         maj_paris_stats(roi_pmu)
+        # v6.2 : calcul 2sur4 par course
+        try:
+            v4_local = set(arrivee[:4]) if len(arrivee) >= 4 else set(arrivee)
+            pred_local = pred[:4] if len(pred) >= 4 else pred
+            if len(set(pred_local) & v4_local) >= 2:
+                PARIS_STATS["2sur4"]["gagne"] += 1
+            PARIS_STATS["2sur4"]["total"] += 1
+        except Exception:
+            pass
 def compute_agent_weights(discipline=None):
     """Poids des agents pour MetaAgent.
     N'inclut que les agents avec un ROI acceptable (> -30 %)."""
