@@ -81,13 +81,13 @@
                 </div>
                 <div class="card">
                     <div class="card-title">Top 4 (4sur5)</div>
-                    <div class="card-value {{ 'positive' if stats.top4.taux_reussite >= 25 else 'neutral' }}">{{ stats.top4.taux_reussite }}%</div>
-                    <div class="card-sub">{{ stats.top4.gagne }} / {{ stats.top4.total }} réussis</div>
+                    <div class="card-value {{ 'positive' if stats.mult4.taux_reussite >= 25 else 'neutral' }}">{{ stats.multi4.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.multi4.gagne }} / {{ stats.top4.total }} réussis</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Top 5</div>
-                    <div class="card-value {{ 'positive' if stats.top5.taux_reussite >= 5 else 'negative' }}">{{ stats.top5.taux_reussite }}%</div>
-                    <div class="card-sub">{{ stats.top5.gagne }} / {{ stats.top5.total }} réussis</div>
+                    <div class="card-title">multi5</div>
+                    <div class="card-value {{ 'positive' if stats.multi5.taux_reussite >= 5 else 'negative' }}">{{ stats.multi5.taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats.multi.gagne }} / {{ stats.multi5.total }} réussis</div>
                 </div>
                 <div class="card"
                     <div class="card">
