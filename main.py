@@ -1029,16 +1029,18 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
     pred_top4 = pred[:4] if len(pred) >= 4 else pred
     pred_top5 = pred[:5] if len(pred) >= 5 else pred
 
+    # Simple Gagnant
     gagne = bool(pred_top5) and pred_top5[0] == v1
     mise = MISES_PMU["simple_gagnant"]
     cote = cotes.get(v1, 0) if v1 else 0
-    gain = mise * cote  if gagne and cote > 0 else 0
+    gain = mise * cote if gagne and cote > 0 else 0
     resultats["simple_gagnant"] = {
         "gagne": gagne, "mise": mise,
         "gain": round(gain, 2),
         "roi_euros": round(gain - mise, 2),
     }
 
+    # Simple Placé
     gagne = bool(pred_top5) and pred_top5[0] in v3
     mise = MISES_PMU["simple_place"]
     cote = cotes.get(pred_top5[0], 0) if pred_top5 else 0
@@ -1049,30 +1051,37 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
         "roi_euros": round(gain - mise, 2),
     }
 
+    # Couplé Gagnant
     gagne = len(set(pred_top2) & set(arrivee[:2])) == 2 if len(arrivee) >= 2 else False
     resultats["couple_gagnant"] = {"gagne": gagne}
 
+    # Couplé Placé
     gagne = len(set(pred_top2) & v3) == 2 if v3 else False
     resultats["couple_place"] = {"gagne": gagne}
 
+    # Trio
     gagne = set(pred_top3) == v3 if v3 else False
     resultats["trio"] = {"gagne": gagne}
-    # 2sur4 (3 €)
-    v4_local = set(arrivee[:4]) if len(arrivee) >= 4 else set(arrivee)
-    pred_top4_local = pred[:4] if len(pred) >= 4 else pred
-    gagne = len(set(pred_top4_local) & v4_local) >= 2
+
+    # 2sur4 — les 2 premiers prédits dans le top 4
+    gagne = len(set(pred_top2) & v4) == 2 if v4 else False
     resultats["2sur4"] = {"gagne": gagne}
 
+    # Multi en 4 — les 4 premiers, ordre libre
+    resultats["multi4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
+
+    # Multi en 5 — les 5 premiers, ordre libre
+    resultats["multi5"] = {"gagne": set(pred_top5) == v5 if v5 else False}
+
+    # Super 4 — les 4 premiers, ordre EXACT
+    resultats["super4"] = {"gagne": pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False}
+
+    # Bonus 4sur5 et Bonus 3 — UNIQUEMENT sur Quinté+
     if est_quinte and len(arrivee) >= 5:
         resultats["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5]}
         resultats["quinte_desordre"] = {"gagne": set(pred_top5) == v5}
-        resultats["quinte_bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4}
-        resultats["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3}
-
-    resultats["multi4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
-    resultats["multi5"] = {"gagne": len(set(pred_top5) & v5) >= 4 if v5 else False}
-    resultats["super4"] = {"gagne": pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False}
-    resultats["bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3 if v5 else False}
+        resultats["bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4}
+        resultats["bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3}
 
     return resultats
 
