@@ -1096,15 +1096,6 @@ def recalculer_paris_stats():
         roi_pmu = calculer_roi_pmu({"ForecastAgent": pred}, arrivee, cotes,
                                     est_quinte=est_quinte)
         maj_paris_stats(roi_pmu)
-        # v6.2 : calcul 2sur4 par course
-        try:
-            v4_local = set(arrivee[:4]) if len(arrivee) >= 4 else set(arrivee)
-            pred_local = pred[:4] if len(pred) >= 4 else pred
-            if len(set(pred_local) & v4_local) >= 2:
-                PARIS_STATS["2sur4"]["gagne"] += 1
-            PARIS_STATS["2sur4"]["total"] += 1
-        except Exception:
-            pass
 def compute_agent_weights(discipline=None):
     """Poids des agents pour MetaAgent.
     N'inclut que les agents avec un ROI acceptable (> -30 %)."""
