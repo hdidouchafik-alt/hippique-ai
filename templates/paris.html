@@ -93,6 +93,11 @@
                     <div class="card-title">Trio</div>
                     <div class="card-value {% if stats.trio.taux_reussite >= 5 %}positive{% else %}neutral{% endif %}">{{ stats.trio.taux_reussite }}%</div>
                     <div class="card-sub">{{ stats.trio.gagne }} / {{ stats.trio.total }} réussis</div>
+                    <div class="card">
+                    <div class="card-title">2sur4</div>
+                    <div class="card-value {% if stats["2sur4"].taux_reussite >= 25 %}positive{% else %}neutral{% endif %}">{{ stats["2sur4"].taux_reussite }}%</div>
+                    <div class="card-sub">{{ stats["2sur4"].gagne }} / {{ stats["2sur4"].total }} réussis</div>
+                </div>
                 </div>
             </div>
         </div>
@@ -132,6 +137,7 @@
                     <tr><td><strong>Trio</strong></td><td>{{ stats.trio.gagne }}</td><td>{{ stats.trio.total }}</td><td><span class="badge {{ 'badge-green' if stats.trio.taux_reussite > 0 else 'badge-red' }}">{{ stats.trio.taux_reussite }}%</span></td></tr>
                     <tr><td><strong>Top 4 (4sur5)</strong></td><td>{{ stats.top4.gagne }}</td><td>{{ stats.top4.total }}</td><td><span class="badge {{ 'badge-green' if stats.top4.taux_reussite > 0 else 'badge-red' }}">{{ stats.top4.taux_reussite }}%</span></td></tr>
                     <tr><td><strong>Top 5</strong></td><td>{{ stats.top5.gagne }}</td><td>{{ stats.top5.total }}</td><td><span class="badge {{ 'badge-green' if stats.top5.taux_reussite > 0 else 'badge-red' }}">{{ stats.top5.taux_reussite }}%</span></td></tr>
+                    <tr><td><strong>2sur4</strong></td><td>{{ stats["2sur4"].gagne }}</td><td>{{ stats["2sur4"].total }}</td><td><span class="badge {% if stats["2sur4"].taux_reussite > 0 %}badge-green{% else %}badge-red{% endif %}">{{ stats["2sur4"].taux_reussite }}%</span></td></tr>
                 </tbody>
             </table>
         </div<div class="card">
