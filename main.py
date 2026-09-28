@@ -77,12 +77,12 @@ PARIS_STATS = {
     "couple_place": {"gagne": 0, "total": 0},
     "trio": {"gagne": 0, "total": 0},
     "2sur4": {"gagne": 0, "total": 0},
+    "multi4": {"gagne": 0, "total": 0},
+    "multi5": {"gagne": 0, "total": 0},
+    "super4": {"gagne": 0, "total": 0},
     "quinte_ordre": {"gagne": 0, "total": 0},
     "quinte_desordre": {"gagne": 0, "total": 0},
-    "quinte_bonus4": {"gagne": 0, "total": 0},
-    "quinte_bonus3": {"gagne": 0, "total": 0},
-    "top5": {"gagne": 0, "total": 0},
-    "top4": {"gagne": 0, "total": 0},
+    "bonus3": {"gagne": 0, "total": 0},
 }
 
 if DB_OK:
@@ -1052,8 +1052,10 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
         resultats["quinte_bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4}
         resultats["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3}
 
-    resultats["top5"] = {"gagne": len(set(pred_top5) & v5) == 5 if v5 else False}
-    resultats["top4"] = {"gagne": len(set(pred_top5) & v5) >= 4 if v5 else False}
+    resultats["multi4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
+    resultats["multi5"] = {"gagne": len(set(pred_top5) & v5) >= 4 if v5 else False}
+    resultats["super4"] = {"gagne": pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False}
+    resultats["bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3 if v5 else False}
 
     return resultats
 
