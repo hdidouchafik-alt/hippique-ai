@@ -530,28 +530,42 @@ def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     gain = 2.0 * cote * 0.40 if gagne and cote > 0 else 0
     res["simple_place"] = {"gagne": gagne, "mise": 2.0, "gain": gain}
 
-    # Couplé Gagnant (2 €) — taux
+    # Couplé Gagnant (2 €)
     gagne = len(set(pred_top2) & set(arrivee[:2])) == 2 if len(arrivee) >= 2 else False
     res["couple_gagnant"] = {"gagne": gagne, "mise": 2.0}
 
-    # Couplé Placé (2 €) — taux
+    # Couplé Placé (2 €)
     gagne = len(set(pred_top2) & v3) == 2 if v3 else False
     res["couple_place"] = {"gagne": gagne, "mise": 2.0}
 
-    # Trio (2 €) — taux
+    # Trio (2 €)
     gagne = set(pred_top3) == v3 if v3 else False
     res["trio"] = {"gagne": gagne, "mise": 2.0}
 
-    # 2sur4 (3 €) — taux
-    gagne = len(set(pred_top4) & v4) >= 2 if v4 else False
+    # 2sur4 (3 €) — les 2 premiers prédits doivent être dans le top 4
+    gagne = len(set(pred_top2) & v4) == 2 if v4 else False
     res["2sur4"] = {"gagne": gagne, "mise": 3.0}
 
-    # Quinté+ (2 €) — taux
+    # Multi en 4 (2 €) — les 4 premiers, ordre libre
+    gagne = set(pred_top4) == v4 if v4 else False
+    res["multi4"] = {"gagne": gagne, "mise": 2.0}
+
+    # Multi en 5 (2 €) — 4 des 5 premiers
+    gagne = len(set(pred_top5) & v5) >= 4 if v5 else False
+    res["multi5"] = {"gagne": gagne, "mise": 2.0}
+
+    # Super 4 (2 €) — les 4 premiers, ordre EXACT
+    gagne = pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False
+    res["super4"] = {"gagne": gagne, "mise": 2.0}
+
+    # Bonus 3 (2 €) — 3 des 5 premiers
+    gagne = len(set(pred_top5) & v5) == 3 if v5 else False
+    res["bonus3"] = {"gagne": gagne, "mise": 2.0}
+
+    # Quinté+ (2 €)
     if est_quinte and len(arrivee) >= 5:
         res["quinte_ordre"] = {"gagne": pred_top5 == arrivee[:5], "mise": 2.0}
         res["quinte_desordre"] = {"gagne": set(pred_top5) == v5, "mise": 2.0}
-        res["quinte_bonus4"] = {"gagne": len(set(pred_top5) & v5) == 4, "mise": 2.0}
-        res["quinte_bonus3"] = {"gagne": len(set(pred_top5) & v5) == 3, "mise": 2.0}
 
     return res
 
