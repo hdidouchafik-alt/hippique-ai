@@ -419,6 +419,13 @@ async def paris_page(request: Request):
 
 
 @app.get("/api/health")
+@app.head("/api/health")
+async def health():
+    return {
+        "status": "ok",
+        ...
+    }
+@app.get("/api/health")
 async def health():
     return {
         "status": "ok",
@@ -1951,6 +1958,11 @@ async def quinte_du_jour(offset: int = 0):
             return {"ok": True, "statut": "a_venir", **details}
 
     return {"ok": False, "error": "Aucun Quinté+ trouvé ce jour"}
+@app.get("/api/cron/run")
+@app.head("/api/cron/run")
+async def cron_run(background_tasks: BackgroundTasks):
+    background_tasks.add_task(agent_collect, offset=0)
+    return {"ok": True, "queued": True}
 @app.get("/api/cron/run")
 async def cron_run(background_tasks: BackgroundTasks):
     background_tasks.add_task(agent_collect, offset=0)
