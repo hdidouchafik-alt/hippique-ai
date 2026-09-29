@@ -670,6 +670,13 @@ async def learning_metrics():
             "roi_gain": sg.get("gain", 0),
             "roi_pari": sg.get("total", 0),
             "roi_gagne": sg.get("gagne", 0),
+            "roi_combine_pct": round(
+                ((sg.get("gain", 0) + sp.get("gain", 0)) - (sg.get("mise", 0) + sp.get("mise", 0)))
+                / (sg.get("mise", 0) + sp.get("mise", 0)) * 100, 2
+            ) if (sg.get("mise", 0) + sp.get("mise", 0)) > 0 else 0,
+            "roi_combine_euros": round(
+                (sg.get("gain", 0) + sp.get("gain", 0)) - (sg.get("mise", 0) + sp.get("mise", 0)), 2
+            ),
             "paris": {
                 "simple_gagnant": {
                     "roi_pct": sg.get("roi_pct", 0),
