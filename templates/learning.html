@@ -200,8 +200,37 @@ function loadMetrics() {
         html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
         html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
         html += '</div>';
-        html += '<div class="roi ' + roiClass + '">ROI : ' + (roiPct >= 0 ? '+' : '') + roiPct.toFixed(1) + '% (' + (roiPnl >= 0 ? '+' : '') + roiPnl.toFixed(0) + '€)</div>';
-        html += '</div>';
+        // ROI en euros
+var paris = a.data.paris || {};
+var sg = paris.simple_gagnant || {};
+var sp = paris.simple_place || {};
+var cg = paris.couple_gagnant || {};
+var cp = paris.couple_place || {};
+var tri = paris.trio || {};
+var t24 = paris["2sur4"] || {};
+var m4 = paris.multi4 || {};
+var m5 = paris.multi5 || {};
+var s4 = paris.super4 || {};
+
+var sgRoi = sg.roi_pct || 0;
+var spRoi = sp.roi_pct || 0;
+var combinePct = a.data.roi_combine_pct || 0;
+var combineEur = a.data.roi_combine_euros || 0;
+
+html += '<div class="roi-detail">';
+html += '<div class="roi-section-title">💰 ROI en euros</div>';
+html += '<div class="roi-line"><span>Simple Gagnant</span><span class="' + (sgRoi >= 0 ? 'pos' : 'neg') + '">' + (sgRoi >= 0 ? '+' : '') + sgRoi.toFixed(1) + '% (' + (sg.roi_euros || 0) + '€)</span></div>';
+html += '<div class="roi-line"><span>Simple Placé</span><span class="' + (spRoi >= 0 ? 'pos' : 'neg') + '">' + (spRoi >= 0 ? '+' : '') + spRoi.toFixed(1) + '% (' + (sp.roi_euros || 0) + '€)</span></div>';
+html += '<div class="roi-line roi-combine"><span><b>Combiné (G+P)</b></span><span class="' + (combinePct >= 0 ? 'pos' : 'neg') + '"><b>' + (combinePct >= 0 ? '+' : '') + combinePct.toFixed(1) + '% (' + (combineEur >= 0 ? '+' : '') + combineEur + '€)</b></span></div>';
+html += '<div class="roi-section-title">🎯 Taux de réussite</div>';
+html += '<div class="roi-line"><span>Couplé Gagnant</span><span>' + (cg.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Couplé Placé</span><span>' + (cp.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Trio</span><span>' + (tri.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>2sur4</span><span>' + (t24.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Multi en 4</span><span>' + (m4.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Multi en 5</span><span>' + (m5.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Super 4</span><span>' + (s4.taux || 0).toFixed(1) + '%</span></div>';
+html += '</div>';
       }
       $('agentsList').innerHTML = html;
       $('agentsCount').textContent = arr.length + ' agents';
