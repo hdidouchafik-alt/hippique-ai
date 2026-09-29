@@ -423,12 +423,6 @@ async def paris_page(request: Request):
 async def health():
     return {
         "status": "ok",
-        ...
-    }
-@app.get("/api/health")
-async def health():
-    return {
-        "status": "ok",
         "version": app.version,
         "database": DB_OK,
         "results_collected": len(COLLECTED),
