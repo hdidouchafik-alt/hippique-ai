@@ -1953,7 +1953,7 @@ async def quinte_du_jour(offset: int = 0):
 
     return {"ok": False, "error": "Aucun Quinté+ trouvé ce jour"}
 @app.get("/api/cron/run")
-@app.head("/api/cron/run")
+@app.head("/api/cron/run", include_in_schema=False)
 async def cron_run(background_tasks: BackgroundTasks):
     background_tasks.add_task(agent_collect, offset=0)
     return {"ok": True, "queued": True}
