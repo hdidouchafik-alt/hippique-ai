@@ -219,18 +219,21 @@ var combineEur = a.data.roi_combine_euros || 0;
 
 html += '<div class="roi-detail">';
 html += '<div class="roi-section-title">💰 ROI en euros</div>';
-html += '<div class="roi-line"><span>Simple Gagnant</span><span class="' + (sgRoi >= 0 ? 'pos' : 'neg') + '">' + (sgRoi >= 0 ? '+' : '') + sgRoi.toFixed(1) + '% (' + (sg.roi_euros || 0) + '€)</span></div>';
-html += '<div class="roi-line"><span>Simple Placé</span><span class="' + (spRoi >= 0 ? 'pos' : 'neg') + '">' + (spRoi >= 0 ? '+' : '') + spRoi.toFixed(1) + '% (' + (sp.roi_euros || 0) + '€)</span></div>';
-html += '<div class="roi-line roi-combine"><span><b>Combiné (G+P)</b></span><span class="' + (combinePct >= 0 ? 'pos' : 'neg') + '"><b>' + (combinePct >= 0 ? '+' : '') + combinePct.toFixed(1) + '% (' + (combineEur >= 0 ? '+' : '') + combineEur + '€)</b></span></div>';
+html += '<div class="roi-detail">';
+html += '<div class="roi-section-title">💰 ROI en euros</div>';
+html += '<div class="roi-line"><span>Simple Gagnant&nbsp;:</span><span class="' + (sgRoi >= 0 ? 'pos' : 'neg') + '">' + (sgRoi >= 0 ? '+' : '') + sgRoi.toFixed(1) + '% (' + (sg.roi_euros || 0) + '€)</span></div>';
+html += '<div class="roi-line"><span>Simple Placé&nbsp;:</span><span class="' + (spRoi >= 0 ? 'pos' : 'neg') + '">' + (spRoi >= 0 ? '+' : '') + spRoi.toFixed(1) + '% (' + (sp.roi_euros || 0) + '€)</span></div>';
+html += '<div class="roi-line roi-combine"><span><b>Combiné (G+P)&nbsp;:</b></span><span class="' + (combinePct >= 0 ? 'pos' : 'neg') + '"><b>' + (combinePct >= 0 ? '+' : '') + combinePct.toFixed(1) + '% (' + (combineEur >= 0 ? '+' : '') + combineEur + '€)</b></span></div>';
 html += '<div class="roi-section-title">🎯 Taux de réussite</div>';
-html += '<div class="roi-line"><span>Couplé Gagnant</span><span>' + (cg.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>Couplé Placé</span><span>' + (cp.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>Trio</span><span>' + (tri.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>2sur4</span><span>' + (t24.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>Multi en 4</span><span>' + (m4.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>Multi en 5</span><span>' + (m5.taux || 0).toFixed(1) + '%</span></div>';
-html += '<div class="roi-line"><span>Super 4</span><span>' + (s4.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Couplé Gagnant&nbsp;:</span><span>' + (cg.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Couplé Placé&nbsp;:</span><span>' + (cp.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Trio&nbsp;:</span><span>' + (tri.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>2sur4&nbsp;:</span><span>' + (t24.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Multi en 4&nbsp;:</span><span>' + (m4.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Multi en 5&nbsp;:</span><span>' + (m5.taux || 0).toFixed(1) + '%</span></div>';
+html += '<div class="roi-line"><span>Super 4&nbsp;:</span><span>' + (s4.taux || 0).toFixed(1) + '%</span></div>';
 html += '</div>';
+html
       }
       $('agentsList').innerHTML = html;
       $('agentsCount').textContent = arr.length + ' agents';
