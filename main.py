@@ -612,6 +612,209 @@ def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     return res
 
 
+def calculer_paris_champ_reduit(pred, arrivee, nb_partants, cotes, est_quinte=False):
+    """Calcule les paris en champ réduit selon règles PMU strictes."""
+    res = {}
+    if not arrivee or not pred:
+        return res
+
+    formules = detecter_formules("", nb_partants, est_quinte)
+    v1 = arrivee[0]
+    v3 = set(arrivee[:3])
+    v4 = set(arrivee[:4])
+    v5 = set(arrivee[:5])
+
+    # --- SIMPLE GAGNANT (2 chevaux, 2 paris) ---
+    chevaux = pred[:2]
+    gagne = False
+    gain = 0
+    mise = 4.0  # 2 chevaux x 2 €
+    for ch in chevaux:
+        if ch == v1:
+            gagne = True
+            cote = cotes.get(ch, 0)
+            if cote > 0:
+                gain += 2.0 * cote
+    res["simple_gagnant"] = {"mise": mise, "gain": round(gain, 2), "gagne": gagne}
+
+    # --- SIMPLE PLACÉ (2 chevaux, 2 paris) ---
+    chevaux = pred[:2]
+    gagne = False
+    gain = 0
+    mise = 4.0
+    for ch in chevaux:
+        if ch in v3:
+            gagne = True
+            cote = cotes.get(ch, 0)
+            if cote > 0:
+                gain += 2.0 * cote * 0.40
+    res["simple_place"] = {"mise": mise, "gain": round(gain, 2), "gagne": gagne}
+
+    # --- COUPLÉ GAGNANT DÉSORDRE (3 chevaux, 3 combis) ---
+    if formules["couple_gagnant_desordre"]:
+        chevaux = pred[:3]
+        combis = []
+        for i in range(len(chevaux)):
+            for j in range(i + 1, len(chevaux)):
+                combis.append({chevaux[i], chevaux[j]})
+        gagne = 0
+        for c in combis:
+            if c == set(arrivee[:2]):
+                gagne += 1
+        res["couple_gagnant_desordre"] = {
+            "mise": len(combis) * 2.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- COUPLÉ GAGNANT ORDRE (3 chevaux, 6 combis) ---
+    if formules["couple_gagnant_ordre"]:
+        chevaux = pred[:3]
+        combis = []
+        for i in range(len(chevaux)):
+            for j in range(len(chevaux)):
+                if i != j:
+                    combis.append((chevaux[i], chevaux[j]))
+        gagne = 0
+        for c in combis:
+            if c == tuple(arrivee[:2]):
+                gagne += 1
+        res["couple_gagnant_ordre"] = {
+            "mise": len(combis) * 2.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- COUPLÉ PLACÉ (3 chevaux, 3 combis) ---
+    chevaux = pred[:3]
+    combis = []
+    for i in range(len(chevaux)):
+        for j in range(i + 1, len(chevaux)):
+            combis.append({chevaux[i], chevaux[j]})
+    gagne = 0
+    for c in combis:
+        if len(c & v3) == 2:
+            gagne += 1
+    res["couple_place"] = {
+        "mise": len(combis) * 2.0,
+        "combis": len(combis),
+        "gagne": gagne > 0,
+        "gain": 0,
+    }
+
+    # --- TRIO DÉSORDRE (4 chevaux, 4 combis) ---
+    if formules["trio_desordre"]:
+        chevaux = pred[:4]
+        combis = []
+        for i in range(len(chevaux)):
+            for j in range(i + 1, len(chevaux)):
+                for k in range(j + 1, len(chevaux)):
+                    combis.append({chevaux[i], chevaux[j], chevaux[k]})
+        gagne = 0
+        for c in combis:
+            if c == v3:
+                gagne += 1
+        res["trio_desordre"] = {
+            "mise": len(combis) * 2.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- TRIO ORDRE (4 chevaux, 24 combis) ---
+    if formules["trio_ordre"]:
+        from itertools import permutations
+        chevaux = pred[:4]
+        combis = list(permutations(chevaux, 3))
+        gagne = 0
+        for c in combis:
+            if c == tuple(arrivee[:3]):
+                gagne += 1
+        res["trio_ordre"] = {
+            "mise": len(combis) * 2.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- 2SUR4 (4 chevaux, 6 combis à 3 €) ---
+    if formules["2sur4"]:
+        chevaux = pred[:4]
+        combis = []
+        for i in range(len(chevaux)):
+            for j in range(i + 1, len(chevaux)):
+                combis.append({chevaux[i], chevaux[j]})
+        gagne = 0
+        for c in combis:
+            if len(c & v4) == 2:
+                gagne += 1
+        res["2sur4"] = {
+            "mise": len(combis) * 3.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- MULTI EN 4 (5 chevaux, 5 combis à 3 €) ---
+    if formules["multi4"]:
+        chevaux = pred[:5]
+        combis = []
+        for i in range(len(chevaux)):
+            combis.append(set(chevaux[:i] + chevaux[i+1:]))
+        gagne = 0
+        for c in combis:
+            if len(c & v4) == 4:
+                gagne += 1
+        res["multi4"] = {
+            "mise": len(combis) * 3.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- MULTI EN 5 (6 chevaux, 6 combis à 2 €) ---
+    if formules["multi5"]:
+        chevaux = pred[:6]
+        combis = []
+        for i in range(len(chevaux)):
+            combis.append(set(chevaux[:i] + chevaux[i+1:]))
+        gagne = 0
+        for c in combis:
+            if len(c & v5) == 5:
+                gagne += 1
+        res["multi5"] = {
+            "mise": len(combis) * 2.0,
+            "combis": len(combis),
+            "gagne": gagne > 0,
+            "gain": 0,
+        }
+
+    # --- SUPER 4 (4 chevaux en ordre, 1 €) ---
+    if formules["super4"]:
+        pred4 = pred[:4]
+        gagne = (pred4 == arrivee[:4])
+        res["super4"] = {
+            "mise": 1.0,
+            "combis": 1,
+            "gagne": gagne,
+            "gain": 0,
+        }
+
+    # --- QUINTÉ+ (6 chevaux) ---
+    if formules["quinte_ordre"]:
+        chevaux = pred[:6]
+        gagne_ordre = (chevaux[:5] == arrivee[:5])
+        gagne_desordre = (set(chevaux[:5]) == v5)
+        gagne_b4 = (len(set(chevaux[:5]) & v5) == 4)
+        gagne_b3 = (len(set(chevaux[:5]) & v5) == 3)
+        res["quinte_ordre"] = {"mise": 2.0, "gagne": gagne_ordre, "gain": 0}
+        res["quinte_desordre"] = {"mise": 2.0, "gagne": gagne_desordre, "gain": 0}
+        res["bonus4"] = {"mise": 2.0, "gagne": gagne_b4, "gain": 0}
+        res["bonus3"] = {"mise": 2.0, "gagne": gagne_b3, "gain": 0}
+
+    return res
 def compute_roi_per_agent():
     """Pour chaque agent, calcule le ROI par type de pari (vraies mises)."""
     resultat = {}
