@@ -590,13 +590,17 @@ def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     gagne = len(set(pred_top2) & v4) == 2 if v4 else False
     res["2sur4"] = {"gagne": gagne, "mise": 3.0}
 
-    # Multi en 4 (2 €) — les 4 premiers, ordre libre
-    gagne = set(pred_top4) == v4 if v4 else False
+    # Multi en 4 : les 4 chevaux joues doivent etre dans les 4 premiers
+    gagne = len(set(pred_top4) & v4) == 4 if v4 else False
     res["multi4"] = {"gagne": gagne, "mise": 2.0}
 
-    # Multi en 5 (2 €) — les 5 premiers, ordre libre
-    gagne = set(pred_top5) == v5 if v5 else False
+    # Multi en 5 : AU MOINS 4 des 5 chevaux joues dans les 4 premiers
+    gagne = len(set(pred_top5) & v4) >= 4 if v4 else False
     res["multi5"] = {"gagne": gagne, "mise": 2.0}
+
+    # Super 4 : les 4 premiers dans l'ordre EXACT
+    gagne = pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False
+    res["super4"] = {"gagne": gagne, "mise": 2.0}
 
     # Super 4 (2 €) — les 4 premiers, ordre EXACT
     gagne = pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False
