@@ -189,14 +189,21 @@ function loadMetrics() {
         var roiClass = roiPct >= 0 ? 'pos' : 'neg';
 
         html += '<div class="agent-row ' + rankClass + '">';
-        html += '<div class="agent-head"><div class="agent-id">';
-        html += '<div class="agent-icon" style="background:' + meta.color + '22;color:' + meta.color + '">';
-        if (medal) html += '<span class="medal">' + medal + '</span>';
-        html += meta.icon + '</div>';
-        html += '<div><div class="agent-name">' + esc(a.name) + '</div><div class="agent-desc">' + esc(meta.desc) + '</div></div>';
-        html += '</div><div class="agent-score">' + score.toFixed(0) + '<small>/100</small></div></div>';
-        html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
-        html += '<div class="agent-stats">';
+html += '<div class="agent-head">';
+html += '<div class="agent-id">';
+html += '<div class="agent-icon" style="background:' + meta.color + '22;color:' + meta.color + '">';
+if (medal) html += '<span class="medal">' + medal + '</span>';
+html += meta.icon + '</div>';
+html += '<div><div class="agent-name">' + esc(a.name) + '</div><div class="agent-desc">' + esc(meta.desc) + '</div></div>';
+html += '</div>';
+html += '<div class="agent-score">' + score.toFixed(0) + '<small>/100</small></div>';
+html += '</div>';
+html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
+html += '<div class="agent-stats">';
+html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
+html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
+html += '</div>';
+// roi-detail sera ajouté juste après (le bloc existe déjà)
         html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
         html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
         html += '</div>';
