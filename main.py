@@ -1399,7 +1399,7 @@ def recalculer_paris_stats():
         maj_paris_stats(roi_pmu)
 def compute_agent_weights(discipline=None):
     """Poids des agents pour MetaAgent.
-    N'inclut que les agents avec un ROI acceptable (> -30 %)."""
+    Les agents a ROI positif ont un poids booste."""
     weights = {}
     for name, s in STATS["agents"].items():
         if name in ("MetaAgent", "DemoAgent"):
@@ -1407,7 +1407,7 @@ def compute_agent_weights(discipline=None):
         tot = s["tot"]
         if tot < 50:
             continue
-        # Calcul du ROI de l'agent
+        # Calcul du ROI de l'agent (sur Simple Gagnant)
         tot_roi = 0
         gain_roi = 0
         for course in COLLECTED:
@@ -1421,15 +1421,19 @@ def compute_agent_weights(discipline=None):
                 gain_roi += float(cote)
         if tot_roi == 0:
             continue
-        roi_agent = (gain_roi - tot_roi) / tot_roi  # ROI en ratio
+        roi_agent = (gain_roi - tot_roi) / tot_roi
         # Filtre : ROI > -30 %
         if roi_agent < -0.30:
             continue
 
+        # Score de base : combinaison top1 et top5
         t1r = s["h1"] / tot
         t5r = s["h5"] / (tot * 5)
-        score = t1r * 0.7 + t5r * 0.3
-        weights[name] = max(0.05, score)
+        base_score = t1r * 0.7 + t5r * 0.3
+
+        # Boost : les agents a ROI positif ont un poids booste
+        boost = 1.0 + max(roi_agent, 0)
+        weights[name] = base_score * boost
 
     if not weights:
         weights["ForecastAgent"] = 1.0
