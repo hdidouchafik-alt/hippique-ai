@@ -1344,13 +1344,8 @@ def calculer_roi_pmu(predictions, arrivee, cotes, est_quinte=False):
     gagne = len(set(pred_top2) & v4) == 2 if v4 else False
     resultats["2sur4"] = {"gagne": gagne}
 
-    # Multi en 4 — les 4 premiers, ordre libre
-    resultats["multi4"] = {"gagne": set(pred_top4) == v4 if v4 else False}
-
-    # Multi en 5 — les 5 premiers, ordre libre
-    resultats["multi5"] = {"gagne": set(pred_top5) == v5 if v5 else False}
-
-    # Super 4 — les 4 premiers, ordre EXACT
+    resultats["multi4"] = {"gagne": len(set(pred_top4) & v4) == 4 if v4 else False}
+    resultats["multi5"] = {"gagne": len(set(pred_top5) & v4) >= 4 if v4 else False}
     resultats["super4"] = {"gagne": pred_top4 == arrivee[:4] if len(arrivee) >= 4 else False}
 
     # Bonus 4sur5 et Bonus 3 — UNIQUEMENT sur Quinté+
