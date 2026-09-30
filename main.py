@@ -509,6 +509,43 @@ async def create_prediction(payload: PredIn):
     return result
 
 
+def detecter_formules(course_key, nb_partants, est_quinte=False):
+    """Retourne les paris jouables selon les règles PMU."""
+    formules = {
+        "simple_gagnant": True,
+        "simple_place": True,
+        "couple_gagnant_desordre": nb_partants >= 8,
+        "couple_gagnant_ordre": nb_partants < 8,
+        "couple_place": True,
+        "trio_desordre": nb_partants >= 8,
+        "trio_ordre": nb_partants < 8,
+        "2sur4": nb_partants >= 10,
+        "multi4": nb_partants >= 10,
+        "multi5": nb_partants >= 10,
+        "super4": 5 <= nb_partants <= 9,
+        "quinte_ordre": est_quinte,
+        "quinte_desordre": est_quinte,
+        "bonus4": est_quinte,
+        "bonus3": est_quinte,
+    }
+    return formules
+
+
+def get_chevaux_pour_pari(pred, pari):
+    """Retourne les N chevaux à jouer selon le pari."""
+    if not pred:
+        return []
+    if pari == "simple_gagnant" or pari == "simple_place":
+        return pred[:2]
+    if pari in ("couple_gagnant_desordre", "couple_gagnant_ordre", "couple_place"):
+        return pred[:3]
+    if pari in ("trio_desordre", "trio_ordre", "2sur4", "super4"):
+        return pred[:4]
+    if pari == "multi4":
+        return pred[:5]
+    if pari in ("multi5", "quinte_ordre", "quinte_desordre", "bonus4", "bonus3"):
+        return pred[:6]
+    return pred[:5]
 def calculer_roi_agent(pred, arrivee, cote_top1, est_quinte=False):
     """Calcule le ROI d'un agent pour tous les paris PMU (vraies mises)."""
     res = {}
