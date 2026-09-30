@@ -1581,6 +1581,47 @@ def score_avis_entraineur(p):
 
     return score
 
+def appliquer_fallback(scored, agent_key, fallbacks, cotes_ref):
+    """Remplace les scores uniformes par un fallback hierarchique."""
+    if not scored:
+        return
+    valeurs = []
+    for x in scored:
+        v = x.get(agent_key)
+        if v is not None:
+            try:
+                valeurs.append(float(v))
+            except Exception:
+                pass
+    if len(valeurs) < 2:
+        return
+    if len(set(round(v, 3) for v in valeurs)) > 1:
+        return  # Scores differents -> pas de fallback
+
+    for source in fallbacks:
+        if source == "cote":
+            for x in scored:
+                try:
+                    num = int(x["num"])
+                except Exception:
+                    continue
+                cote = cotes_ref.get(num)
+                if cote and cote > 0:
+                    x[agent_key] = 10.0 / cote
+        else:
+            for x in scored:
+                x[agent_key] = x.get(source, 0)
+
+        new_vals = []
+        for x in scored:
+            v = x.get(agent_key)
+            if v is not None:
+                try:
+                    new_vals.append(float(v))
+                except Exception:
+                    pass
+        if len(set(round(v, 3) for v in new_vals)) > 1:
+            return
 def predire(participants, discipline="AUTRE", terrain="INCONNU",
             hippodrome="", type_depart="", distance_course=None, surface=""):
     raw = []
@@ -1709,6 +1750,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "class": r["sg"],
             "risk": r["sr"],
             "demo": r["sdem"],
+            "track": r["sd"],
             "trainer": r["strainer"],
             "pedigree": r["spedigree"],
             "histo": r["shisto"],
@@ -1716,6 +1758,32 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             "forecast": forecast,
         })
 
+# v6.5 : fallback anti-agents-fantomes
+    cotes_ref = {}
+    for p in participants:
+        if not isinstance(p, dict):
+            continue
+        num = p.get("numPmu")
+        if not num:
+            continue
+        ref = p.get("dernierRapportReference") or {}
+        cote = ref.get("rapport")
+        if cote:
+            try:
+                cotes_ref[int(num)] = float(cote)
+            except Exception:
+                pass
+
+    fallbacks_par_agent = {
+        "form": ["histo", "driver", "cote"],
+        "class": ["histo", "driver", "cote"],
+        "track": ["driver", "histo", "cote"],
+        "demo": ["cote", "histo", "driver"],
+        "risk": ["cote", "driver"],
+        "pedigree": ["cote", "histo"],
+    }
+    for agent_key, fallbacks in fallbacks_par_agent.items():
+        appliquer_fallback(scored, agent_key, fallbacks, cotes_ref)
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
