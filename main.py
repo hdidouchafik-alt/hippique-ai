@@ -1773,7 +1773,10 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
             except Exception:
                 pass
 
-    roi_pmu = calculer_roi_pmu(preds, arrivee, cotes, est_quinte=est_quinte)
+    nb_partants = len(participants)
+    roi_pmu = calculer_paris_champ_reduit(
+        preds.get("ForecastAgent", []), arrivee, nb_partants, cotes, est_quinte
+    )
     maj_paris_stats(roi_pmu)
 
     res = {}
