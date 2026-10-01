@@ -1587,7 +1587,7 @@ def score_historique(p):
 
 
 def score_avis_entraineur(p):
-    """Score basé sur l'avis de l'entraîneur (signal avant-course)."""
+    """Score base sur l'avis de l'entraineur (signal avant-course)."""
     avis = (p.get("avisEntraineur") or "").strip().upper()
     if avis == "POSITIF":
         return 8.0
@@ -1596,60 +1596,6 @@ def score_avis_entraineur(p):
     if avis == "NEGATIF":
         return 2.0
     return 5.0
-    # Normaliser le sexe
-    est_male = sexe in ("M", "MALE", "H") and sexe != "H"
-    est_femelle = sexe in ("F", "FEMELLE")
-    est_hongre = sexe in ("H", "HONGRE", "HONGRES")
-    est_male = sexe in ("M", "MALE") or (sexe == "H" and False)  # correction
-
-    score = 0.0
-
-    if discipline == "TROT":
-        if est_male and 4 <= age <= 7:
-            score = 1.0
-        elif est_femelle and 4 <= age <= 7:
-            score = 0.5
-        elif est_hongre and 4 <= age <= 7:
-            score = 0.3
-        elif age <= 3:
-            score = -1.0
-        elif age >= 8:
-            score = -0.5
-
-    elif discipline == "PLAT":
-        if age == 2:
-            score = -0.5
-        elif age == 3:
-            score = 0.8
-        elif age == 4:
-            score = 1.3
-        elif age == 5:
-            score = 1.2
-        elif age == 6:
-            score = -0.3
-        elif age >= 7:
-            score = -0.6
-        # Ajustement sexe
-        if est_femelle and 3 <= age <= 5:
-            score -= 0.1
-        if est_hongre and 3 <= age <= 5:
-            score -= 0.05
-
-    elif discipline == "OBSTACLE":
-        if 5 <= age <= 9:
-            score = 1.0
-        elif age == 4:
-            score = 0.5
-        elif age >= 10:
-            score = -0.5
-        elif age <= 3:
-            score = -1.5
-
-    # Ajustement : léger bonus pour les femelles en obstacle
-    if discipline == "OBSTACLE" and est_femelle:
-        score += 0.2
-
-    return score
 
 def appliquer_fallback(scored, agent_key, fallbacks, cotes_ref):
     """Remplace les scores uniformes par un fallback hierarchique."""
