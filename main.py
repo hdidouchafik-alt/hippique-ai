@@ -1461,7 +1461,7 @@ def meta_predict(preds, weights):
             
 
 def score_demographie(p, discipline):
-    """Score basé sur sexe + âge, ajusté par discipline."""
+    """Score base sur sexe + age, ajuste par discipline."""
     sexe = (p.get("sexe") or "").upper()
     age = p.get("age")
     try:
@@ -1471,6 +1471,68 @@ def score_demographie(p, discipline):
 
     if age is None:
         return 0.0
+
+    est_male = sexe in ("M", "MALE")
+    est_femelle = sexe in ("F", "FEMELLE")
+    est_hongre = sexe in ("H", "HONGRE", "HONGRES")
+
+    score = 0.0
+
+    if discipline == "TROT":
+        if age == 2:
+            score = -1.0
+        elif age == 3:
+            score = -0.5
+        elif age == 4:
+            score = 0.8
+        elif age == 5:
+            score = 1.0
+        elif age == 6:
+            score = 0.9
+        elif age == 7:
+            score = 0.7
+        elif age >= 8:
+            score = -0.3
+
+    elif discipline == "PLAT":
+        if age == 2:
+            score = -0.5
+        elif age == 3:
+            score = 0.8
+        elif age == 4:
+            score = 1.3
+        elif age == 5:
+            score = 1.2
+        elif age == 6:
+            score = 0.0
+        elif age >= 7:
+            score = -0.4
+
+    elif discipline == "OBSTACLE":
+        if age <= 3:
+            score = -1.5
+        elif age == 4:
+            score = 0.5
+        elif age == 5:
+            score = 1.0
+        elif age == 6:
+            score = 1.1
+        elif age == 7:
+            score = 1.0
+        elif age == 8:
+            score = 0.8
+        elif age == 9:
+            score = 0.5
+        elif age >= 10:
+            score = -0.5
+
+    # Ajustements sexe
+    if est_femelle and 3 <= age <= 5:
+        score -= 0.1
+    if est_hongre and 3 <= age <= 5:
+        score -= 0.05
+
+    return score
 
 def score_trainer(p):
     """Score entraîneur basé sur ses statistiques (nom)."""
