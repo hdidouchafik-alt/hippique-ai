@@ -1784,6 +1784,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
     }
     for agent_key, fallbacks in fallbacks_par_agent.items():
         appliquer_fallback(scored, agent_key, fallbacks, cotes_ref)
+
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
         key = agent.replace("Agent", "").lower()
