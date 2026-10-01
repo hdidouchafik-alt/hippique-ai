@@ -1845,7 +1845,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
                 pass
 
     fallbacks_par_agent = {
-        "form": ["histo", "driver", "cote"],
+        "form":"driver": ["histo", "cote"],
+         ["histo", "driver", "cote"],
         "class": ["histo", "driver", "cote"],
         "track": ["driver", "histo", "cote"],
         "demo": ["cote", "histo", "driver"],
