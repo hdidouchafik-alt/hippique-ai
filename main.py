@@ -1537,7 +1537,7 @@ def score_avis_entraineur(p):
     # Normaliser le sexe
     est_male = sexe in ("M", "MALE", "H") and sexe != "H"
     est_femelle = sexe in ("F", "FEMELLE")
-    est_hongre = sexe in ("H", "HONGRE")
+    est_hongre = sexe in ("H", "HONGRE", "HONGRES")
     est_male = sexe in ("M", "MALE") or (sexe == "H" and False)  # correction
 
     score = 0.0
