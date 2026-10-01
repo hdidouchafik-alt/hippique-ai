@@ -1555,15 +1555,23 @@ def score_avis_entraineur(p):
             score = -0.5
 
     elif discipline == "PLAT":
-        if 3 <= age <= 5:
-            if est_male or est_hongre:
-                score = 1.2
-            else:
-                score = 0.8
-        elif age == 2:
+        if age == 2:
             score = -0.5
-        elif age >= 6:
+        elif age == 3:
+            score = 0.8
+        elif age == 4:
+            score = 1.3
+        elif age == 5:
+            score = 1.2
+        elif age == 6:
             score = -0.3
+        elif age >= 7:
+            score = -0.6
+        # Ajustement sexe
+        if est_femelle and 3 <= age <= 5:
+            score -= 0.1
+        if est_hongre and 3 <= age <= 5:
+            score -= 0.05
 
     elif discipline == "OBSTACLE":
         if 5 <= age <= 9:
