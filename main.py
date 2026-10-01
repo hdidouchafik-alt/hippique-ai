@@ -1780,6 +1780,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
         "track": ["driver", "histo", "cote"],
         "demo": ["cote", "histo", "driver"],
         "risk": ["cote", "driver"],
+        "market": ["driver", "histo"],
         "pedigree": ["cote", "histo"],
     }
     for agent_key, fallbacks in fallbacks_par_agent.items():
