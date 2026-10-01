@@ -1808,7 +1808,7 @@ try:
         preds["MetaAgent"] = meta_predict(preds, weights)
         if not preds["MetaAgent"] or preds["MetaAgent"][:5] == [1, 2, 3, 4, 5]:
             preds["MetaAgent"] = preds.get("ForecastAgent", [])
-    except Exception:
+except Exception:
         preds["MetaAgent"] = preds.get("ForecastAgent", [])
 
     v1 = arrivee[0]
