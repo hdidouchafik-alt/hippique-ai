@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.6.0")
+app = FastAPI(title="Hippique AI", version="6.9.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -1850,7 +1850,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
         "class": ["histo", "driver", "cote"],
         "track": ["driver", "histo", "cote"],
         "demo": ["cote", "histo", "driver"],
-        "risk": ["driver", "cote"],
+        "risk": ["histo", "cote"],
         "market": ["driver", "histo"],
         "pedigree": ["cote", "histo"],
     }
