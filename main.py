@@ -1804,8 +1804,11 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
 
     # v5.9 : MetaAgent
     try:
+        try:
         weights = compute_agent_weights(discipline=discipline)
         preds["MetaAgent"] = meta_predict(preds, weights)
+        if not preds["MetaAgent"] or preds["MetaAgent"][:5] == [1, 2, 3, 4, 5]:
+            preds["MetaAgent"] = preds.get("ForecastAgent", [])
     except Exception:
         preds["MetaAgent"] = preds.get("ForecastAgent", [])
 
