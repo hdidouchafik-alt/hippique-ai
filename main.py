@@ -1844,7 +1844,9 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
             except Exception:
                 pass
 
-    fallbacks_par_agent = {       "form:"["histo", "driver", "cote"],
+    fallbacks_par_agent = {
+        "form": ["histo", "driver", "cote"],
+        "driver": ["histo", "cote"],
         "class": ["histo", "driver", "cote"],
         "track": ["driver", "histo", "cote"],
         "demo": ["cote", "histo", "driver"],
