@@ -1803,8 +1803,7 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
                     distance_course=distance_course, surface=surface)
 
     # v5.9 : MetaAgent
-    try:
-        try:
+try:
         weights = compute_agent_weights(discipline=discipline)
         preds["MetaAgent"] = meta_predict(preds, weights)
         if not preds["MetaAgent"] or preds["MetaAgent"][:5] == [1, 2, 3, 4, 5]:
