@@ -2109,6 +2109,8 @@ async def agent_collect(offset: int = 0):
                     "date_course": ds,
                     "date_prediction": now_ts(),
                     "arrivee": arr[:5], "evaluations": ev}
+            COLLECTED.append(item)
+            if DB_OK:
                 db.save_result(item)
             nouv += 1
             
