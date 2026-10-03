@@ -1135,6 +1135,38 @@ def score_risk(musique):
     return max(0, 2 - da * 0.5)
 
 
+def detect_pays(hippodrome):
+    """Detecte le pays a partir du nom de l'hippodrome."""
+    h = (hippodrome or "").upper()
+    if any(x in h for x in ("BELGIQUE", "MONS", "ANVERS", "GAND", "BRUXELLES")):
+        return "BE"
+    if any(x in h for x in ("ALLEMAGNE", "STRAUBING", "GERMANY")):
+        return "DE"
+    if any(x in h for x in ("SUISSE", "AVENCHES", "SWITZERLAND")):
+        return "CH"
+    if any(x in h for x in ("PAYS-BAS", "WOLVEGA", "NETHERLANDS", "P-B")):
+        return "NL"
+    if any(x in h for x in ("ESPAGNE", "SANLUCAR")):
+        return "ES"
+    if any(x in h for x in ("PORTUGAL", "LISBONNE")):
+        return "PT"
+    if any(x in h for x in ("ITALIE", "MILAN", "ROME")):
+        return "IT"
+    if any(x in h for x in ("IRLANDE", "DUNDALK")):
+        return "IE"
+    if any(x in h for x in ("ANGLETERRE", "ASCOT", "NEWMARKET", "GB")):
+        return "GB"
+    if any(x in h for x in ("MAROC", "CASABLANCA")):
+        return "MA"
+    if any(x in h for x in ("SUEDE", "SWEDEN", "SOLVALLA")):
+        return "SE"
+    if any(x in h for x in ("NORVEGE", "OSLO")):
+        return "NO"
+    if any(x in h for x in ("DANEMARK")):
+        return "DK"
+    if any(x in h for x in ("FINLANDE")):
+        return "FI"
+    return "FR"
 def extract_features(participants):
     """Extrait features brutes ET relatives (z-scores, rangs)."""
     raw = []
