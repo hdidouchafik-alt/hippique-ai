@@ -2575,6 +2575,7 @@ async def export_csv():
         "age_z", "cote_z", "gains_z",
         "taux_victoire_z", "taux_place_z",
         "cote_rang", "gains_rang", "nb_partants",
+        "pays", "data_quality",
         "target_top1", "target_top5",
     ])
 
