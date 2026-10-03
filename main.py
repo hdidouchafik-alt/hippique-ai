@@ -835,6 +835,9 @@ def compute_roi_per_agent():
             "quinte_bonus4": {"gagne": 0, "total": 0},
             "bonus4": {"gagne": 0, "total": 0},
             "quinte_bonus3": {"gagne": 0, "total": 0},
+            "multi4": {"gagne": 0, "total": 0},
+            "multi5": {"gagne": 0, "total": 0},
+            "super4": {"gagne": 0, "total": 0},
         }
 
     for course in COLLECTED:
