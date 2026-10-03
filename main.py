@@ -2628,6 +2628,8 @@ async def export_csv():
                 f.get("cote_rang", 0),
                 f.get("gains_rang", 0),
                 f.get("nb_partants", 0),
+                f.get("pays", "FR"),
+                f.get("data_quality", 0.0),
                 target_top1,
                 target_top5,
             ])
