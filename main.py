@@ -2106,9 +2106,9 @@ async def agent_collect(offset: int = 0):
                     "distance": c.get("distance", 0),
                     "partants": c.get("nombreDeclaresPartants", 0),
                     "est_quinte": est_quinte,
+                    "date_course": ds,
+                    "date_prediction": now_ts(),
                     "arrivee": arr[:5], "evaluations": ev}
-            COLLECTED.append(item)
-            if DB_OK:
                 db.save_result(item)
             nouv += 1
     return {"ok": True, "nouvelles": nouv, "evaluees": eval_, "ignorees": ignorees,
