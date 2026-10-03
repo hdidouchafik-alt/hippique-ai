@@ -1135,6 +1135,38 @@ def score_risk(musique):
     return max(0, 2 - da * 0.5)
 
 
+def extract_features(participants):
+    """Extrait les features brutes pour chaque participant (pour ML)."""
+    features = []
+    for p in participants:
+        if not isinstance(p, dict):
+            continue
+        num = p.get("numPmu")
+        if not num:
+            continue
+        musique = p.get("musique", "")
+        driver = p.get("driver") or p.get("jockey") or ""
+        ref = p.get("dernierRapportReference") or {}
+        cote = ref.get("rapport") if isinstance(ref, dict) else None
+        g = p.get("gainsParticipant") or {}
+        gains = g.get("gainsAnneePrecedente", 0) if isinstance(g, dict) else 0
+        features.append({
+            "num": num,
+            "age": p.get("age"),
+            "sexe": p.get("sexe"),
+            "driver": driver,
+            "entraineur": p.get("entraineur"),
+            "musique": musique if isinstance(musique, str) else " ".join(map(str, musique)),
+            "cote": cote,
+            "gains": gains,
+            "nombreCourses": p.get("nombreCourses"),
+            "nombreVictoires": p.get("nombreVictoires"),
+            "nombrePlaces": p.get("nombrePlaces"),
+            "deferrage": p.get("deferrage"),
+            "poids": p.get("poidsConditionMonte") or p.get("poids"),
+            "corde": p.get("corde"),
+        })
+    return features
 def detect_discipline(discipline_str):
     d = (discipline_str or "").upper()
     if "TROT" in d:
