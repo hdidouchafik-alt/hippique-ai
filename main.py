@@ -424,6 +424,37 @@ async def agents_audit():
         "evaluated": STATS["evaluated"],
         "agents": auditer_agents(),
     }
+    @app.get("/api/leakage/audit")
+async def leakage_audit():
+    cours_avec_fuite = []
+    cours_ok = 0
+    cours_sans_ts = 0
+    for course in COLLECTED:
+        dc = course.get("date_course")
+        dp = course.get("date_prediction")
+        if not dc or not dp:
+            cours_sans_ts += 1
+            continue
+        try:
+            d = datetime.strptime(dc, "%d%m%Y")
+            p = datetime.fromisoformat(dp.replace("Z", ""))
+            if p >= d:
+                cours_ok += 1
+            else:
+                cours_avec_fuite.append(course.get("key"))
+        except Exception:
+            cours_sans_ts += 1
+    return {
+        "total_cours": len(COLLECTED),
+        "cours_avec_timestamps": cours_ok + len(cours_avec_fuite),
+        "cours_sans_timestamps": cours_sans_ts,
+        "cours_ok": cours_ok,
+        "cours_avec_fuite": len(cours_avec_fuite),
+        "liste_fuites": cours_avec_fuite[:20],
+        "statut": "OK" if len(cours_avec_fuite) == 0 else "FUITE DETECTEE",
+    }
+
+
 @app.get("/api/health")
 @app.head("/api/health")
 async def health():
