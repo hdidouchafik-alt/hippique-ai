@@ -418,6 +418,12 @@ async def paris_page(request: Request):
         return HTMLResponse(f"<h1>Erreur</h1><pre>{e}</pre>", status_code=500)
 
 
+@app.get("/api/agents/audit")
+async def agents_audit():
+    return {
+        "evaluated": STATS["evaluated"],
+        "agents": auditer_agents(),
+    }
 @app.get("/api/health")
 @app.head("/api/health")
 async def health():
