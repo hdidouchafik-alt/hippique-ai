@@ -1229,6 +1229,26 @@ def extract_features(participants):
     if not raw:
         return raw
 
+    # Detection du pays
+    hippo_name = ""
+    for p in participants:
+        if isinstance(p, dict):
+            hippo_name = p.get("hippodrome", "") or ""
+            break
+    pays = detect_pays(hippo_name)
+
+    # Data quality : % de features remplies
+    for r in raw:
+        filled = 0
+        total = 0
+        for k in ["age", "sexe", "driver", "entraineur", "musique", "cote", "gains", "poids", "corde"]:
+            total += 1
+            v = r.get(k)
+            if v is not None and v != "" and v != 0:
+                filled += 1
+        r["pays"] = pays
+        r["data_quality"] = round(filled / total, 3) if total > 0 else 0.0
+
     # Calcul des z-scores par course
     ages = [r["age"] for r in raw if r["age"] is not None]
     cotes = [r["cote"] for r in raw if r["cote"] is not None]
