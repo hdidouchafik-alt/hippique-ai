@@ -1136,8 +1136,8 @@ def score_risk(musique):
 
 
 def extract_features(participants):
-    """Extrait les features brutes pour chaque participant (pour ML)."""
-    features = []
+    """Extrait features brutes ET relatives (z-scores, rangs)."""
+    raw = []
     for p in participants:
         if not isinstance(p, dict):
             continue
@@ -1150,23 +1150,93 @@ def extract_features(participants):
         cote = ref.get("rapport") if isinstance(ref, dict) else None
         g = p.get("gainsParticipant") or {}
         gains = g.get("gainsAnneePrecedente", 0) if isinstance(g, dict) else 0
-        features.append({
+        try:
+            age = int(p.get("age")) if p.get("age") else None
+        except Exception:
+            age = None
+        try:
+            cote_f = float(cote) if cote else None
+        except Exception:
+            cote_f = None
+        try:
+            gains_f = float(gains) if gains else 0.0
+        except Exception:
+            gains_f = 0.0
+        try:
+            nc = int(p.get("nombreCourses") or 0)
+        except Exception:
+            nc = 0
+        try:
+            nv = int(p.get("nombreVictoires") or 0)
+        except Exception:
+            nv = 0
+        try:
+            npl = int(p.get("nombrePlaces") or 0)
+        except Exception:
+            npl = 0
+
+        raw.append({
             "num": num,
-            "age": p.get("age"),
+            "age": age,
             "sexe": p.get("sexe"),
             "driver": driver,
             "entraineur": p.get("entraineur"),
             "musique": musique if isinstance(musique, str) else " ".join(map(str, musique)),
-            "cote": cote,
-            "gains": gains,
-            "nombreCourses": p.get("nombreCourses"),
-            "nombreVictoires": p.get("nombreVictoires"),
-            "nombrePlaces": p.get("nombrePlaces"),
+            "cote": cote_f,
+            "gains": gains_f,
+            "nombreCourses": nc,
+            "nombreVictoires": nv,
+            "nombrePlaces": npl,
+            "taux_victoire": nv / nc if nc > 0 else 0.0,
+            "taux_place": npl / nc if nc > 0 else 0.0,
             "deferrage": p.get("deferrage"),
             "poids": p.get("poidsConditionMonte") or p.get("poids"),
             "corde": p.get("corde"),
         })
-    return features
+
+    if not raw:
+        return raw
+
+    # Calcul des z-scores par course
+    ages = [r["age"] for r in raw if r["age"] is not None]
+    cotes = [r["cote"] for r in raw if r["cote"] is not None]
+    gains_list = [r["gains"] for r in raw]
+    taux_v = [r["taux_victoire"] for r in raw]
+    taux_p = [r["taux_place"] for r in raw]
+
+    def zscore(values, v):
+        if len(values) < 2 or v is None:
+            return 0.0
+        try:
+            m = statistics.mean(values)
+            s = statistics.pstdev(values)
+            if s == 0:
+                return 0.0
+            return (v - m) / s
+        except Exception:
+            return 0.0
+
+    def rang(values, v, reverse=False):
+        if v is None:
+            return 0
+        try:
+            sorted_v = sorted(values, reverse=reverse)
+            return sorted_v.index(v) + 1
+        except Exception:
+            return 0
+
+    # Enrichir chaque cheval
+    for r in raw:
+        r["age_z"] = round(zscore(ages, r["age"]), 3) if r["age"] is not None else 0.0
+        r["cote_z"] = round(zscore(cotes, r["cote"]), 3) if r["cote"] is not None else 0.0
+        r["gains_z"] = round(zscore(gains_list, r["gains"]), 3)
+        r["taux_victoire_z"] = round(zscore(taux_v, r["taux_victoire"]), 3)
+        r["taux_place_z"] = round(zscore(taux_p, r["taux_place"]), 3)
+        r["cote_rang"] = rang(cotes, r["cote"]) if r["cote"] is not None else 0
+        r["gains_rang"] = rang(gains_list, r["gains"], reverse=True)
+        r["nb_partants"] = len(raw)
+
+    return raw
 def detect_discipline(discipline_str):
     d = (discipline_str or "").upper()
     if "TROT" in d:
