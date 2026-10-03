@@ -2519,6 +2519,10 @@ async def export_csv():
         "num", "age", "sexe", "driver", "entraineur", "musique",
         "cote", "gains", "nombreCourses", "nombreVictoires", "nombrePlaces",
         "deferrage", "poids", "corde",
+        "taux_victoire", "taux_place",
+        "age_z", "cote_z", "gains_z",
+        "taux_victoire_z", "taux_place_z",
+        "cote_rang", "gains_rang", "nb_partants",
         "target_top1", "target_top5",
     ])
 
