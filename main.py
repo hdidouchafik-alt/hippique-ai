@@ -2111,6 +2111,7 @@ async def agent_collect(offset: int = 0):
                     "arrivee": arr[:5], "evaluations": ev}
                 db.save_result(item)
             nouv += 1
+            
     return {"ok": True, "nouvelles": nouv, "evaluees": eval_, "ignorees": ignorees,
             "total": len(COLLECTED), "total_evaluees": STATS["evaluated"]}
 
