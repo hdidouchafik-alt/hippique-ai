@@ -1399,6 +1399,37 @@ def recalculer_paris_stats():
         roi_pmu = calculer_roi_pmu({"ForecastAgent": pred}, arrivee, cotes,
                                     est_quinte=est_quinte)
         maj_paris_stats(roi_pmu)
+def auditer_agents():
+    """Detecte les agents fantomes (prediction toujours [1,2,3,4,5])."""
+    resultats = {}
+    for agent_name in STATS["agents"].keys():
+        fantomes = 0
+        total = 0
+        for course in COLLECTED[-150:]:
+            ev = course.get("evaluations") or {}
+            data = ev.get(agent_name) or {}
+            pred = data.get("prediction") or []
+            if not pred:
+                continue
+            total += 1
+            if pred[:5] == [1, 2, 3, 4, 5] or pred[:5] == [1, 2, 3, 4, 5, 6]:
+                fantomes += 1
+        taux = round(fantomes / total * 100, 1) if total > 0 else 0
+        if total == 0:
+            statut = "⚪ Aucune donnee"
+        elif taux > 50:
+            statut = "🔴 FANTOME"
+        elif taux > 20:
+            statut = "🟠 Partiel"
+        else:
+            statut = "✅ OK"
+        resultats[agent_name] = {
+            "total_courses": total,
+            "predictions_fantomes": fantomes,
+            "taux_fantome_pct": taux,
+            "statut": statut,
+        }
+    return resultats
 def compute_agent_weights(discipline=None):
     """Poids des agents pour MetaAgent.
     Les agents a ROI positif ont un poids booste."""
