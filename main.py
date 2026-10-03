@@ -2433,6 +2433,74 @@ async def cron_run(background_tasks: BackgroundTasks):
     return {"ok": True, "queued": True}
 
 
+@app.get("/api/export/csv")
+async def export_csv():
+    """Exporte les donnees en CSV (1 ligne par cheval)."""
+    from fastapi.responses import StreamingResponse
+    import io
+    import csv
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header
+    writer.writerow([
+        "race_key", "date", "discipline", "distance", "terrain", "hippodrome",
+        "num", "age", "sexe", "driver", "entraineur", "musique",
+        "cote", "gains", "nombreCourses", "nombreVictoires", "nombrePlaces",
+        "deferrage", "poids", "corde",
+        "target_top1", "target_top5",
+    ])
+
+    # Lignes
+    for course in COLLECTED:
+        features = course.get("features") or []
+        arrivee = course.get("arrivee") or []
+        if not features or not arrivee:
+            continue
+        v1 = arrivee[0] if arrivee else None
+        v5 = set(arrivee[:5]) if len(arrivee) >= 5 else set(arrivee)
+
+        for f in features:
+            num = f.get("num")
+            try:
+                num_int = int(num)
+            except Exception:
+                continue
+            target_top1 = 1 if num_int == v1 else 0
+            target_top5 = 1 if num_int in v5 else 0
+
+            writer.writerow([
+                course.get("key", ""),
+                course.get("date", ""),
+                course.get("discipline_norm", course.get("discipline", "")),
+                course.get("distance", 0),
+                course.get("terrain", ""),
+                course.get("hippodrome", ""),
+                num,
+                f.get("age", ""),
+                f.get("sexe", ""),
+                f.get("driver", ""),
+                f.get("entraineur", ""),
+                f.get("musique", ""),
+                f.get("cote", ""),
+                f.get("gains", ""),
+                f.get("nombreCourses", ""),
+                f.get("nombreVictoires", ""),
+                f.get("nombrePlaces", ""),
+                f.get("deferrage", ""),
+                f.get("poids", ""),
+                f.get("corde", ""),
+                target_top1,
+                target_top5,
+            ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=hippique_export.csv"},
+    )
 @app.on_event("startup")
 async def _startup_recalc():
     """Au démarrage : recalcule les stats de paris depuis COLLECTED."""
