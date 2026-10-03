@@ -424,7 +424,7 @@ async def agents_audit():
         "evaluated": STATS["evaluated"],
         "agents": auditer_agents(),
     }
-    @app.get("/api/leakage/audit")
+@app.get("/api/leakage/audit")
 async def leakage_audit():
     cours_avec_fuite = []
     cours_ok = 0
