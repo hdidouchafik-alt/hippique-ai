@@ -1468,19 +1468,46 @@ def auditer_agents():
         }
     return resultats
 def compute_agent_weights(discipline=None):
-    """Poids des agents pour MetaAgent.
-    Les agents a ROI positif ont un poids booste."""
+    """Poids des agents par discipline (TROT/PLAT/OBSTACLE/AUTRE)."""
+    # Filtrer les cours par discipline
+    if discipline and discipline != "AUTRE":
+        cours_filtrees = [c for c in COLLECTED if c.get("discipline_norm") == discipline]
+    else:
+        cours_filtrees = COLLECTED
+
+    # Si pas assez de cours pour cette discipline, fallback global
+    if len(cours_filtrees) < 30:
+        cours_filtrees = COLLECTED
+
     weights = {}
     for name, s in STATS["agents"].items():
         if name in ("MetaAgent", "DemoAgent"):
             continue
-        tot = s["tot"]
-        if tot < 50:
+        # Recount top1/top5/tot sur les cours filtrees
+        h1 = 0
+        h5 = 0
+        tot = 0
+        for course in cours_filtrees:
+            ev = course.get("evaluations") or {}
+            agent_ev = ev.get(name) or {}
+            pred = agent_ev.get("prediction")
+            if not pred:
+                continue
+            arrivee = course.get("arrivee") or []
+            if not arrivee:
+                continue
+            tot += 1
+            if pred[0] == arrivee[0]:
+                h1 += 1
+            h5 += len(set(pred[:5]) & set(arrivee[:5]))
+
+        if tot < 15:
             continue
-        # Calcul du ROI de l'agent (sur Simple Gagnant)
+
+        # ROI de l'agent sur les cours filtrees
         tot_roi = 0
         gain_roi = 0
-        for course in COLLECTED:
+        for course in cours_filtrees:
             ev = course.get("evaluations") or {}
             agent_ev = ev.get(name) or {}
             cote = agent_ev.get("cote_top1")
@@ -1492,16 +1519,12 @@ def compute_agent_weights(discipline=None):
         if tot_roi == 0:
             continue
         roi_agent = (gain_roi - tot_roi) / tot_roi
-        # Filtre : ROI > -30 %
         if roi_agent < -0.30:
             continue
 
-        # Score de base : combinaison top1 et top5
-        t1r = s["h1"] / tot
-        t5r = s["h5"] / (tot * 5)
+        t1r = h1 / tot
+        t5r = h5 / (tot * 5)
         base_score = t1r * 0.7 + t5r * 0.3
-
-        # Boost : les agents a ROI positif ont un poids booste
         boost = 1.0 + max(roi_agent, 0)
         weights[name] = base_score * boost
 
