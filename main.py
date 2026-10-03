@@ -1428,7 +1428,7 @@ def auditer_agents():
         elif taux > 20:
             statut = "🟠 Partiel"
         else:
-            statut = "✅ OK"
+            statut = "OK"
         resultats[agent_name] = {
             "total_courses": total,
             "predictions_fantomes": fantomes,
