@@ -2005,6 +2005,9 @@ def hippodrome_ok(hippo_obj, nom):
     return True
 
 
+def now_ts():
+    """Retourne le timestamp ISO UTC."""
+    return datetime.utcnow().isoformat() + "Z"
 def date_str(offset=0):
     d = datetime.now() + timedelta(days=offset)
     return d.strftime("%d%m%Y")
