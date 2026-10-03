@@ -2194,6 +2194,7 @@ async def agent_collect(offset: int = 0):
                     "est_quinte": est_quinte,
                     "date_course": ds,
                     "date_prediction": now_ts(),
+                    "features": extract_features(parts),
                     "arrivee": arr[:5], "evaluations": ev}
             COLLECTED.append(item)
             if DB_OK:
