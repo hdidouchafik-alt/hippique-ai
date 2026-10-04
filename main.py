@@ -937,6 +937,10 @@ def compute_roi_per_agent():
 
 @app.get("/api/learning/metrics")
 async def learning_metrics():
+    cached = cache_get("learning_metrics", ttl=300)
+    if cached:
+        return cached
+
     evaluated = STATS["evaluated"]
     roi_per_agent = compute_roi_per_agent()
     agents_scores = {}
@@ -1051,8 +1055,14 @@ async def learning_metrics():
         "top1_hit_rate": round(avg1, 3),
         "top5_hit_rate": round(avg5, 3),
         "agents": agents_scores,
+        "agents": agents_scores,
+        "agents": agents_scores,
         "paris": PARIS_STATS,
         "database": DB_OK,
+    }
+    cache_set("learning_metrics", _resultat)
+    return _resultat
+    }
     }
 
 
