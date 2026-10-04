@@ -2079,9 +2079,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
         "market": ["driver", "histo"],
         "pedigree": ["cote", "histo"],
     }
-    for agent_key, fallbacks in fallbacks_par_agent.items():
-            appliquer_fallback(scored, agent_key, fallbacks, cotes_ref)
-        for agent_key in ["form", "driver", "market", "class", "risk", "track", "demo"]:
+    for agent_key in ["form", "driver", "market", "class", "risk", "track", "demo"]:
+        forcer_ordre_numerique(scored, agent_key)
         forcer_ordre_numerique(scored, agent_key)
 
     preds = {k: [] for k in STATS["agents"].keys()}
