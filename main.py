@@ -942,6 +942,9 @@ async def learning_metrics():
         cp = paris_agent.get("couple_place", {})
         trio = paris_agent.get("trio", {})
         t24 = paris_agent.get("2sur4", {})
+        m4 = paris_agent.get("multi4", {})
+        m5 = paris_agent.get("multi5", {})
+        s4 = paris_agent.get("super4", {})
 
         agents_scores[name] = {
             "score": score,
