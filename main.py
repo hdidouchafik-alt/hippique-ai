@@ -1003,6 +1003,21 @@ async def learning_metrics():
                     "gagne": t24.get("gagne", 0),
                     "total": t24.get("total", 0),
                 },
+                "multi4": {
+                    "taux": m4.get("taux_reussite", 0),
+                    "gagne": m4.get("gagne", 0),
+                    "total": m4.get("total", 0),
+                },
+                "multi5": {
+                    "taux": m5.get("taux_reussite", 0),
+                    "gagne": m5.get("gagne", 0),
+                    "total": m5.get("total", 0),
+                },
+                "super4": {
+                    "taux": s4.get("taux_reussite", 0),
+                    "gagne": s4.get("gagne", 0),
+                    "total": s4.get("total", 0),
+                },
             },
         }
     if evaluated > 0:
