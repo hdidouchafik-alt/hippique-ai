@@ -1049,7 +1049,7 @@ async def learning_metrics():
         avg5 = t5 / (evaluated * nb * 5)
     evaluated_prediction
     cache_set("learning_metrics", _resultat)
-    return _resultat
+    return _resultat=
     }
 
 
