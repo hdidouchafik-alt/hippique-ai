@@ -1906,6 +1906,17 @@ def appliquer_fallback(scored, agent_key, fallbacks, cotes_ref):
                     pass
         if len(set(round(v, 3) for v in new_vals)) > 1:
             return
+def forcer_ordre_numerique(scored, agent_key):
+    """Fallback ultime : differencier avec le numero du cheval."""
+    valeurs = [x.get(agent_key) for x in scored if x.get(agent_key) is not None]
+    if len(valeurs) >= 2 and len(set(round(float(v), 3) for v in valeurs)) <= 1:
+        for x in scored:
+            try:
+                x[agent_key] = float(x["num"])
+            except Exception:
+                pass
+
+
 def predire(participants, discipline="AUTRE", terrain="INCONNU",
             hippodrome="", type_depart="", distance_course=None, surface=""):
     raw = []
@@ -2070,6 +2081,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
     }
     for agent_key, fallbacks in fallbacks_par_agent.items():
         appliquer_fallback(scored, agent_key, fallbacks, cotes_ref)
+        for agent_key in ["form", "driver", "market", "class", "risk", "track", "demo"]:
+        forcer_ordre_numerique(scored, agent_key)
 
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
