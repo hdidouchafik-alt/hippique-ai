@@ -1057,6 +1057,15 @@ async def learning_metrics():
         avg1 = 0
         avg5 = 0
     _resultat = {
+        "evaluated_predictions": evaluated,
+        "top1_hit_rate": round(avg1, 3),
+        "top5_hit_rate": round(avg5, 3),
+        "agents": agents_scores,
+        "paris": PARIS_STATS,
+        "database": DB_OK,
+    }
+    cache_set("learning_metrics", _resultat)
+    return _resultat
 
 
 @app.get("/api/paris/stats")
