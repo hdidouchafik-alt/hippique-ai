@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.9.15")
+app = FastAPI(title="Hippique AI", version="6.9.18")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -84,7 +84,7 @@ STATS = {
         "MetaAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
         "DemoAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
     }
-}
+} 
 
 PARIS_STATS = {
     "simple_gagnant": {"gagne": 0, "total": 0, "mise": 0.0, "gain": 0.0},
@@ -105,7 +105,6 @@ PARIS_STATS = {
 if DB_OK:
     try:
         db.init()
-        COLLECTED = db.load_results()
         COLLECTED = db.load_results()
         agents_db = db.load_agents()
         for name, s in agents_db.items():
@@ -1058,12 +1057,6 @@ async def learning_metrics():
         avg1 = 0
         avg5 = 0
     _resultat = {
-        "agents": agents_scores,
-        "paris": PARIS_STATS,
-        "database": DB_OK,
-    }
-    cache_set("learning_metrics", _resultat)
-    return _resultat
 
 
 @app.get("/api/paris/stats")
@@ -2751,9 +2744,12 @@ def recalculer_stats_agents():
             except Exception:
                 pass
 
+    STATS["evaluated"] = len([c for c in COLLECTED if c.get("evaluations")])
+
     print("STATS agents recalculés : " + str({
         n: s["h1"] for n, s in STATS["agents"].items()
     }))
+    print("STATS evaluated : " + str(STATS["evaluated"]))
 
 
 @app.on_event("startup")
