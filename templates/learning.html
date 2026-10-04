@@ -230,8 +230,11 @@ function loadMetrics() {
         html += '</div>';
         html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
         html += '<div class="agent-stats">';
-        html += '<span>🎯 Top1 : <b>' + t1 + '/' + tot + '</b></span>';
-        html += '<span>📊 Top5 : <b>' + t5 + '/' + t5max + '</b></span>';
+        html += '<span>🎯 Top1 : <b>' + (a.data.top1 || 0) + '/' + tot + '</b></span>';
+        html += '<span>🎯 Top2 : <b>' + (a.data.top2 || 0) + '/' + tot + '</b></span>';
+        html += '<span>🎯 Top3 : <b>' + (a.data.top3 || 0) + '/' + tot + '</b></span>';
+        html += '<span>🎯 Top4 : <b>' + (a.data.top4 || 0) + '/' + tot + '</b></span>';
+        html += '<span>🎯 Top5 : <b>' + (a.data.top5 || 0) + '/' + tot + '</b></span>';
         html += '</div>';
 
         html += '<div class="roi-detail">';
