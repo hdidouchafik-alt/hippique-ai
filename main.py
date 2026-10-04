@@ -1156,6 +1156,8 @@ def score_risk(musique):
 def detect_pays(hippodrome):
     """Detecte le pays a partir du nom de l'hippodrome."""
     h = (hippodrome or "").upper()
+    if any(x in h for x in ("HONG KONG", "SHA TIN", "HAPPY VALLEY")):
+        return "HK"
     if any(x in h for x in ("BELGIQUE", "MONS", "ANVERS", "GAND", "BRUXELLES")):
         return "BE"
     if any(x in h for x in ("ALLEMAGNE", "STRAUBING", "GERMANY")):
