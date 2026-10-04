@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.9.14")
+app = FastAPI(title="Hippique AI", version="6.9.15")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -74,15 +74,15 @@ def cache_set(key, valeur):
 STATS = {
     "evaluated": 0,
     "agents": {
-        "FormAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "DriverAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "MarketAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "ClassAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "RiskAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "TrackAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "ForecastAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "MetaAgent": {"h1": 0, "h5": 0, "tot": 0},
-        "DemoAgent": {"h1": 0, "h5": 0, "tot": 0},
+        "FormAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "DriverAgent":   {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "MarketAgent":   {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "ClassAgent":    {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "RiskAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "TrackAgent":    {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "ForecastAgent": {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "MetaAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
+        "DemoAgent":     {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0},
     }
 }
 
@@ -106,12 +106,17 @@ if DB_OK:
     try:
         db.init()
         COLLECTED = db.load_results()
+        COLLECTED = db.load_results()
         agents_db = db.load_agents()
         for name, s in agents_db.items():
             if name in STATS["agents"]:
                 STATS["agents"][name]["h1"] = s.get("hits_top1", 0)
                 STATS["agents"][name]["h5"] = s.get("hits_top5", 0)
                 STATS["agents"][name]["tot"] = s.get("total", 0)
+        # Assurer que toutes les clés existent
+        for name in STATS["agents"]:
+            for k in ("h1", "h2", "h3", "h4", "h5", "tot"):
+                STATS["agents"][name].setdefault(k, 0)
         ev = db.load_meta("evaluated")
         if ev:
             STATS["evaluated"] = int(ev)
@@ -968,15 +973,12 @@ async def learning_metrics():
 
         agents_scores[name] = {
             "score": score,
-            "total": s["tot"],
-            "top1": s["h1"],
-            "top2": s["h2"],
-            "top3": s["h3"],
-            "top4": s["h5"],
-            "top5": s["h5"],
+            "total": s.get("tot", 0),
+            "top1": s.get("h1", 0),
             "top2": s.get("h2", 0),
             "top3": s.get("h3", 0),
             "top4": s.get("h4", 0),
+            "top5": s.get("h5", 0),
             "roi_pct": sg.get("roi_pct", 0),
             "roi_pnl": sg.get("roi_euros", 0),
             "roi_mise": sg.get("mise", 0),
@@ -1048,14 +1050,14 @@ async def learning_metrics():
         }
     if evaluated > 0:
         nb = len(STATS["agents"])
-        t1 = sum(s["h1"] for s in STATS["agents"].values())
-        t5 = sum(s["h5"] for s in STATS["agents"].values())
+        t1 = sum(s.get("h1", 0) for s in STATS["agents"].values())
+        t5 = sum(s.get("h5", 0) for s in STATS["agents"].values())
         avg1 = t1 / (evaluated * nb)
         avg5 = t5 / (evaluated * nb * 5)
+    else:
+        avg1 = 0
+        avg5 = 0
     _resultat = {
-        "evaluated_predictions": evaluated,
-        "top1_hit_rate": round(avg1, 3),
-        "top5_hit_rate": round(avg5, 3),
         "agents": agents_scores,
         "paris": PARIS_STATS,
         "database": DB_OK,
