@@ -55,6 +55,20 @@ MISES_PMU = {
 }
 
 COLLECTED = []
+CACHE_API = {}
+
+
+def cache_get(key, ttl=300):
+    """Retourne la valeur cachee si pas expiree."""
+    if key in CACHE_API:
+        valeur, ts = CACHE_API[key]
+        if (datetime.now() - ts).total_seconds() < ttl:
+            return valeur
+    return None
+
+
+def cache_set(key, valeur):
+    CACHE_API[key] = (valeur, datetime.now())
 STATS = {
     "evaluated": 0,
     "agents": {
