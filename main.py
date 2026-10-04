@@ -1063,7 +1063,6 @@ async def learning_metrics():
     cache_set("learning_metrics", _resultat)
     return _resultat
     }
-    }
 
 
 @app.get("/api/paris/stats")
@@ -2588,6 +2587,9 @@ async def course_detail(key: str):
 
 @app.get("/api/quinte/jour")
 async def quinte_du_jour(offset: int = 0):
+    cached = cache_get("quinte_jour", ttl=180)
+    if cached:
+        return cached
     """Retourne le Quinté+ du jour avec son arrivée si terminé, sinon ses partants."""
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
@@ -2614,7 +2616,9 @@ async def quinte_du_jour(offset: int = 0):
             details = await course_detail(key)
             return {"ok": True, "statut": "a_venir", **details}
 
-    return {"ok": False, "error": "Aucun Quinté+ trouvé ce jour"}
+    resultat = {"ok": False, "error": "Aucun Quinté+ trouvé ce jour"}
+    cache_set("quinte_jour", resultat)
+    return resultat
 @app.get("/api/cron/run")
 @app.head("/api/cron/run", include_in_schema=False)
 async def cron_run(background_tasks: BackgroundTasks):
