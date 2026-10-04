@@ -2155,8 +2155,11 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
 
     res = {}
     for name, pred in preds.items():
-        h1 = 1 if pred and pred[0] == v1 else 0
-        h5 = len(set(pred) & v5) if pred else 0
+        h1 = 1 if pred and len(pred) >= 1 and pred[0] == arrivee[0] else 0
+        h2 = 1 if pred and len(pred) >= 2 and set(pred[:2]) == set(arrivee[:2]) else 0
+        h3 = 1 if pred and len(pred) >= 3 and set(pred[:3]) == set(arrivee[:3]) else 0
+        h4 = 1 if pred and len(pred) >= 4 and set(pred[:4]) == set(arrivee[:4]) else 0
+        h5 = 1 if pred and len(pred) >= 5 and set(pred[:5]) == set(arrivee[:5]) else 0
         cote_top1 = cotes.get(pred[0]) if pred else None
 
         # v5.9 : évaluation stricte
@@ -2177,6 +2180,9 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
 
         res[name] = {
             "top1": h1,
+            "top2": h2,
+            "top3": h3,
+            "top4": h4,
             "top5": h5,
             "h_ordered": h_ordered,
             "podium": podium_exact,
