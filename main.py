@@ -2715,12 +2715,57 @@ async def export_csv():
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=hippique_export.csv"},
     )
+def recalculer_stats_agents():
+    """Recalcule STATS['agents'] h1..h5 depuis COLLECTED (pour corriger l'historique)."""
+    for name in STATS["agents"]:
+        STATS["agents"][name] = {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0}
+
+    for course in COLLECTED:
+        ev = course.get("evaluations") or {}
+        arrivee = course.get("arrivee") or []
+        if not arrivee:
+            continue
+        for name, data in ev.items():
+            if name not in STATS["agents"]:
+                continue
+            pred = data.get("prediction") or []
+            if not pred:
+                continue
+            s = STATS["agents"][name]
+            s["tot"] += 1
+            if len(pred) >= 1 and pred[0] == arrivee[0]:
+                s["h1"] += 1
+            if len(pred) >= 2 and set(pred[:2]) == set(arrivee[:2]):
+                s["h2"] += 1
+            if len(pred) >= 3 and set(pred[:3]) == set(arrivee[:3]):
+                s["h3"] += 1
+            if len(pred) >= 4 and set(pred[:4]) == set(arrivee[:4]):
+                s["h4"] += 1
+            if len(pred) >= 5 and set(pred[:5]) == set(arrivee[:5]):
+                s["h5"] += 1
+
+    if DB_OK:
+        for name, s in STATS["agents"].items():
+            try:
+                db.save_agent(name, s["h1"], s["h5"], s["tot"])
+            except Exception:
+                pass
+
+    print("STATS agents recalculés : " + str({
+        n: s["h1"] for n, s in STATS["agents"].items()
+    }))
+
+
 @app.on_event("startup")
 async def _startup_recalc():
-    """Au démarrage : recalcule les stats de paris depuis COLLECTED."""
+    """Au démarrage : recalcule les stats de paris et agents depuis COLLECTED."""
     try:
         recalculer_paris_stats()
         totals = {k: v.get("total", 0) for k, v in PARIS_STATS.items()}
         print("PARIS_STATS recalculé : " + str(totals))
     except Exception as e:
         print("PARIS_STATS recalc error: " + str(e))
+    try:
+        recalculer_stats_agents()
+    except Exception as e:
+        print("STATS agents recalc error: " + str(e))
