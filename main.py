@@ -1056,7 +1056,6 @@ async def learning_metrics():
         "database": DB_OK,
     }
     cache_set("learning_metrics", _resultat)
-    print("DEBUG agents =", agents_scores)
     return _resultat
 
 
