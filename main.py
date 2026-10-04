@@ -46,6 +46,8 @@ MISES_PMU = {
     "couple_place": 2.0,
     "trio": 2.0,
     "2sur4": 3.0,
+    "multi4": 3.0,
+    "multi5": 3.0,
     "quinte_ordre": 2.0,
     "quinte_desordre": 2.0,
     "quinte_bonus4": 2.0,
