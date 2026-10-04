@@ -1047,19 +1047,7 @@ async def learning_metrics():
         t5 = sum(s["h5"] for s in STATS["agents"].values())
         avg1 = t1 / (evaluated * nb)
         avg5 = t5 / (evaluated * nb * 5)
-    else:
-        avg1 = 0
-        avg5 = 0
-    return {
-        "evaluated_predictions": evaluated,
-        "top1_hit_rate": round(avg1, 3),
-        "top5_hit_rate": round(avg5, 3),
-        "agents": agents_scores,
-        "agents": agents_scores,
-        "agents": agents_scores,
-        "paris": PARIS_STATS,
-        "database": DB_OK,
-    }
+    evaluated_prediction
     cache_set("learning_metrics", _resultat)
     return _resultat
     }
