@@ -1105,7 +1105,7 @@ async def learning_reset():
     COLLECTED.clear()
     STATS["evaluated"] = 0
     for name in STATS["agents"]:
-        STATS["agents"][name] = {"h1": 0, "h5": 0, "tot": 0}
+        STATS["agents"][name] = {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0}
     for pari in PARIS_STATS:
         for k in PARIS_STATS[pari]:
             PARIS_STATS[pari][k] = 0
@@ -1121,7 +1121,7 @@ async def admin_purge(confirm: str = ""):
     COLLECTED.clear()
     STATS["evaluated"] = 0
     for name in STATS["agents"]:
-        STATS["agents"][name] = {"h1": 0, "h5": 0, "tot": 0}
+        STATS["agents"][name] = {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "tot": 0}
     for pari in PARIS_STATS:
         for k in PARIS_STATS[pari]:
             PARIS_STATS[pari][k] = 0
@@ -2196,6 +2196,9 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
         s = STATS["agents"][name]
         s["tot"] += 1
         s["h1"] += h1
+        s["h2"] += h2
+        s["h3"] += h3
+        s["h4"] += h4
         s["h5"] += h5
         if DB_OK:
             db.save_agent(name, s["h1"], s["h5"], s["tot"])
