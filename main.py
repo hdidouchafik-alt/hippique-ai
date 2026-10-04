@@ -2073,6 +2073,8 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
 
     preds = {k: [] for k in STATS["agents"].keys()}
     for agent in preds:
+        if agent == "MetaAgent":
+            continue
         key = agent.replace("Agent", "").lower()
         s = sorted(scored, key=lambda x: (x.get(key) if x.get(key) is not None else 0.0), reverse=True)
         preds[agent] = [x["num"] for x in s[:5]]
