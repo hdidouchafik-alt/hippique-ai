@@ -19,9 +19,9 @@ def init():
             with conn.cursor() as cur:
                 cur.execute("CREATE TABLE IF NOT EXISTS collected_results (key TEXT PRIMARY KEY, date TEXT, reunion INTEGER, num_course INTEGER, course TEXT, hippodrome TEXT, discipline TEXT, distance INTEGER, partants INTEGER, arrivee TEXT, evaluations TEXT, created_at TIMESTAMP DEFAULT NOW())")
                 cur.execute("CREATE TABLE IF NOT EXISTS learning_stats (agent TEXT PRIMARY KEY, hits_top1 INTEGER DEFAULT 0, hits_top2 INTEGER DEFAULT 0, hits_top3 INTEGER DEFAULT 0, hits_top4 INTEGER DEFAULT 0, hits_top5 INTEGER DEFAULT 0, total INTEGER DEFAULT 0)")
-cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top2 INTEGER DEFAULT 0")
-cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top3 INTEGER DEFAULT 0")
-cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top4 INTEGER DEFAULT 0")
+                                cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top2 INTEGER DEFAULT 0")
+                                                cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top3 INTEGER DEFAULT 0")
+                                                                cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top4 INTEGER DEFAULT 0")
                 cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
                 cur.execute("CREATE TABLE IF NOT EXISTS driver_stats (driver TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, victoires INTEGER DEFAULT 0, top5 INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
                 cur.execute("CREATE TABLE IF NOT EXISTS hippodrome_stats (hippodrome TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
