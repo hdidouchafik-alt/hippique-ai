@@ -2593,9 +2593,14 @@ async def courses_a_venir(offset: int = 0):
 
 
 @app.get("/api/course/{key}")
-async def course_detail(key: str):
+async def course_detail(key: str, request: Request):
     """Détail d'une course : infos + partants (avec pronostic si dispo)."""
-    # Vérifier si c'est une course déjà collectée
+    # Si appele depuis un navigateur, rediriger vers la page HTML
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/course_detail/" + key)
+
     for c in COLLECTED:
         if c.get("key") == key:
             return {"ok": True, "source": "collected", "course": c}
