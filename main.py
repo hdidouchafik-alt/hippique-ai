@@ -2531,6 +2531,9 @@ async def agent_collect(offset: int = 0):
                     except Exception as e:
                         print("save_agent_history error: " + str(e))
             nouv += 1
+
+    if nouv > 0:
+        try:
             recalculer_paris_stats()
         except Exception as e:
             print("PARIS_STATS recalc error (collect): " + str(e))
