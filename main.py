@@ -2757,7 +2757,7 @@ def recalculer_stats_agents():
         for name, s in STATS["agents"].items():
             try:
             
-db.save_agent(name, s["h1"], s["h2"], s["h3"], s["h4"], s["h5"], s["tot"])
+                db.save_agent(name, s["h1"], s["h2"], s["h3"], s["h4"], s["h5"], s["tot"])
             except Exception:
                 pass
 
