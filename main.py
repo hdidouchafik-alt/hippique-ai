@@ -110,6 +110,9 @@ if DB_OK:
         for name, s in agents_db.items():
             if name in STATS["agents"]:
                 STATS["agents"][name]["h1"] = s.get("hits_top1", 0)
+                STATS["agents"][name]["h2"] = s.get("hits_top2", 0)
+                STATS["agents"][name]["h3"] = s.get("hits_top3", 0)
+                STATS["agents"][name]["h4"] = s.get("hits_top4", 0)
                 STATS["agents"][name]["h5"] = s.get("hits_top5", 0)
                 STATS["agents"][name]["tot"] = s.get("total", 0)
         # Assurer que toutes les clés existent
@@ -2216,7 +2219,7 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
         s["h4"] += h4
         s["h5"] += h5
         if DB_OK:
-            db.save_agent(name, s["h1"], s["h5"], s["tot"])
+            db.save_agent(name, s["h1"], s["h2"], s["h3"], s["h4"], s["h5"], s["tot"])
 
         res[name] = {
             "top1": h1,
@@ -2753,7 +2756,8 @@ def recalculer_stats_agents():
     if DB_OK:
         for name, s in STATS["agents"].items():
             try:
-                db.save_agent(name, s["h1"], s["h5"], s["tot"])
+            
+db.save_agent(name, s["h1"], s["h2"], s["h3"], s["h4"], s["h5"], s["tot"])
             except Exception:
                 pass
 
