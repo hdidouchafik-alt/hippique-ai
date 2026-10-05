@@ -158,7 +158,7 @@ def load_results():
                 return result
     except Exception as e:
         print("DB load_results error: " + str(e))
-        return []
+        return [] 
 
 
 def load_agents():
