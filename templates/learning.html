@@ -231,10 +231,10 @@ function loadMetrics() {
         html += '<div class="progress"><div class="progress-bar ' + c + '" style="width:' + score + '%"></div></div>';
         html += '<div class="agent-stats">';
         html += '<span>🎯 Top1 : <b>' + (a.data.top1 || 0) + '/' + tot + '</b></span>';
-        html += '<span>🎯 Top2 : <b>' + (a.data.top2 || 0) + '/' + tot + '</b></span>';
-        html += '<span>🎯 Top3 : <b>' + (a.data.top3 || 0) + '/' + tot + '</b></span>';
-        html += '<span>🎯 Top4 : <b>' + (a.data.top4 || 0) + '/' + tot + '</b></span>';
-        html += '<span>🎯 Top5 : <b>' + (a.data.top5 || 0) + '/' + tot + '</b></span>';
+        html += '<span>🎯 Top2 : <b>' + (a.data.top2_avg || 0).toFixed(2) + '/2</b></span>';
+        html += '<span>🎯 Top3 : <b>' + (a.data.top3_avg || 0).toFixed(2) + '/3</b></span>';
+        html += '<span>🎯 Top4 : <b>' + (a.data.top4_avg || 0).toFixed(2) + '/4</b></span>';
+        html += '<span>🎯 Top5 : <b>' + (a.data.top5_avg || 0).toFixed(2) + '/5</b></span>';
         html += '</div>';
 
         html += '<div class="roi-detail">';
