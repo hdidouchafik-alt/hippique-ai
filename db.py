@@ -18,7 +18,10 @@ def init():
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
                 cur.execute("CREATE TABLE IF NOT EXISTS collected_results (key TEXT PRIMARY KEY, date TEXT, reunion INTEGER, num_course INTEGER, course TEXT, hippodrome TEXT, discipline TEXT, distance INTEGER, partants INTEGER, arrivee TEXT, evaluations TEXT, created_at TIMESTAMP DEFAULT NOW())")
-                cur.execute("CREATE TABLE IF NOT EXISTS learning_stats (agent TEXT PRIMARY KEY, hits_top1 INTEGER DEFAULT 0, hits_top5 INTEGER DEFAULT 0, total INTEGER DEFAULT 0)")
+                cur.execute("CREATE TABLE IF NOT EXISTS learning_stats (agent TEXT PRIMARY KEY, hits_top1 INTEGER DEFAULT 0, hits_top2 INTEGER DEFAULT 0, hits_top3 INTEGER DEFAULT 0, hits_top4 INTEGER DEFAULT 0, hits_top5 INTEGER DEFAULT 0, total INTEGER DEFAULT 0)")
+cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top2 INTEGER DEFAULT 0")
+cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top3 INTEGER DEFAULT 0")
+cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top4 INTEGER DEFAULT 0")
                 cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
                 cur.execute("CREATE TABLE IF NOT EXISTS driver_stats (driver TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, victoires INTEGER DEFAULT 0, top5 INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
                 cur.execute("CREATE TABLE IF NOT EXISTS hippodrome_stats (hippodrome TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
@@ -45,13 +48,13 @@ def save_result(item):
         print("DB save_result error: " + str(e))
 
 
-def save_agent(name, h1, h5, tot):
+def save_agent(name, h1, h2, h3, h4, h5, tot):
     if not DB_OK:
         return
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO learning_stats (agent, hits_top1, hits_top5, total) VALUES (%s, %s, %s, %s) ON CONFLICT (agent) DO UPDATE SET hits_top1 = EXCLUDED.hits_top1, hits_top5 = EXCLUDED.hits_top5, total = EXCLUDED.total", (name, h1, h5, tot))
+                cur.execute("INSERT INTO learning_stats (agent, hits_top1, hits_top2, hits_top3, hits_top4, hits_top5, total) VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (agent) DO UPDATE SET hits_top1 = EXCLUDED.hits_top1, hits_top2 = EXCLUDED.hits_top2, hits_top3 = EXCLUDED.hits_top3, hits_top4 = EXCLUDED.hits_top4, hits_top5 = EXCLUDED.hits_top5, total = EXCLUDED.total", (name, h1, h2, h3, h4, h5, tot))
                 conn.commit()
     except Exception as e:
         print("DB save_agent error: " + str(e))
@@ -161,10 +164,17 @@ def load_agents():
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT agent, hits_top1, hits_top5, total FROM learning_stats")
+                cur.execute("SELECT agent, hits_top1, hits_top2, hits_top3, hits_top4, hits_top5, total FROM learning_stats")
                 result = {}
                 for r in cur.fetchall():
-                    result[r[0]] = {"hits_top1": r[1], "hits_top5": r[2], "total": r[3]}
+                    result[r[0]] = {
+                        "hits_top1": r[1],
+                        "hits_top2": r[2],
+                        "hits_top3": r[3],
+                        "hits_top4": r[4],
+                        "hits_top5": r[5],
+                        "total": r[6],
+                    }
                 return result
     except Exception as e:
         print("DB load_agents error: " + str(e))
