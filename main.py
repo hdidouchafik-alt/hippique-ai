@@ -22,7 +22,14 @@ try:
 except Exception:
     IMPORTS_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.9.19")
+try:
+    import db
+    DB_OK = db.DB_OK
+    print("DB OK : " + str(DB_OK))
+except Exception as e:
+    DB_OK = False
+    print("DB IMPORT ERROR : " + str(e))
+app = FastAPI(title="Hippique AI", version="6.9.20")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
