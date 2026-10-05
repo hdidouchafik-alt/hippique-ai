@@ -2589,7 +2589,7 @@ async def courses_a_venir(offset: int = 0):
                 "heure": h,
                 "statut": st,
             })
-        return {"ok": True, "count": len(courses), "courses": courses, "date": ds}
+    return {"ok": True, "count": len(courses), "courses": courses, "date": ds}
 
 
 @app.get("/api/course/{key}")
