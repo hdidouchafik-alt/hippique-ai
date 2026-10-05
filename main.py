@@ -2409,6 +2409,12 @@ async def agent_collect(offset: int = 0):
                 db.save_result(item)
             nouv += 1
             
+    if nouv > 0:
+        try:
+            recalculer_paris_stats()
+        except Exception as e:
+            print("PARIS_STATS recalc error (collect): " + str(e))
+
     return {"ok": True, "nouvelles": nouv, "evaluees": eval_, "ignorees": ignorees,
             "total": len(COLLECTED), "total_evaluees": STATS["evaluated"]}
 
