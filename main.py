@@ -25,9 +25,10 @@ except Exception:
 try:
     import db
     DB_OK = db.DB_OK
-except Exception:
+    print("MAIN DEBUG : import db OK, DB_OK=" + str(DB_OK))
+except Exception as e:
     DB_OK = False
-
+    print("MAIN DEBUG : import db FAILED : " + str(e))
 app = FastAPI(title="Hippique AI", version="6.9.19")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
