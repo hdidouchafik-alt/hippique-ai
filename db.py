@@ -18,6 +18,7 @@ def init():
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
                 cur.execute("CREATE TABLE IF NOT EXISTS collected_results (key TEXT PRIMARY KEY, date TEXT, reunion INTEGER, num_course INTEGER, course TEXT, hippodrome TEXT, discipline TEXT, distance INTEGER, partants INTEGER, arrivee TEXT, evaluations TEXT, created_at TIMESTAMP DEFAULT NOW())")
+                cur.execute("ALTER TABLE collected_results ADD COLUMN IF NOT EXISTS features TEXT")
                 cur.execute("CREATE TABLE IF NOT EXISTS learning_stats (agent TEXT PRIMARY KEY, hits_top1 INTEGER DEFAULT 0, hits_top2 INTEGER DEFAULT 0, hits_top3 INTEGER DEFAULT 0, hits_top4 INTEGER DEFAULT 0, hits_top5 INTEGER DEFAULT 0, total INTEGER DEFAULT 0)")
                 cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top2 INTEGER DEFAULT 0")
                 cur.execute("ALTER TABLE learning_stats ADD COLUMN IF NOT EXISTS hits_top3 INTEGER DEFAULT 0")
@@ -36,12 +37,13 @@ def save_result(item):
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                cur.execute("INSERT INTO collected_results (key, date, reunion, num_course, course, hippodrome, discipline, distance, partants, arrivee, evaluations) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (key) DO NOTHING", (
+                cur.execute("INSERT INTO collected_results (key, date, reunion, num_course, course, hippodrome, discipline, distance, partants, arrivee, evaluations, features) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (key) DO UPDATE SET features = EXCLUDED.features", (
                     item["key"], item["date"], item["reunion"], item["num_course"],
                     item["course"], item["hippodrome"], item["discipline"],
                     item["distance"], item["partants"],
                     json.dumps(item.get("arrivee", [])),
-                    json.dumps(item.get("evaluations", {}))
+                    json.dumps(item.get("evaluations", {})),
+                    json.dumps(item.get("features", []))
                 ))
                 conn.commit()
     except Exception as e:
@@ -141,7 +143,7 @@ def load_results():
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT key, date, reunion, num_course, course, hippodrome, discipline, distance, partants, arrivee, evaluations FROM collected_results ORDER BY created_at ASC")
+                cur.execute("SELECT key, date, reunion, num_course, course, hippodrome, discipline, distance, partants, arrivee, evaluations, features FROM collected_results ORDER BY created_at ASC")
                 rows = cur.fetchall()
                 result = []
                 for r in rows:
@@ -151,6 +153,7 @@ def load_results():
                         "distance": r[7], "partants": r[8],
                         "arrivee": json.loads(r[9] or "[]"),
                         "evaluations": json.loads(r[10] or "{}"),
+                        "features": json.loads(r[11] or "[]"),
                     })
                 return result
     except Exception as e:
