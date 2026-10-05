@@ -2509,11 +2509,22 @@ async def agent_collect(offset: int = 0):
                     "arrivee": arr[:5], "evaluations": ev}
             COLLECTED.append(item)
             if DB_OK:
+                COLLECTED.append(item)
+            if DB_OK:
                 db.save_result(item)
+                for agent_name, agent_data in (ev or {}).items():
+                    try:
+                        db.save_agent_history(
+                            agent_name, key, ds,
+                            agent_data.get("top1", 0),
+                            agent_data.get("top2", 0),
+                            agent_data.get("top3", 0),
+                            agent_data.get("top4", 0),
+                            agent_data.get("top5", 0),
+                        )
+                    except Exception as e:
+                        print("save_agent_history error: " + str(e))
             nouv += 1
-            
-    if nouv > 0:
-        try:
             recalculer_paris_stats()
         except Exception as e:
             print("PARIS_STATS recalc error (collect): " + str(e))
