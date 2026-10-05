@@ -26,6 +26,7 @@ def init():
                 cur.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
                 cur.execute("CREATE TABLE IF NOT EXISTS driver_stats (driver TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, victoires INTEGER DEFAULT 0, top5 INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
                 cur.execute("CREATE TABLE IF NOT EXISTS hippodrome_stats (hippodrome TEXT PRIMARY KEY, courses INTEGER DEFAULT 0, updated_at TIMESTAMP DEFAULT NOW())")
+                cur.execute("CREATE TABLE IF NOT EXISTS agent_history (agent TEXT, race_key TEXT, date TEXT, h1 INTEGER DEFAULT 0, h2 INTEGER DEFAULT 0, h3 INTEGER DEFAULT 0, h4 INTEGER DEFAULT 0, h5 INTEGER DEFAULT 0, created_at TIMESTAMP DEFAULT NOW(), PRIMARY KEY (agent, race_key))")
                 conn.commit()
     except Exception as e:
         print("DB init error: " + str(e))
