@@ -1049,7 +1049,7 @@ async def admin_backfill_features(background_tasks: BackgroundTasks, limit: int 
 cached = cache_get("learning_metrics", ttl=10)
     if cached and cached.get("agents"):
         return cached
-
+    
     evaluated = STATS["evaluated"]
     roi_per_agent = compute_roi_per_agent()
     agents_scores = {}
