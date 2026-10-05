@@ -1,3 +1,6 @@
+print("DB MODULE LOADING...")
+import os
+import json
 import os
 import json
 
