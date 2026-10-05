@@ -970,7 +970,17 @@ async def learning_metrics():
         m5 = paris_agent.get("multi5", {})
         s4 = paris_agent.get("super4", {})
 
-        "top2_avg": round(s.get("h2", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
+        s4 = paris_agent.get("super4", {})
+
+        agents_scores[name] = {
+            "score": score,
+            "total": s.get("tot", 0),
+            "top1": s.get("h1", 0),
+            "top2": s.get("h2", 0),
+            "top3": s.get("h3", 0),
+            "top4": s.get("h4", 0),
+            "top5": s.get("h5", 0),
+            "top2_avg": round(s.get("h2", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
             "top3_avg": round(s.get("h3", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
             "top4_avg": round(s.get("h4", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
             "top5_avg": round(s.get("h5", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
@@ -978,6 +988,8 @@ async def learning_metrics():
             "roi_pnl": sg.get("roi_euros", 0),
             "roi_mise": sg.get("mise", 0),
             "roi_gain": sg.get("gain", 0),
+            "roi_pari": sg.get("total", 0),
+            "roi_gagne": sg.get("gagne", 0),
             "roi_pari": sg.get("total", 0),
             "roi_gagne": sg.get("gagne", 0),
             "roi_combine_pct": round(
