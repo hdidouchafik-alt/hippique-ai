@@ -2897,6 +2897,33 @@ def recalculer_stats_agents():
     print("STATS evaluated : " + str(STATS["evaluated"]))
 
 
+def backfill_history():
+    """Remplit agent_history depuis COLLECTED (pour les cours deja collectees)."""
+    if not DB_OK:
+        return
+    count = 0
+    for course in COLLECTED:
+        ev = course.get("evaluations") or {}
+        key = course.get("key", "")
+        ds = course.get("date", "")
+        if not ev or not key:
+            continue
+        for agent_name, agent_data in ev.items():
+            try:
+                db.save_agent_history(
+                    agent_name, key, ds,
+                    agent_data.get("top1", 0),
+                    agent_data.get("top2", 0),
+                    agent_data.get("top3", 0),
+                    agent_data.get("top4", 0),
+                    agent_data.get("top5", 0),
+                )
+                count += 1
+            except Exception:
+                pass
+    print("Backfill history : " + str(count) + " lignes")
+
+
 @app.on_event("startup")
 async def _startup_recalc():
     """Au démarrage : recalcule les stats de paris et agents depuis COLLECTED."""
