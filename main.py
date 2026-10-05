@@ -1336,10 +1336,10 @@ def detect_pays(hippodrome):
         return "SE"
     if any(x in h for x in ("NORVEGE", "OSLO")):
         return "NO"
-    if any(x in h for x in ("DANEMARK")):
-        return "DK"
-    if any(x in h for x in ("FINLANDE")):
-        return "FI"
+    if "DANEMARK" in h:
+    return "DK"
+if "FINLANDE" in h:
+    return "FI"
     return "FR"
 def extract_features(participants):
     """Extrait features brutes ET relatives (z-scores, rangs)."""
@@ -2171,7 +2171,7 @@ def predire(participants, discipline="AUTRE", terrain="INCONNU",
 
             if discipline == "TROT":
                 forecast = (zf * 0.15 + zd * 0.22 + zc * 0.28
-            + zg * 0.12 + zr * 0.10 + zdef * 0.13)
+    + zg * 0.12 + zr * 0.10 + zdef * 0.13)
             elif discipline == "PLAT":
                 forecast = (zf * 0.12 + zd * 0.10 + zc * 0.22
                             + zg * 0.08 + zpoids * 0.08 + zcorde * 0.06
