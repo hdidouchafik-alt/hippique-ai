@@ -62,6 +62,34 @@ def save_agent(name, h1, h2, h3, h4, h5, tot):
     except Exception as e:
         print("DB save_agent error: " + str(e))
 
+def save_agent_history(agent, race_key, date, h1, h2, h3, h4, h5):
+    if not DB_OK:
+        return
+    try:
+        with psycopg.connect(DB_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("INSERT INTO agent_history (agent, race_key, date, h1, h2, h3, h4, h5) VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (agent, race_key) DO UPDATE SET h1 = EXCLUDED.h1, h2 = EXCLUDED.h2, h3 = EXCLUDED.h3, h4 = EXCLUDED.h4, h5 = EXCLUDED.h5", (agent, race_key, date, h1, h2, h3, h4, h5))
+                conn.commit()
+    except Exception as e:
+        print("DB save_agent_history error: " + str(e))
+
+
+def load_agent_history(agent, limit=100):
+    if not DB_OK:
+        return []
+    try:
+        with psycopg.connect(DB_URL) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT race_key, date, h1, h2, h3, h4, h5 FROM agent_history WHERE agent = %s ORDER BY created_at DESC LIMIT %s", (agent, limit))
+                return [
+                    {"race_key": r[0], "date": r[1], "h1": r[2], "h2": r[3], "h3": r[4], "h4": r[5], "h5": r[6]}
+                    for r in cur.fetchall()
+                ]
+    except Exception as e:
+        print("DB load_agent_history error: " + str(e))
+        return []
+
+
 
 def save_meta(key, value):
     if not DB_OK:
