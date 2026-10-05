@@ -28,7 +28,7 @@ try:
 except Exception:
     DB_OK = False
 
-app = FastAPI(title="Hippique AI", version="6.9.18")
+app = FastAPI(title="Hippique AI", version="6.9.19")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
@@ -970,14 +970,10 @@ async def learning_metrics():
         m5 = paris_agent.get("multi5", {})
         s4 = paris_agent.get("super4", {})
 
-        agents_scores[name] = {
-            "score": score,
-            "total": s.get("tot", 0),
-            "top1": s.get("h1", 0),
-            "top2": s.get("h2", 0),
-            "top3": s.get("h3", 0),
-            "top4": s.get("h4", 0),
-            "top5": s.get("h5", 0),
+        "top2_avg": round(s.get("h2", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
+            "top3_avg": round(s.get("h3", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
+            "top4_avg": round(s.get("h4", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
+            "top5_avg": round(s.get("h5", 0) / s.get("tot", 1), 2) if s.get("tot", 0) > 0 else 0,
             "roi_pct": sg.get("roi_pct", 0),
             "roi_pnl": sg.get("roi_euros", 0),
             "roi_mise": sg.get("mise", 0),
@@ -2184,11 +2180,11 @@ def evaluer(participants, arrivee, hippodrome, discipline="AUTRE",
 
     res = {}
     for name, pred in preds.items():
-        h1 = 1 if pred and len(pred) >= 1 and pred[0] == arrivee[0] else 0
-        h2 = 1 if pred and len(pred) >= 2 and set(pred[:2]) == set(arrivee[:2]) else 0
-        h3 = 1 if pred and len(pred) >= 3 and set(pred[:3]) == set(arrivee[:3]) else 0
-        h4 = 1 if pred and len(pred) >= 4 and set(pred[:4]) == set(arrivee[:4]) else 0
-        h5 = 1 if pred and len(pred) >= 5 and set(pred[:5]) == set(arrivee[:5]) else 0
+        h1 = 1 if pred and pred[0] == arrivee[0] else 0
+        h2 = len(set(pred[:2]) & set(arrivee[:2]))
+        h3 = len(set(pred[:3]) & set(arrivee[:3]))
+        h4 = len(set(pred[:4]) & set(arrivee[:4]))
+        h5 = len(set(pred[:5]) & set(arrivee[:5]))
         cote_top1 = cotes.get(pred[0]) if pred else None
 
         # v5.9 : évaluation stricte
@@ -2735,16 +2731,12 @@ def recalculer_stats_agents():
                 continue
             s = STATS["agents"][name]
             s["tot"] += 1
-            if len(pred) >= 1 and pred[0] == arrivee[0]:
+            if pred and pred[0] == arrivee[0]:
                 s["h1"] += 1
-            if len(pred) >= 2 and set(pred[:2]) == set(arrivee[:2]):
-                s["h2"] += 1
-            if len(pred) >= 3 and set(pred[:3]) == set(arrivee[:3]):
-                s["h3"] += 1
-            if len(pred) >= 4 and set(pred[:4]) == set(arrivee[:4]):
-                s["h4"] += 1
-            if len(pred) >= 5 and set(pred[:5]) == set(arrivee[:5]):
-                s["h5"] += 1
+            s["h2"] += len(set(pred[:2]) & set(arrivee[:2]))
+            s["h3"] += len(set(pred[:3]) & set(arrivee[:3]))
+            s["h4"] += len(set(pred[:4]) & set(arrivee[:4]))
+            s["h5"] += len(set(pred[:5]) & set(arrivee[:5]))
 
     if DB_OK:
         for name, s in STATS["agents"].items():
