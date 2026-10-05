@@ -1043,6 +1043,14 @@ async def admin_backfill_features(background_tasks: BackgroundTasks, limit: int 
     return {"ok": True, "queued": True, "message": "Backfill en cours, limit=" + str(limit)}
 
 
+@app.get("/api/agents/history/{name}")
+async def agent_history_api(name: str, limit: int = 50):
+    if not DB_OK:
+        return {"ok": False, "error": "DB off"}
+    rows = db.load_agent_history(name, limit=limit)
+    return {"ok": True, "agent": name, "count": len(rows), "history": rows}
+
+
 
 
 @app.get("/api/learning/metrics")
