@@ -947,20 +947,6 @@ def compute_roi_per_agent():
     
 
 
-@app.get("/api/db/dump_agents")
-async def db_dump_agents():
-    """Debug : lit directement la DB, sans passer par STATS en mémoire."""
-    if not DB_OK:
-        return {"ok": False, "error": "DB off"}
-    try:
-        data = db.load_agents()
-        return {"ok": True, "agents": data}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
-
-
-
 @app.get("/api/learning/metrics")
 async def learning_metrics():
     cached = cache_get("learning_metrics", ttl=300)
