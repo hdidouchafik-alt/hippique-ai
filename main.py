@@ -994,6 +994,58 @@ async def debug_musique_fuite():
     }
 
 
+async def backfill_features_task(limit: int = 50):
+    """Rejoue les cours sans features pour les recuperer depuis PMU."""
+    import asyncio
+    count = 0
+    errors = 0
+    skipped = 0
+    for course in COLLECTED:
+        if count >= limit:
+            break
+        if course.get("features"):
+            continue
+        key = course.get("key", "")
+        parts = key.split("-")
+        if len(parts) != 2:
+            skipped += 1
+            continue
+        ds = parts[0]
+        rc = parts[1][1:]
+        if "C" not in rc:
+            skipped += 1
+            continue
+        nr, nc = rc.split("C", 1)
+        try:
+            nr = int(nr)
+            nc = int(nc)
+        except Exception:
+            skipped += 1
+            continue
+        try:
+            parts_data = await get_participants(ds, nr, nc)
+            if not parts_data:
+                errors += 1
+                continue
+            course["features"] = extract_features(parts_data)
+            if DB_OK:
+                db.save_result(course)
+            count += 1
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            print("Backfill err " + key + ": " + str(e))
+            errors += 1
+    print("Backfill features termine : " + str(count) + " OK, " + str(errors) + " erreurs, " + str(skipped) + " ignorees")
+
+
+@app.get("/api/admin/backfill_features")
+async def admin_backfill_features(background_tasks: BackgroundTasks, limit: int = 50):
+    background_tasks.add_task(backfill_features_task, limit=limit)
+    return {"ok": True, "queued": True, "message": "Backfill en cours, limit=" + str(limit)}
+
+
+
+
 async def learning_metrics():
     cached = cache_get("learning_metrics", ttl=300)
     if cached:
