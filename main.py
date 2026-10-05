@@ -948,6 +948,52 @@ def compute_roi_per_agent():
 
 
 @app.get("/api/learning/metrics")
+@app.get("/api/debug/musique_fuite")
+async def debug_musique_fuite():
+    """Teste si la musique contient deja le resultat de la course evaluee."""
+    total = 0
+    gagnant_commence_par_1 = 0
+    exemples = []
+    for course in COLLECTED[-50:]:
+        arrivee = course.get("arrivee") or []
+        features = course.get("features") or []
+        if not arrivee or not features:
+            continue
+        gagnant = arrivee[0]
+        for f in features:
+            if str(f.get("num")) == str(gagnant):
+                musique = f.get("musique") or ""
+                if musique:
+                    total += 1
+                    premiere = musique.split()[0] if musique.split() else ""
+                    commence_par_1 = premiere.startswith("1")
+                    if commence_par_1:
+                        gagnant_commence_par_1 += 1
+                    if len(exemples) < 10:
+                        exemples.append({
+                            "key": course.get("key"),
+                            "gagnant": gagnant,
+                            "musique": musique,
+                            "commence_par_1": commence_par_1,
+                        })
+                break
+    taux = round(gagnant_commence_par_1 / total * 100, 1) if total > 0 else 0
+    if taux > 40:
+        statut = "🔴 FUITE PROBABLE"
+    elif taux > 25:
+        statut = "🟠 Suspect"
+    else:
+        statut = "✅ Pas de fuite"
+    return {
+        "statut": statut,
+        "total_courses_testees": total,
+        "gagnant_commence_par_1": gagnant_commence_par_1,
+        "taux_pct": taux,
+        "reference_hasard": "~10-15% attendu si pas de fuite",
+        "exemples": exemples,
+    }
+
+
 async def learning_metrics():
     cached = cache_get("learning_metrics", ttl=300)
     if cached:
