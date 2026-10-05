@@ -1285,12 +1285,10 @@ def score_cote(cote):
 def score_gains(gains):
     """Score logarithmique : differencie les gains jusqu'a 10M EUR."""
     try:
+        import math
         g = float(gains)
         if g <= 0:
             return 0.0
-        # log10(1000)=3, log10(100k)=5, log10(10M)=7
-        # Normalise 0-10 : 0 a 10M EUR
-        import math
         return min(math.log10(g + 1) / 7.0 * 10, 10.0)
     except Exception:
         return 0.0
