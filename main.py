@@ -947,7 +947,6 @@ def compute_roi_per_agent():
     
 
 
-@app.get("/api/learning/metrics")
 @app.get("/api/debug/musique_fuite")
 async def debug_musique_fuite():
     """Teste si la musique contient deja le resultat de la course evaluee."""
