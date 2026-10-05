@@ -1046,9 +1046,8 @@ async def admin_backfill_features(background_tasks: BackgroundTasks, limit: int 
 
 
 
-async def learning_metrics():
-    cached = cache_get("learning_metrics", ttl=300)
-    if cached:
+cached = cache_get("learning_metrics", ttl=10)
+    if cached and cached.get("agents"):
         return cached
 
     evaluated = STATS["evaluated"]
