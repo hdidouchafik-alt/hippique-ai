@@ -2606,7 +2606,7 @@ async def course_detail(key: str, request: Request):
             return {"ok": True, "source": "collected", "course": c}
 
     # Sinon, c'est une course à venir : récupérer les partants via PMU
-    # key format : "26092026-R1C3"
+    # key format : "26092026-R1C3" 
     parts = key.split("-")
     if len(parts) != 2 or not parts[0] or not parts[1].startswith("R"):
         return {"ok": False, "error": "Clé invalide"}
