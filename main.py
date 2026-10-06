@@ -2623,14 +2623,17 @@ async def course_detail_api(key: str, request: Request):
     return await course_detail(key)
 
 
-async def course_detail(key: str):
-    """Détail d'une course : infos + partants (avec pronostic si dispo)."""
-    # Si appele depuis un navigateur, rediriger vers la page HTML
+@app.get("/api/course/{key}")
+async def course_detail_api(key: str, request: Request):
     accept = request.headers.get("accept", "")
     if "text/html" in accept:
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/course_detail/" + key)
+    return await course_detail(key)
 
+
+async def course_detail(key: str):
+    """Détail d'une course : infos + partants (avec pronostic si dispo)."""
     for c in COLLECTED:
         if c.get("key") == key:
             return {"ok": True, "source": "collected", "course": c}
