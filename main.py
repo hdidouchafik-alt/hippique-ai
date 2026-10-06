@@ -1338,8 +1338,8 @@ def detect_pays(hippodrome):
         return "NO"
     if "DANEMARK" in h:
         return "DK"
-if "FINLANDE" in h:
-    return "FI"
+    if "FINLANDE" in h:
+        return "FI"
     return "FR"
 def extract_features(participants):
     """Extrait features brutes ET relatives (z-scores, rangs)."""
