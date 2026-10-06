@@ -1337,7 +1337,7 @@ def detect_pays(hippodrome):
     if any(x in h for x in ("NORVEGE", "OSLO")):
         return "NO"
     if "DANEMARK" in h:
-    return "DK"
+        return "DK"
 if "FINLANDE" in h:
     return "FI"
     return "FR"
