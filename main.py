@@ -2,6 +2,7 @@ import os
 import re
 import statistics
 import httpx
+from itertools import permutations
 from pathlib import Path
 from datetime import datetime, timedelta
 from fastapi import FastAPI, Request, BackgroundTasks
