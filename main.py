@@ -1065,13 +1065,14 @@ async def learning_metrics():
     roi_per_agent = compute_roi_per_agent()
     agents_scores = {}
     for name, s in STATS["agents"].items():
+        # v7.0 : récupérer le ROI placé AVANT le calcul du score
+        paris_agent = roi_per_agent.get(name, {})
+        sp_pre = paris_agent.get("simple_place", {})
+        roi_place = sp_pre.get("roi_pct", 0) / 100.0
+        
         if s["tot"] > 0:
             t1r = s["h1"] / s["tot"]
             t5r = s["h5"] / (s["tot"] * 5)
-            # v7.0 : intégrer le ROI placé dans le score
-            paris_name = roi_per_agent.get(name, {})
-            sp_name = paris_name.get("simple_place", {})
-            roi_place = sp_name.get("roi_pct", 0) / 100.0
             
             def _sigmoid(x):
                 return 1.0 / (1.0 + math.exp(-x * 5))
@@ -1084,7 +1085,6 @@ async def learning_metrics():
             score = min(100.0, max(0.0, score))
         else:
             score = 50.0
-        paris_agent = roi_per_agent.get(name, {})
         # ROI Simple Gagnant + Placé (en euros)
         sg = paris_agent.get("simple_gagnant", {})
         sp = paris_agent.get("simple_place", {})
