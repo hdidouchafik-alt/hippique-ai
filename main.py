@@ -1068,7 +1068,19 @@ async def learning_metrics():
         if s["tot"] > 0:
             t1r = s["h1"] / s["tot"]
             t5r = s["h5"] / (s["tot"] * 5)
-            score = round(t1r * 60 + t5r * 40, 1)
+            # v7.0 : intégrer le ROI placé dans le score
+            paris_name = roi_per_agent.get(name, {})
+            sp_name = paris_name.get("simple_place", {})
+            roi_place = sp_name.get("roi_pct", 0) / 100.0
+            
+            def _sigmoid(x):
+                return 1.0 / (1.0 + math.exp(-x * 5))
+            
+            score = round((
+                60 * _sigmoid(roi_place) +
+                25 * t1r +
+                15 * t5r
+            ), 1)
             score = min(100.0, max(0.0, score))
         else:
             score = 50.0
