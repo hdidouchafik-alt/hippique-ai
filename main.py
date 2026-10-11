@@ -1812,10 +1812,62 @@ def auditer_agents():
     
     
 def compute_agent_weights(discipline=None):
+    """v7.0 : poids bases sur le score composite (ROI place + Top1 + Top5)."""
+    if discipline and discipline != "AUTRE":
+        cours_filtrees = [c for c in COLLECTED if c.get("discipline_norm") == discipline]
+    else:
+        cours_filtrees = COLLECTED
+    if len(cours_filtrees) < 30:
+        cours_filtrees = COLLECTED
+
+    weights = {}
+    for name, s in STATS["agents"].items():
+        if name in ("MetaAgent", "DemoAgent"):
+            continue
+        h1 = 0
+        h5 = 0
+        tot = 0
+        mise_place = 0.0
+        gain_place = 0.0
+        for course in cours_filtrees:
+            ev = course.get("evaluations") or {}
+            agent_ev = ev.get(name) or {}
+            pred = agent_ev.get("prediction")
+            arrivee = course.get("arrivee") or []
+            if not pred or not arrivee:
+                continue
+            tot += 1
+            if pred[0] == arrivee[0]:
+                h1 += 1
+            h5 += len(set(pred[:5]) & set(arrivee[:5]))
+            cote = agent_ev.get("cote_top1")
+            if cote:
+                mise_place += 2.0
+                if pred[0] in arrivee[:3]:
+                    gain_place += 2.0 * float(cote) * 0.40
+        if tot < 15:
+            continue
+        t1r = h1 / tot
+        t5r = h5 / (tot * 5)
+        if mise_place > 0:
+            roi_place = (gain_place - mise_place) / mise_place
+        else:
+            roi_place = 0.0
+        sig = 1.0 / (1.0 + math.exp(-roi_place * 5))
+        score = (60 * sig + 25 * t1r + 15 * t5r) / 100.0
+        weights[name] = max(score, 0.01)
+
+    if not weights:
+        weights["ForecastAgent"] = 1.0
+
+    total = sum(weights.values()) or 1
+    for k in weights:
+        weights[k] /= total
+    return weights
 
 
 def meta_predict(preds, weights):
-    """Combine les prédictions des agents avec leurs poids."""
+    """Combine les predictions des agents avec leurs poids."""
     score_par_cheval = {}
     for agent, pred in preds.items():
         if agent not in weights or not pred:
