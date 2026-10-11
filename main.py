@@ -32,7 +32,7 @@ except Exception as e:
     print("DB IMPORT ERROR : " + str(e))
     
     
-app = FastAPI(title="Hippique AI", version="6.9.20")
+app = FastAPI(title="Hippique AI", version="7.0.0")
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
