@@ -2455,8 +2455,7 @@ async def get_arrivee(parts):
     return [n for _, n in cls[:5]]
 
 
-@app.get("/api/agent/collect")
-@app.post("/api/agent/collect")
+
 async def get_rapports_definitifs(ds, r, c):
     """Recupere les rapports definitifs PMU d'une course."""
     url = PMU_BASE + "/programme/" + ds + "/R" + str(r) + "/C" + str(c) + "/rapports-definitifs"
@@ -2477,6 +2476,8 @@ async def get_rapports_definitifs(ds, r, c):
                 "libelle": rap.get("libelle"),
             })
     return rapports
+@app.get("/api/agent/collect")
+@app.post("/api/agent/collect")
 async def agent_collect(offset: int = 0):
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
