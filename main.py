@@ -2457,6 +2457,26 @@ async def get_arrivee(parts):
 
 @app.get("/api/agent/collect")
 @app.post("/api/agent/collect")
+async def get_rapports_definitifs(ds, r, c):
+    """Recupere les rapports definitifs PMU d'une course."""
+    url = PMU_BASE + "/programme/" + ds + "/R" + str(r) + "/C" + str(c) + "/rapports-definitifs"
+    data = await pmu_get(url)
+    if not data or not isinstance(data, list):
+        return {}
+    
+    rapports = {}
+    for bloc in data:
+        type_pari = bloc.get("typePari")
+        if not type_pari:
+            continue
+        rapports[type_pari] = []
+        for rap in bloc.get("rapports", []):
+            rapports[type_pari].append({
+                "combinaison": rap.get("combinaison"),
+                "dividende_pour_1euro": rap.get("dividendePourUnEuro", 0) / 100.0,
+                "libelle": rap.get("libelle"),
+            })
+    return rapports
 async def agent_collect(offset: int = 0):
     ds = date_str(offset)
     prog = await pmu_get(PMU_BASE + "/programme/" + ds)
