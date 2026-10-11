@@ -1809,6 +1809,8 @@ def auditer_agents():
             "statut": statut,
         }
     return resultats
+    
+    
 def compute_agent_weights(discipline=None):
 
 
